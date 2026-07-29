@@ -8,21 +8,21 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export const Badge: React.FC<BadgeProps> = ({
   children,
   className,
-  variant = 'brand',
+  variant = 'neutral',
   ...props
 }) => {
   const variants = {
-    brand: 'bg-brand-500/15 text-brand-300 border-brand-500/30',
-    success: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    warning: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    error: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-    neutral: 'bg-slate-800 text-slate-300 border-slate-700',
+    brand:   'bg-[#F7F6F3] text-charcoal border-border',
+    success: 'bg-accent-green-bg text-accent-green-text border-[#C8DEC7]',
+    warning: 'bg-accent-yellow-bg text-accent-yellow-text border-[#E8D9A0]',
+    error:   'bg-accent-red-bg text-accent-red-text border-[#F5C0C1]',
+    neutral: 'bg-bone text-muted border-border',
   };
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border tracking-wide uppercase',
+        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border tracking-[0.05em] uppercase',
         variants[variant],
         className,
       )}

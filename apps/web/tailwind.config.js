@@ -8,33 +8,73 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#f0f4ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        // Primary monochrome scale
+        canvas: '#FBFBFA',
+        bone: '#F7F6F3',
+        surface: '#FFFFFF',
+        border: '#EAEAEA',
+        muted: '#787774',
+        charcoal: '#2F3437',
+        ink: '#111111',
+
+        // Muted pastel accents (semantic only)
+        accent: {
+          'red-bg': '#FDEBEC',
+          'red-text': '#9F2F2D',
+          'blue-bg': '#E1F3FE',
+          'blue-text': '#1F6C9F',
+          'green-bg': '#EDF3EC',
+          'green-text': '#346538',
+          'yellow-bg': '#FBF3DB',
+          'yellow-text': '#956400',
         },
-        dark: {
-          bg: '#090d16',
-          card: '#111827',
-          border: '#1f293d',
-          input: '#1a2234',
-        }
+
+        // Legacy brand alias (keeps existing imports from breaking)
+        brand: {
+          50: '#F7F6F3',
+          100: '#EAEAEA',
+          200: '#D0CFCD',
+          300: '#B0AFAC',
+          400: '#787774',
+          500: '#4A4845',
+          600: '#2F3437',
+          700: '#1E2224',
+          800: '#161819',
+          900: '#111111',
+          950: '#0A0A0A',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'Helvetica Neue', 'system-ui', 'sans-serif'],
+        serif: ['Newsreader', 'Georgia', 'serif'],
+        mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
+      },
+      letterSpacing: {
+        editorial: '-0.03em',
+        tight: '-0.02em',
+      },
+      lineHeight: {
+        editorial: '1.1',
       },
       boxShadow: {
-        'glow': '0 0 25px -5px rgba(99, 102, 241, 0.4)',
-        'glow-lg': '0 0 50px -10px rgba(99, 102, 241, 0.3)',
-      }
+        'editorial': '0 2px 8px rgba(0,0,0,0.04)',
+        'editorial-md': '0 4px 16px rgba(0,0,0,0.06)',
+        // Keeping glow keys so old code doesn't error
+        'glow': '0 0 0 rgba(0,0,0,0)',
+        'glow-lg': '0 0 0 rgba(0,0,0,0)',
+      },
+      animation: {
+        'reveal': 'reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'reveal-delay-1': 'reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) 80ms forwards',
+        'reveal-delay-2': 'reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) 160ms forwards',
+        'reveal-delay-3': 'reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) 240ms forwards',
+      },
+      keyframes: {
+        reveal: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
     },
   },
   plugins: [],

@@ -26,25 +26,25 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl';
+      'inline-flex items-center justify-center font-medium font-sans transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed select-none';
 
     const variants = {
       primary:
-        'bg-brand-600 hover:bg-brand-500 text-white shadow-glow hover:shadow-glow-lg focus:ring-brand-500 border border-brand-500/50',
+        'bg-ink text-white border border-ink hover:bg-charcoal active:scale-[0.98]',
       secondary:
-        'bg-slate-800 hover:bg-slate-700 text-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-700',
+        'bg-bone text-charcoal border border-border hover:bg-[#EFEEED] active:scale-[0.98]',
       outline:
-        'border border-slate-700 hover:border-slate-500 text-slate-200 hover:bg-slate-800/50',
+        'bg-transparent text-charcoal border border-border hover:bg-bone active:scale-[0.98]',
       ghost:
-        'text-slate-300 hover:bg-slate-800/50 hover:text-white',
+        'bg-transparent text-muted border border-transparent hover:bg-bone hover:text-charcoal active:scale-[0.98]',
       danger:
-        'bg-rose-600 hover:bg-rose-500 text-white focus:ring-rose-500 shadow-sm',
+        'bg-accent-red-bg text-accent-red-text border border-[#F5C0C1] hover:bg-[#FAD8D9] active:scale-[0.98]',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-xs font-semibold gap-1.5',
-      md: 'px-4 py-2 text-sm gap-2',
-      lg: 'px-6 py-3 text-base font-semibold gap-2.5',
+      sm: 'px-3 py-1.5 text-xs tracking-wide rounded gap-1.5',
+      md: 'px-4 py-2 text-sm rounded gap-2',
+      lg: 'px-6 py-2.5 text-sm tracking-wide rounded gap-2',
     };
 
     return (
@@ -54,7 +54,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={clsx(baseStyles, variants[variant], sizes[size], className)}
         {...props}
       >
-        {isLoading && <Spinner size="sm" className="mr-1.5" />}
+        {isLoading && <Spinner size="sm" className="mr-1" />}
         {!isLoading && leftIcon && <span className="inline-flex shrink-0">{leftIcon}</span>}
         <span>{children}</span>
         {!isLoading && rightIcon && <span className="inline-flex shrink-0">{rightIcon}</span>}

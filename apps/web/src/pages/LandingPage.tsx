@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../config/axios';
 import { SystemHealth } from '@lifeos/shared';
@@ -7,21 +7,94 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { useToastStore } from '../store/useToastStore';
-import {
-  Sparkles,
-  Server,
-  Layers,
-  Activity,
-  Boxes,
-  Terminal,
-  CheckCircle,
-} from 'lucide-react';
 
+// ─── Inline SVG icons ──────────────────────────────────────────────────────
+const ServerIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="2" width="20" height="8" rx="2" />
+    <rect x="2" y="14" width="20" height="8" rx="2" />
+    <path d="M6 6h.01M6 18h.01" />
+  </svg>
+);
+
+const LayersIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);
+
+const BoxesIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="9" height="9" rx="1" />
+    <rect x="13" y="3" width="9" height="9" rx="1" />
+    <rect x="2" y="13" width="9" height="9" rx="1" />
+    <rect x="13" y="13" width="9" height="9" rx="1" />
+  </svg>
+);
+
+const ActivityIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+  </svg>
+);
+
+const TerminalIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="4 17 10 11 4 5" />
+    <line x1="12" y1="19" x2="20" y2="19" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="1 4 1 10 7 10" />
+    <path d="M3.51 15a9 9 0 1 0 .49-3.29" />
+  </svg>
+);
+
+// ─── Scroll-reveal hook ─────────────────────────────────────────────────────
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('is-visible');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
 export const LandingPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToast } = useToastStore();
 
-  // Live Backend System Health Ping via TanStack Query
+  const heroRef = useScrollReveal();
+  const testRef = useScrollReveal();
+  const healthRef = useScrollReveal();
+  const archRef = useScrollReveal();
+
   const { data: healthData, isLoading, isError, refetch } = useQuery<SystemHealth>({
     queryKey: ['systemHealth'],
     queryFn: async () => {
@@ -33,202 +106,314 @@ export const LandingPage: React.FC = () => {
 
   const triggerToast = (type: 'success' | 'error' | 'warning' | 'info') => {
     const messages = {
-      success: { title: 'Architecture Action Triggered', message: 'Zustand toast system is working smoothly!' },
-      error: { title: 'Test Error Toast', message: 'Simulated error notification caught by architecture logger.' },
-      warning: { title: 'Rate Limiter Warning', message: 'System threshold checked by Express security stack.' },
-      info: { title: 'Repository Pattern Ready', message: 'BaseRepository pattern is configured for MongoDB.' },
+      success: { title: 'State update confirmed', message: 'Zustand toast system is operating correctly.' },
+      error:   { title: 'Error state captured', message: 'Simulated error notification processed by the logger.' },
+      warning: { title: 'Rate threshold warning', message: 'Rate limiter threshold checked by Express security stack.' },
+      info:    { title: 'Repository pattern ready', message: 'BaseRepository is configured and connected to MongoDB.' },
     };
     addToast({ type, ...messages[type] });
   };
 
+  const pillars = [
+    {
+      icon: <ServerIcon />,
+      accent: 'bg-accent-blue-bg text-accent-blue-text',
+      tag: 'Backend',
+      title: 'Clean Backend & Repository Pattern',
+      description:
+        'Decoupled architecture with BaseRepository abstract class, Mongoose abstraction, and a structured AppError hierarchy.',
+      features: [
+        'Standardized ApiResponse JSON format',
+        'Zod request validation middleware',
+        'Winston structured logger',
+      ],
+      stagger: 'stagger-1',
+    },
+    {
+      icon: <BoxesIcon />,
+      accent: 'bg-accent-yellow-bg text-accent-yellow-text',
+      tag: 'Monorepo',
+      title: 'Shared Workspace Packages',
+      description:
+        'Zero-duplication monorepo workspace sharing TypeScript DTOs, interfaces, and enums across web and API boundaries.',
+      features: [
+        'Shared ApiResponse and Pagination contracts',
+        'User roles and SystemHealth types',
+        'Strictly typed boundary payloads',
+      ],
+      stagger: 'stagger-2',
+    },
+    {
+      icon: <LayersIcon />,
+      accent: 'bg-accent-green-bg text-accent-green-text',
+      tag: 'Frontend',
+      title: 'React Web & Design System',
+      description:
+        'Feature-based React structure with Tailwind CSS, Zustand state stores, TanStack Query, and reusable UI primitives.',
+      features: [
+        'Persistent theme and auth state store',
+        'Reusable Button, Input, Modal, Toast components',
+        'Axios JWT interceptor client',
+      ],
+      stagger: 'stagger-3',
+    },
+  ];
+
   return (
-    <div className="space-y-24 py-12 px-6 max-w-7xl mx-auto">
-      {/* Hero Section */}
-      <section className="text-center space-y-8 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
+    <div className="text-charcoal">
+      {/* Ambient depth layer (fixed, non-scrolling) */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-10"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(47,52,55,0.04) 0%, transparent 70%)',
+        }}
+      />
 
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-300 text-xs font-semibold uppercase tracking-widest shadow-glow">
-          <Sparkles className="w-3.5 h-3.5" /> Flagship Production-Grade Architecture
-        </div>
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section
+        className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center"
+      >
+        <div ref={heroRef} className="reveal-on-scroll space-y-7">
+          <Badge variant="neutral">Scalable Monorepo Architecture</Badge>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
-          The Scalable Architecture for <span className="gradient-text">LifeOS</span>
-        </h1>
+          <h1 className="font-serif text-5xl sm:text-6xl font-light text-ink tracking-[-0.03em] leading-[1.05] max-w-3xl mx-auto">
+            The production foundation<br />
+            <span className="italic">for</span> LifeOS
+          </h1>
 
-        <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-          Clean Architecture foundation powered by Node.js, Express, MongoDB, Repository Pattern, Shared TypeScript Monorepo, React, Zustand, and TanStack Query.
-        </p>
+          <p className="text-base text-muted max-w-xl mx-auto leading-relaxed">
+            Clean Architecture powered by Node.js, Express, MongoDB, Repository Pattern,
+            shared TypeScript monorepo, React, Zustand, and TanStack Query.
+          </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-          <Button size="lg" variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Terminal className="w-4 h-4" />}>
-            Test Interactive Architecture Modal
-          </Button>
-          <a href="#health">
-            <Button size="lg" variant="outline" leftIcon={<Activity className="w-4 h-4" />}>
-              Live System Status
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Button
+              size="lg"
+              variant="primary"
+              onClick={() => setIsModalOpen(true)}
+              leftIcon={<TerminalIcon />}
+            >
+              Architecture Blueprint
             </Button>
-          </a>
-        </div>
-      </section>
-
-      {/* Interactive Toast & System Test Playground */}
-      <section className="space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-white">Architecture Testing Controls</h2>
-          <p className="text-xs text-slate-400">Trigger frontend Zustand stores and state events</p>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button size="sm" variant="secondary" onClick={() => triggerToast('success')} className="border-emerald-500/30 text-emerald-300">
-            Trigger Success Toast
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => triggerToast('info')} className="border-brand-500/30 text-brand-300">
-            Trigger Info Toast
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => triggerToast('warning')} className="border-amber-500/30 text-amber-300">
-            Trigger Warning Toast
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => triggerToast('error')} className="border-rose-500/30 text-rose-300">
-            Trigger Error Toast
-          </Button>
-        </div>
-      </section>
-
-      {/* Backend Live Health & Telemetry Section */}
-      <section id="health" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-400" /> Backend Telemetry Status
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">Real-time status check pinging Express backend at <code className="text-brand-300">/api/v1/health</code></p>
+            <a href="#health">
+              <Button size="lg" variant="outline" leftIcon={<ActivityIcon />}>
+                Live System Status
+              </Button>
+            </a>
           </div>
-          <Button size="sm" variant="outline" onClick={() => refetch()}>
-            Refresh Health Ping
-          </Button>
         </div>
+      </section>
 
-        <Card glass hoverEffect className="border-emerald-500/20">
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 py-2">
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="border-t border-border" />
+      </div>
+
+      {/* ── Toast Test Controls ───────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <div ref={testRef} className="reveal-on-scroll space-y-6">
+          <div>
+            <h2 className="font-serif text-2xl font-light text-ink tracking-tight">
+              Architecture testing controls
+            </h2>
+            <p className="text-sm text-muted mt-1">
+              Trigger frontend Zustand state events and observe the notification system.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => triggerToast('success')}
+            >
+              Success state
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => triggerToast('info')}
+            >
+              Info state
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => triggerToast('warning')}
+            >
+              Warning state
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => triggerToast('error')}
+            >
+              Error state
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── System Health ─────────────────────────────────────────── */}
+      <section id="health" className="max-w-5xl mx-auto px-6 py-16">
+        <div ref={healthRef} className="reveal-on-scroll space-y-6">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Backend Status</p>
-              <div className="mt-2 flex items-center gap-2">
-                {isLoading ? (
-                  <Badge variant="warning">Checking...</Badge>
+              <h2 className="font-serif text-2xl font-light text-ink tracking-tight flex items-center gap-2">
+                <span className="text-muted"><ActivityIcon /></span>
+                Backend telemetry
+              </h2>
+              <p className="text-sm text-muted mt-1">
+                Real-time ping of Express backend at{' '}
+                <kbd className="font-mono text-xs px-1.5 py-0.5 bg-bone border border-border rounded">
+                  /api/v1/health
+                </kbd>
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => refetch()} leftIcon={<RefreshIcon />}>
+              Refresh
+            </Button>
+          </div>
+
+          <Card hoverEffect={false} className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border rounded-[8px] overflow-hidden p-0">
+            {[
+              {
+                label: 'Backend Status',
+                value: isLoading ? (
+                  <Badge variant="warning">Checking</Badge>
                 ) : isError ? (
-                  <Badge variant="error">Offline / Connecting</Badge>
+                  <Badge variant="error">Offline</Badge>
                 ) : (
-                  <Badge variant="success">Online (OK)</Badge>
-                )}
+                  <Badge variant="success">Online</Badge>
+                ),
+              },
+              {
+                label: 'MongoDB',
+                value: (
+                  <span className="font-mono text-sm font-medium text-ink">
+                    {healthData?.database.status
+                      ? healthData.database.status.toUpperCase()
+                      : 'DISCONNECTED'}
+                  </span>
+                ),
+              },
+              {
+                label: 'Uptime',
+                value: (
+                  <span className="font-mono text-sm font-medium text-ink">
+                    {healthData?.uptimeSeconds ? `${healthData.uptimeSeconds}s` : 'N/A'}
+                  </span>
+                ),
+              },
+              {
+                label: 'Heap Used',
+                value: (
+                  <span className="font-mono text-sm font-medium text-ink">
+                    {healthData?.memoryUsage ? healthData.memoryUsage.heapUsed : 'N/A'}
+                  </span>
+                ),
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-surface px-5 py-4">
+                <p className="text-[10px] uppercase tracking-[0.06em] text-muted font-medium mb-2">
+                  {stat.label}
+                </p>
+                <div>{stat.value}</div>
               </div>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">MongoDB Database</p>
-              <p className="mt-2 font-mono text-sm font-bold text-slate-200">
-                {healthData?.database.status ? healthData.database.status.toUpperCase() : 'DISCONNECTED'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">System Uptime</p>
-              <p className="mt-2 font-mono text-sm font-bold text-slate-200">
-                {healthData?.uptimeSeconds ? `${healthData.uptimeSeconds}s` : 'N/A'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Memory Heap Used</p>
-              <p className="mt-2 font-mono text-sm font-bold text-slate-200">
-                {healthData?.memoryUsage ? healthData.memoryUsage.heapUsed : 'N/A'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Key Architectural Pillars */}
-      <section id="architecture" className="space-y-8">
-        <div className="text-center space-y-3">
-          <Badge variant="brand">Scalable Monorepo Stack</Badge>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Enterprise Architectural Pillars</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card glass hoverEffect>
-            <CardHeader>
-              <Server className="w-8 h-8 text-brand-400 mb-2" />
-              <CardTitle>Clean Backend & Repository Pattern</CardTitle>
-              <CardDescription>
-                Decoupled architecture with BaseRepository abstract class, Mongoose abstraction, and custom AppError hierarchy.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-xs text-slate-300">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-brand-400" /> Standardized ApiResponse JSON format</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-brand-400" /> Zod request validation middleware</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-brand-400" /> Winston structured logger</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card glass hoverEffect>
-            <CardHeader>
-              <Boxes className="w-8 h-8 text-indigo-400 mb-2" />
-              <CardTitle>Shared Workspace Packages</CardTitle>
-              <CardDescription>
-                Zero-duplication Monorepo workspace setup sharing TypeScript DTOs, interfaces, and enums between web & API.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-xs text-slate-300">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-indigo-400" /> Shared ApiResponse and Pagination contracts</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-indigo-400" /> User Roles & System Health types</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-indigo-400" /> Strictly typed boundary payloads</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card glass hoverEffect>
-            <CardHeader>
-              <Layers className="w-8 h-8 text-purple-400 mb-2" />
-              <CardTitle>React Web & Design System</CardTitle>
-              <CardDescription>
-                Feature-based React structure with Tailwind CSS, Zustand stores, TanStack Query, and glassmorphic UI primitives.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-xs text-slate-300">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-purple-400" /> Persistent Dark/Light theme store</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-purple-400" /> Reusable Button, Input, Modal, Toast components</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-purple-400" /> Axios JWT interceptor client</li>
-              </ul>
-            </CardContent>
+            ))}
           </Card>
         </div>
       </section>
 
-      {/* Architecture Modal */}
+      {/* ── Architectural Pillars ─────────────────────────────────── */}
+      <section id="architecture" className="max-w-5xl mx-auto px-6 py-16 section-depth">
+        <div ref={archRef} className="reveal-on-scroll space-y-8">
+          <div>
+            <Badge variant="neutral" className="mb-4">Technical foundations</Badge>
+            <h2 className="font-serif text-3xl font-light text-ink tracking-[-0.02em]">
+              Enterprise architectural pillars
+            </h2>
+          </div>
+
+          {/* Asymmetric bento grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pillars.map((pillar) => (
+              <Card
+                key={pillar.title}
+                hoverEffect
+                padding="lg"
+                className={`reveal-on-scroll ${pillar.stagger}`}
+              >
+                <CardHeader>
+                  <div className={`w-9 h-9 rounded-[6px] flex items-center justify-center mb-4 ${pillar.accent}`}>
+                    {pillar.icon}
+                  </div>
+                  <Badge variant="neutral" className="mb-2">{pillar.tag}</Badge>
+                  <CardTitle>{pillar.title}</CardTitle>
+                  <CardDescription>{pillar.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 pt-1">
+                    {pillar.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-muted">
+                        <span className="mt-0.5 shrink-0 text-charcoal">
+                          <CheckIcon />
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Architecture Modal ────────────────────────────────────── */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="LifeOS Architecture Blueprint"
-        description="Verified Production SaaS Foundation Setup"
+        description="Verified production SaaS foundation setup"
       >
-        <div className="space-y-4 py-2 text-xs text-slate-300">
-          <p>
-            This LifeOS monorepo is fully initialized with production-grade architecture patterns.
+        <div className="space-y-4 text-sm text-charcoal">
+          <p className="leading-relaxed">
+            This LifeOS monorepo is initialized with production-grade architecture patterns
+            ready for feature development.
           </p>
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300 space-y-1">
-            <p className="text-brand-400">✓ Express 4 + TypeScript + Mongoose</p>
-            <p className="text-brand-400">✓ Repository Pattern (BaseRepository)</p>
-            <p className="text-brand-400">✓ Swagger OpenAPI UI (/api-docs)</p>
-            <p className="text-brand-400">✓ React 18 + Vite + Tailwind CSS</p>
-            <p className="text-brand-400">✓ Docker Compose Orchestration</p>
+
+          {/* Faux OS terminal window */}
+          <div className="rounded-[8px] border border-border overflow-hidden">
+            <div className="bg-bone border-b border-border px-3 py-2 flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]" />
+              <span className="ml-2 text-[11px] font-mono text-muted">lifeos — architecture</span>
+            </div>
+            <div className="bg-surface px-4 py-4 font-mono text-xs space-y-1.5">
+              {[
+                'Express 4 + TypeScript + Mongoose',
+                'Repository Pattern (BaseRepository)',
+                'Swagger OpenAPI UI (/api-docs)',
+                'React 18 + Vite + Tailwind CSS',
+                'Docker Compose orchestration',
+              ].map((line) => (
+                <p key={line} className="flex items-start gap-2 text-charcoal">
+                  <span className="text-accent-green-text shrink-0 mt-px">
+                    <CheckIcon />
+                  </span>
+                  {line}
+                </p>
+              ))}
+            </div>
           </div>
-          <div className="pt-2 flex justify-end">
+
+          <div className="flex justify-end pt-1">
             <Button size="sm" variant="primary" onClick={() => setIsModalOpen(false)}>
-              Close Architecture View
+              Close
             </Button>
           </div>
         </div>

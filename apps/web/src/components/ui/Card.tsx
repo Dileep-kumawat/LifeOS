@@ -2,23 +2,33 @@ import React from 'react';
 import { clsx } from 'clsx';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** @deprecated glass prop is ignored — all cards are now flat editorial style */
   glass?: boolean;
   hoverEffect?: boolean;
+  padding?: 'sm' | 'md' | 'lg' | 'none';
 }
 
 export const Card: React.FC<CardProps> = ({
   children,
   className,
-  glass = true,
+  glass,
   hoverEffect = false,
+  padding = 'md',
   ...props
 }) => {
+  const paddings = {
+    none: '',
+    sm: 'p-5',
+    md: 'p-6',
+    lg: 'p-8',
+  };
+
   return (
     <div
       className={clsx(
-        'rounded-2xl p-6 transition-all duration-300',
-        glass ? 'glass-card' : 'bg-slate-900 border border-slate-800',
-        hoverEffect && 'hover:border-brand-500/40 hover:shadow-glow hover:-translate-y-0.5',
+        'bg-surface border border-border rounded-[8px] transition-all duration-200',
+        paddings[padding],
+        hoverEffect && 'hover:shadow-editorial hover:-translate-y-px cursor-pointer',
         className,
       )}
       {...props}
@@ -43,7 +53,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
   className,
   ...props
 }) => (
-  <h3 className={clsx('text-lg font-bold text-white tracking-tight', className)} {...props}>
+  <h3 className={clsx('text-base font-semibold font-sans text-ink tracking-tight', className)} {...props}>
     {children}
   </h3>
 );
@@ -53,7 +63,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   className,
   ...props
 }) => (
-  <p className={clsx('text-xs text-slate-400 leading-relaxed', className)} {...props}>
+  <p className={clsx('text-sm text-muted leading-relaxed', className)} {...props}>
     {children}
   </p>
 );
@@ -63,7 +73,7 @@ export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   className,
   ...props
 }) => (
-  <div className={clsx('space-y-4', className)} {...props}>
+  <div className={clsx('space-y-3', className)} {...props}>
     {children}
   </div>
 );
@@ -73,7 +83,7 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   className,
   ...props
 }) => (
-  <div className={clsx('mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between', className)} {...props}>
+  <div className={clsx('mt-5 pt-4 border-t border-border flex items-center justify-between', className)} {...props}>
     {children}
   </div>
 );

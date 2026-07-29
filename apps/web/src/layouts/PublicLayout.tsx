@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { Sun, Moon, Sparkles, Layers, Cpu, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export const PublicLayout: React.FC = () => {
@@ -14,61 +13,74 @@ export const PublicLayout: React.FC = () => {
   }, [checkAuth]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-brand-500 selection:text-white">
-      {/* Header Bar */}
-      <header className="sticky top-0 z-40 w-full glass-card border-b border-slate-800/80 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold gradient-text tracking-wider">LifeOS</span>
-              <span className="ml-2 text-[10px] font-semibold bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded-full border border-brand-500/30 uppercase tracking-widest">
-                v2.0 Native Architecture
-              </span>
-            </div>
+    <div className="min-h-screen flex flex-col bg-canvas text-charcoal">
+      {/* Header */}
+      <header className="sticky top-0 z-40 w-full bg-canvas/90 backdrop-blur-sm border-b border-border">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+
+          {/* Logo */}
+          <Link to="/" className="group flex items-center gap-2">
+            <span className="font-serif text-lg tracking-tight text-ink leading-none">LifeOS</span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.1em] text-muted border border-border rounded px-1.5 py-0.5">
+              v2.0
+            </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-            <a href="#features" className="hover:text-brand-400 transition-colors flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-brand-400" /> Features
+          {/* Nav */}
+          <nav className="hidden md:flex items-center gap-7 text-sm text-muted">
+            <a
+              href="#features"
+              className="hover:text-ink transition-colors duration-150"
+            >
+              Features
             </a>
-            <a href="#architecture" className="hover:text-brand-400 transition-colors flex items-center gap-1.5">
-              <Cpu className="w-4 h-4 text-indigo-400" /> Architecture
+            <a
+              href="#architecture"
+              className="hover:text-ink transition-colors duration-150"
+            >
+              Architecture
             </a>
-            <a href="#health" className="hover:text-brand-400 transition-colors flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> System Status
+            <a
+              href="#health"
+              className="hover:text-ink transition-colors duration-150"
+            >
+              System Status
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
-              title="Toggle Theme"
+              title="Toggle theme"
+              className="w-8 h-8 flex items-center justify-center text-muted hover:text-ink hover:bg-bone border border-transparent hover:border-border rounded transition-all duration-150"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? (
+                /* Sun icon */
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              ) : (
+                /* Moon icon */
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+                </svg>
+              )}
             </button>
 
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="sm" variant="primary">
-                  Dashboard
-                </Button>
+                <Button size="sm" variant="primary">Dashboard</Button>
               </Link>
             ) : (
               <>
                 <Link to="/login">
-                  <Button size="sm" variant="ghost">
-                    Sign In
-                  </Button>
+                  <Button size="sm" variant="ghost">Sign In</Button>
                 </Link>
-
                 <Link to="/register">
-                  <Button size="sm" variant="primary">
-                    Get Started
-                  </Button>
+                  <Button size="sm" variant="primary">Get Started</Button>
                 </Link>
               </>
             )}
@@ -82,12 +94,22 @@ export const PublicLayout: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-8 px-6 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>© 2026 LifeOS. Built with React, TypeScript, Vite, Express & MongoDB.</p>
-          <div className="flex gap-4">
-            <a href="/api-docs" target="_blank" rel="noreferrer" className="hover:text-brand-400 transition-colors">
-              OpenAPI / Swagger Specs ↗
+      <footer className="border-t border-border py-7 px-6">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-muted">
+            © 2026 LifeOS. Built with React, TypeScript, Vite, Express &amp; MongoDB.
+          </p>
+          <div className="flex gap-5">
+            <a
+              href="/api-docs"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-muted hover:text-ink transition-colors"
+            >
+              OpenAPI Spec
+              <svg className="inline ml-1 w-3 h-3 opacity-60" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <path d="M2 10L10 2M10 2H5M10 2v5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </a>
           </div>
         </div>

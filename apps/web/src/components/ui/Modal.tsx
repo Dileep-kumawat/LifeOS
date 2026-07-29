@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -39,22 +38,32 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-charcoal/20 backdrop-blur-[2px] transition-opacity"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-2xl glass-card border border-slate-700/80 p-6 shadow-2xl z-10 transform transition-all animate-in zoom-in-95 duration-200">
-        <div className="flex items-start justify-between mb-4">
+      <div className="relative w-full max-w-lg bg-surface border border-border rounded-[12px] p-7 z-10 shadow-editorial-md">
+        <div className="flex items-start justify-between mb-5">
           <div>
-            {title && <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>}
-            {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
+            {title && (
+              <h2 className="font-serif text-xl font-normal text-ink tracking-tight leading-snug">
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p className="text-sm text-muted mt-1 leading-relaxed">{description}</p>
+            )}
           </div>
+
+          {/* Close: simple × character */}
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close modal"
+            className="ml-4 shrink-0 w-7 h-7 flex items-center justify-center rounded text-muted hover:text-ink hover:bg-bone transition-colors text-lg leading-none"
           >
-            <X className="w-5 h-5" />
+            ×
           </button>
         </div>
         <div>{children}</div>
