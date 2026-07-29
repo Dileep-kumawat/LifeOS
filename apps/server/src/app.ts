@@ -11,6 +11,7 @@ import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { setupSwagger } from './config/swagger.js';
 import healthRoutes from './features/health/health.routes.js';
 import authRoutes from './features/auth/auth.routes.js';
+import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 import { AppError } from './core/errors/AppError.js';
 
 export const createApp = (): Express => {
@@ -65,6 +66,7 @@ export const createApp = (): Express => {
   // API Routes
   app.use('/api/v1', healthRoutes);
   app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/dashboard', dashboardRoutes);
 
   // 404 Route Handler
   app.use('*', (_req: Request, _res: Response, next) => {

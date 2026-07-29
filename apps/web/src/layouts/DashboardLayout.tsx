@@ -1,7 +1,10 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useDashboardStore } from '../store/useDashboardStore';
 import { ProfileDropdown } from '../components/auth/ProfileDropdown';
+import { CommandPalette } from '../components/dashboard/CommandPalette';
+import { QuickCaptureModal } from '../components/dashboard/QuickCaptureModal';
 
 // Inline SVG icons (Phosphor-style, consistent 1.5 stroke weight)
 const icons = {
@@ -65,6 +68,7 @@ const icons = {
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const { user } = useAuthStore();
+  const setCommandPaletteOpen = useDashboardStore((state) => state.setCommandPaletteOpen);
 
   const navItems = [
     { label: 'Dashboard', icon: icons.dashboard, path: '/dashboard' },
@@ -147,13 +151,19 @@ export const DashboardLayout: React.FC = () => {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">{icons.search}</span>
             <input
               type="search"
-              placeholder="Search workspace…"
-              className="w-full pl-8 pr-3 py-1.5 rounded bg-bone border border-border text-xs text-charcoal placeholder-muted focus:outline-none focus:border-ink transition-colors duration-150"
+              placeholder="Search workspace… (ctrl+k)"
+              onClick={() => setCommandPaletteOpen(true)}
+              onFocus={(e) => {
+                e.target.blur();
+                setCommandPaletteOpen(true);
+              }}
+              className="w-full pl-8 pr-3 py-1.5 rounded bg-bone border border-border text-xs text-charcoal placeholder-muted focus:outline-none focus:border-ink cursor-pointer transition-colors duration-150"
             />
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setCommandPaletteOpen(true)}
               className="relative w-8 h-8 flex items-center justify-center text-muted hover:text-ink hover:bg-bone border border-transparent hover:border-border rounded transition-all duration-150"
               aria-label="Notifications"
             >
@@ -168,6 +178,10 @@ export const DashboardLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Overlays */}
+      <CommandPalette />
+      <QuickCaptureModal />
     </div>
   );
 };
