@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { Sun, Moon, Sparkles, Layers, Cpu, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export const PublicLayout: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
+  const { isAuthenticated, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-brand-500 selection:text-white">
@@ -45,11 +51,27 @@ export const PublicLayout: React.FC = () => {
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <Link to="/dashboard">
-              <Button size="sm" variant="primary">
-                Open App Shell
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/dashboard">
+                <Button size="sm" variant="primary">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button size="sm" variant="ghost">
+                    Sign In
+                  </Button>
+                </Link>
+
+                <Link to="/register">
+                  <Button size="sm" variant="primary">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

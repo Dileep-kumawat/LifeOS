@@ -11,11 +11,13 @@ import {
   Settings,
   Bell,
   Search,
-  User,
 } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
+import { ProfileDropdown } from '../components/auth/ProfileDropdown';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuthStore();
 
   const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -26,6 +28,16 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Calendar', icon: Calendar, path: '/dashboard/calendar' },
     { label: 'Settings', icon: Settings, path: '/dashboard/settings' },
   ];
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'US';
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100">
@@ -62,12 +74,20 @@ export const DashboardLayout: React.FC = () => {
 
         <div className="pt-4 border-t border-slate-800/80">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-900/80 border border-slate-800">
-            <div className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-300 font-bold text-xs">
-              US
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="w-8 h-8 rounded-full object-cover border border-slate-700"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-300 font-bold text-xs">
+                {getInitials(user?.name)}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">Demo User</p>
-              <p className="text-[10px] text-slate-400 truncate">user@lifeos.ai</p>
+              <p className="text-xs font-semibold text-white truncate">{user?.name || 'LifeOS User'}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user?.email || 'user@lifeos.ai'}</p>
             </div>
           </div>
         </div>
@@ -91,9 +111,7 @@ export const DashboardLayout: React.FC = () => {
               <Bell className="w-4 h-4" />
               <span className="w-2 h-2 rounded-full bg-brand-500 absolute top-1.5 right-1.5" />
             </button>
-            <button className="p-2 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-              <User className="w-4 h-4" />
-            </button>
+            <ProfileDropdown />
           </div>
         </header>
 

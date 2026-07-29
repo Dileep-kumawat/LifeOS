@@ -2,11 +2,15 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import session from 'express-session';
+import passport from 'passport';
 import { env } from './config/env.js';
+import { configurePassport } from './config/passport.js';
 import { requestLogger } from './middlewares/logger.middleware.js';
 import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { setupSwagger } from './config/swagger.js';
 import healthRoutes from './features/health/health.routes.js';
+import authRoutes from './features/auth/auth.routes.js';
 import { AppError } from './core/errors/AppError.js';
 
 export const createApp = (): Express => {
@@ -19,7 +23,7 @@ export const createApp = (): Express => {
       origin: env.CORS_ORIGIN,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-refresh-token'],
     }),
   );
 
@@ -42,11 +46,25 @@ export const createApp = (): Express => {
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(requestLogger);
 
+  // Passport & OAuth Handshake Sessions
+  app.use(
+    session({
+      secret: env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: env.NODE_ENV === 'production' },
+    }),
+  );
+  configurePassport();
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   // OpenAPI Swagger Documentation
   setupSwagger(app);
 
   // API Routes
   app.use('/api/v1', healthRoutes);
+  app.use('/api/v1/auth', authRoutes);
 
   // 404 Route Handler
   app.use('*', (_req: Request, _res: Response, next) => {
