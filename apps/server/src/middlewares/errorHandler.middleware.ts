@@ -33,6 +33,10 @@ export const errorHandler = (
   }
 
   logger.error(`[API Error] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${err.message}`);
+  if (!(err instanceof AppError) && err.stack) {
+    logger.error(err.stack);
+  }
+
 
   return ApiResponse.error(res, message, statusCode, errors);
 };

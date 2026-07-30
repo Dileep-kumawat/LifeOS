@@ -10,10 +10,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@lifeos/shared": "*",
     "@tanstack/react-query": "^5.51.21",
+    "@tanstack/react-virtual": "^3.14.9",
     "axios": "^1.7.3",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.43.0",
     "lenis": "^1.3.25",
     "lucide-react": "^0.424.0",
     "react": "^18.3.1",

@@ -43,4 +43,7 @@ const ActivityLogSchema = new Schema<IActivityLogDocument>(
   },
 );
 
-export const ActivityLogModel = mongoose.model<IActivityLogDocument>('ActivityLog', ActivityLogSchema);
+export const ActivityLogModel =
+  mongoose.models.ActivityLog ||
+  mongoose.model<IActivityLogDocument>('ActivityLog', ActivityLogSchema);
+

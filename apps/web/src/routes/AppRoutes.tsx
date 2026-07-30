@@ -5,6 +5,7 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 import { LandingPage } from '../pages/LandingPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import TasksPage from '../pages/TasksPage';
 
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
@@ -30,7 +31,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="ai" element={<DashboardPage />} />
-          <Route path="tasks" element={<DashboardPage />} />
+          <Route path="tasks" element={<TasksPage />} />
           <Route path="projects" element={<DashboardPage />} />
           <Route path="goals" element={<DashboardPage />} />
           <Route path="calendar" element={<DashboardPage />} />
