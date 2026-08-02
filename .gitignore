@@ -6,7 +6,8 @@ build/
 *.log
 .DS_Store
 coverage/
-.idea/
-.vscode/
+.storybook-static/
+storybook-static/
+
 
 Social_Media/

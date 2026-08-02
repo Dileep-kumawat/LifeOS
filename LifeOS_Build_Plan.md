@@ -34,7 +34,7 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 - Docker Compose: MongoDB, Redis, API — one command to boot local dev
 
 **Backend scaffold**
-- Fastify (or Express) app with versioned routing (`/api/v1`)
+- Express app with versioned routing (`/api/v1`)
 - Mongoose connection setup, base `User` model
 - Zod for request validation
 - Environment config layer (`.env` + validation on boot — fail fast on missing config)

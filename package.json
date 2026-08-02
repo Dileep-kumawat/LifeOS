@@ -1,0 +1,27 @@
+{
+  "name": "lifeos",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "api",
+    "web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=api",
+    "dev:web": "npm run dev --workspace=web",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=api && npm run build --workspace=web",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck --workspace=api && npm run typecheck --workspace=web && npm run typecheck --workspace=packages/shared",
+    "test": "npm run test --workspace=api --if-present && npm run test --workspace=web --if-present"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.5.0",
+    "@typescript-eslint/parser": "^8.5.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2"
+  }
+}
