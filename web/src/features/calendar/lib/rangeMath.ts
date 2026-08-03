@@ -45,8 +45,10 @@ export function rangeForView(view: CalendarView, cursor: Date): Range {
  * grid always shows whole weeks starting Monday.
  */
 export function monthGridDays(date: Date): Date[] {
-  const start = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
-  return eachDayOfInterval({ start, end: addDays(start, 6) });
+  const monthStart = startOfMonth(date);
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const nextMonthStart = startOfWeek(addMonths(monthStart, 1), { weekStartsOn: 1 });
+  return eachDayOfInterval({ start: gridStart, end: addDays(nextMonthStart, 6) });
 }
 
 export function moveCursor(view: CalendarView, cursor: Date, direction: -1 | 1): Date {
