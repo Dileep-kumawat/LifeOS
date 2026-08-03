@@ -10,6 +10,7 @@ import { RegisterPage } from "./routes/RegisterPage";
 import { ForgotPasswordPage } from "./routes/ForgotPasswordPage";
 import { ResetPasswordPage } from "./routes/ResetPasswordPage";
 import { SettingsPage } from "./routes/SettingsPage";
+import { CalendarPage } from "./features/calendar/CalendarPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
@@ -44,6 +45,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <DashboardHome />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "calendar",
+        element: (
+          <ProtectedRoute>
+            <CalendarPage />
           </ProtectedRoute>
         )
       },
