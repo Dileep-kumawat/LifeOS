@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import { env } from "./config/env.js";
 import { logger, httpLogger } from "./logger.js";
 import { connectDb } from "./db/mongoose.js";
 import { registerSwagger } from "./plugins/swagger.js";
 import { healthRouter } from "./routes/health.js";
+import { authRouter } from "./routes/auth.js";
 import { passport } from "./auth/passport.js";
 
 async function main() {
@@ -13,18 +15,17 @@ async function main() {
 
   const app = express();
 
-  app.use(cors({ origin: env.CORS_ORIGIN }));
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
+  app.use(cookieParser());
   app.use(httpLogger);
   app.use(passport.initialize());
 
   registerSwagger(app);
 
-  // All feature routes are versioned under /api/v1. New route modules
-  // (auth, calendar, goals, habits, notes, ...) mount here as they land in
-  // later phases — this is the only place that needs to change.
   const v1 = express.Router();
   v1.use(healthRouter);
+  v1.use(authRouter);
   app.use("/api/v1", v1);
 
   app.listen(env.PORT, () => {

@@ -1,5 +1,5 @@
 import pino from "pino";
-import pinoHttp from "pino-http";
+import pinoHttpModule from "pino-http";
 import { env } from "./config/env.js";
 
 export const logger = pino({
@@ -13,6 +13,6 @@ export const logger = pino({
         }
 });
 
-// Express request logging middleware, reusing the same pino instance so
-// request logs and app logs share format/level/transport.
+// Express request logging middleware
+const pinoHttp = (pinoHttpModule as any).default || pinoHttpModule;
 export const httpLogger = pinoHttp({ logger });

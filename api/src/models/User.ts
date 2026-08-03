@@ -1,16 +1,45 @@
-import { Schema, model, type InferSchemaType } from "mongoose";
+import { Schema, model, type Document, type InferSchemaType } from "mongoose";
 
-// Deliberately minimal for Phase 0. Password hash, refresh token rotation,
-// OAuth fields, and role/RBAC fields are added in Phase 1 (Auth + Core CRUD)
-// per the build plan — don't build them ahead of that phase.
 const userSchema = new Schema(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    displayName: { type: String, trim: true }
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true
+    },
+    passwordHash: { type: String, required: true },
+    name: { type: String, required: true, trim: true },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+      required: true
+    },
+    emailVerified: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ["active", "soft_deleted"],
+      default: "active",
+      required: true,
+      index: true
+    },
+    deletedAt: { type: Date, default: null },
+
+    // Password reset fields
+    passwordResetTokenHash: { type: String, default: null },
+    passwordResetExpiresAt: { type: Date, default: null },
+
+    // Phase 10 stubs to avoid future migrations
+    googleId: { type: String, default: null, sparse: true },
+    phoneNumber: { type: String, default: null },
+    mfaEnabled: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
 
-export type UserDoc = InferSchemaType<typeof userSchema>;
+export type UserDoc = InferSchemaType<typeof userSchema> & Document;
 
-export const User = model("User", userSchema);
+export const User = model<UserDoc>("User", userSchema);

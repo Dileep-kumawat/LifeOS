@@ -29,7 +29,7 @@ cp api/.env.example api/.env    # adjust secrets as needed
 **Option A — everything in Docker (API + Mongo + Redis):**
 
 ```bash
-docker compose up
+docker compose up --build
 ```
 
 Then in a second terminal, run the web app on the host (faster HMR than dockerizing it):

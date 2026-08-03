@@ -8,7 +8,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["primary", "secondary", "ghost"]
+      options: ["default", "secondary", "outline", "ghost", "destructive"]
     },
     disabled: { control: "boolean" }
   }
@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof Button>;
 
 export const Primary: Story = {
-  args: { children: "Save changes", variant: "primary" }
+  args: { children: "Save changes", variant: "default" }
 };
 
 export const Secondary: Story = {
@@ -30,5 +30,5 @@ export const Ghost: Story = {
 };
 
 export const Disabled: Story = {
-  args: { children: "Save changes", variant: "primary", disabled: true }
+  args: { children: "Save changes", variant: "default", disabled: true }
 };

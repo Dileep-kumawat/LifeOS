@@ -1,20 +1,89 @@
+import { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Link } from "react-router-dom";
+import { Toaster } from "sonner";
+import axios from "axios";
 import { queryClient } from "./lib/queryClient";
 import { RootLayout } from "./routes/RootLayout";
-import { HomePage } from "./routes/HomePage";
+import { LoginPage } from "./routes/LoginPage";
+import { RegisterPage } from "./routes/RegisterPage";
+import { ForgotPasswordPage } from "./routes/ForgotPasswordPage";
+import { ResetPasswordPage } from "./routes/ResetPasswordPage";
+import { SettingsPage } from "./routes/SettingsPage";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { useAuthStore } from "./store/authStore";
+
+function DashboardHome() {
+  const user = useAuthStore((state) => state.user);
+
+  return (
+    <div className="flex flex-col gap-4 p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-[#000000]">Welcome back, {user?.name || "User"}!</h1>
+      <p className="text-sm text-[#615d59]">
+        LifeOS Phase 1 MVP Core — Authentication module active.
+      </p>
+      <div className="flex gap-4">
+        <Link
+          to="/settings"
+          className="inline-flex items-center justify-center rounded-lg bg-[#0075de] text-white px-4 py-2 text-sm font-medium hover:bg-[#005bab]"
+        >
+          Account Settings
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    children: [{ index: true, element: <HomePage /> }]
-  }
+    children: [
+      {
+        index: true,
+        element: (
+          <ProtectedRoute>
+            <DashboardHome />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "settings",
+        element: (
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        )
+      }
+    ]
+  },
+  { path: "/login", element: <LoginPage /> },
+  { path: "/register", element: <RegisterPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password/:token", element: <ResetPasswordPage /> }
 ]);
 
 export function App() {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  useEffect(() => {
+    // Silent session restore attempt on app boot
+    async function restoreSession() {
+      try {
+        const response = await axios.post("/api/v1/auth/refresh", {}, { withCredentials: true });
+        const { user, accessToken } = response.data;
+        setAuth(user, accessToken);
+      } catch (_err) {
+        clearAuth();
+      }
+    }
+    restoreSession();
+  }, [setAuth, clearAuth]);
+
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" />
       <RouterProvider router={router} />
     </QueryClientProvider>
   );
