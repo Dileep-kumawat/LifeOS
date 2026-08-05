@@ -19,6 +19,18 @@ export function RootLayout() {
               Calendar
             </Link>
             <Link
+              to="/goals"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            >
+              Goals
+            </Link>
+            <Link
+              to="/habits"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            >
+              Habits
+            </Link>
+            <Link
               to="/settings"
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >

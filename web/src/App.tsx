@@ -11,6 +11,10 @@ import { ForgotPasswordPage } from "./routes/ForgotPasswordPage";
 import { ResetPasswordPage } from "./routes/ResetPasswordPage";
 import { SettingsPage } from "./routes/SettingsPage";
 import { CalendarPage } from "./features/calendar/CalendarPage";
+import { GoalListPage } from "./features/goals/GoalListPage";
+import { GoalDetailPage } from "./features/goals/GoalDetailPage";
+import { HabitListPage } from "./features/habits/HabitListPage";
+import { HabitDetailPage } from "./features/habits/HabitDetailPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
@@ -21,14 +25,20 @@ function DashboardHome() {
     <div className="flex flex-col gap-4 p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-[#000000]">Welcome back, {user?.name || "User"}!</h1>
       <p className="text-sm text-[#615d59]">
-        LifeOS Phase 1 MVP Core — Authentication module active.
+        LifeOS Phase 1 MVP Core — Authentication, Calendar, Goals & Habits modules active.
       </p>
       <div className="flex gap-4">
         <Link
-          to="/settings"
+          to="/goals"
           className="inline-flex items-center justify-center rounded-lg bg-[#0075de] text-white px-4 py-2 text-sm font-medium hover:bg-[#005bab]"
         >
-          Account Settings
+          View Goals
+        </Link>
+        <Link
+          to="/habits"
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700"
+        >
+          View Habits
         </Link>
       </div>
     </div>
@@ -53,6 +63,38 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <CalendarPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "goals",
+        element: (
+          <ProtectedRoute>
+            <GoalListPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "goals/:id",
+        element: (
+          <ProtectedRoute>
+            <GoalDetailPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "habits",
+        element: (
+          <ProtectedRoute>
+            <HabitListPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "habits/:id",
+        element: (
+          <ProtectedRoute>
+            <HabitDetailPage />
           </ProtectedRoute>
         )
       },
