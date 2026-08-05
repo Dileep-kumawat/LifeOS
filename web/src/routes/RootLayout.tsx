@@ -31,6 +31,12 @@ export function RootLayout() {
               Habits
             </Link>
             <Link
+              to="/notes"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            >
+              Notes
+            </Link>
+            <Link
               to="/settings"
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >

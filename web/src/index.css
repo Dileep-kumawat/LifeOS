@@ -1,3 +1,103 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── TipTap / ProseMirror note editor ───────────────────────────────────── */
+.notes-editor .tiptap {
+  outline: 0;
+  min-height: 200px;
+  color: #31302e;
+}
+
+.notes-editor .tiptap > * + * {
+  margin-top: 0.5rem;
+}
+
+.notes-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #a39e98;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.notes-editor .tiptap h1,
+.notes-editor .tiptap h2,
+.notes-editor .tiptap h3 {
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.25;
+}
+.notes-editor .tiptap h1 {
+  font-size: 24px;
+}
+.notes-editor .tiptap h2 {
+  font-size: 20px;
+}
+.notes-editor .tiptap h3 {
+  font-size: 17px;
+}
+
+.notes-editor .tiptap ul,
+.notes-editor .tiptap ol {
+  padding-left: 1.5rem;
+}
+.notes-editor .tiptap ul {
+  list-style: disc;
+}
+.notes-editor .tiptap ol {
+  list-style: decimal;
+}
+.notes-editor .tiptap li > p {
+  margin: 0;
+}
+
+.notes-editor .tiptap blockquote {
+  border-left: 3px solid #e6e6e6;
+  padding-left: 1rem;
+  color: #615d59;
+}
+
+.notes-editor .tiptap img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.notes-editor .tiptap ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.notes-editor .tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.notes-editor .tiptap ul[data-type="taskList"] li > label {
+  margin-top: 0.25rem;
+}
+.notes-editor .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
+  accent-color: #0075de;
+  cursor: pointer;
+}
+.notes-editor .tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: #a39e98;
+  text-decoration: line-through;
+}
+
+/* Kitchen sink used by read-only preview rendering in stories */
+.notes-render ul,
+.notes-render ol {
+  padding-left: 1.5rem;
+}
+.notes-render ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.notes-render li {
+  display: list-item;
+}
+.notes-render img {
+  max-width: 100%;
+  border-radius: 8px;
+}

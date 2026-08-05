@@ -11,6 +11,7 @@ import { authRouter } from "./routes/auth.js";
 import { calendarRouter } from "./routes/calendar.js";
 import { goalsRouter } from "./routes/goals.js";
 import { habitsRouter } from "./routes/habits.js";
+import { notesRouter } from "./routes/notes.js";
 import { passport } from "./auth/passport.js";
 
 async function main() {
@@ -32,6 +33,7 @@ async function main() {
   v1.use(calendarRouter);
   v1.use(goalsRouter);
   v1.use(habitsRouter);
+  v1.use(notesRouter);
   app.use("/api/v1", v1);
 
   app.listen(env.PORT, () => {

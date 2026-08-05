@@ -15,6 +15,8 @@ import { GoalListPage } from "./features/goals/GoalListPage";
 import { GoalDetailPage } from "./features/goals/GoalDetailPage";
 import { HabitListPage } from "./features/habits/HabitListPage";
 import { HabitDetailPage } from "./features/habits/HabitDetailPage";
+import { NotesListPage } from "./features/notes/NotesListPage";
+import { NoteDetailPage } from "./features/notes/NoteDetailPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
@@ -39,6 +41,12 @@ function DashboardHome() {
           className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700"
         >
           View Habits
+        </Link>
+        <Link
+          to="/notes"
+          className="inline-flex items-center justify-center rounded-lg bg-[#000000] text-white px-4 py-2 text-sm font-medium hover:bg-[#31302e]"
+        >
+          View Notes
         </Link>
       </div>
     </div>
@@ -95,6 +103,22 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <HabitDetailPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "notes",
+        element: (
+          <ProtectedRoute>
+            <NotesListPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "notes/:id",
+        element: (
+          <ProtectedRoute>
+            <NoteDetailPage />
           </ProtectedRoute>
         )
       },
