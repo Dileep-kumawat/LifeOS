@@ -156,6 +156,17 @@ export function App() {
     restoreSession();
   }, [setAuth, clearAuth]);
 
+  // Register the service worker for web-push receipt. Registration alone never
+  // triggers a permission prompt — the push opt-in gate lives in the
+  // PushOptInCard flow, which only calls the permission API on an explicit click.
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        /* push is opt-in and not required for the app to work */
+      });
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-right" />

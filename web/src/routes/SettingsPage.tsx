@@ -6,6 +6,7 @@ import { apiClient } from "../lib/apiClient";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { DeleteAccountDialog } from "../components/auth/DeleteAccountDialog";
+import { NotificationPreferencesPanel } from "../features/notifications";
 
 export function SettingsPage() {
   const { user, clearAuth } = useAuthStore();
@@ -63,6 +64,10 @@ export function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="flex flex-col gap-6">
+          <NotificationPreferencesPanel />
+        </div>
 
         <Card className="border-red-200 bg-red-50/20">
           <CardHeader>
