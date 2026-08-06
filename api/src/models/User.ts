@@ -1,5 +1,13 @@
 import { Schema, model, type Document, type InferSchemaType } from "mongoose";
 
+const modulePreferenceSchema = new Schema(
+  {
+    push: { type: Boolean, default: true },
+    inApp: { type: Boolean, default: true }
+  },
+  { _id: false }
+);
+
 const userSchema = new Schema(
   {
     email: {
@@ -35,7 +43,16 @@ const userSchema = new Schema(
     // Phase 10 stubs to avoid future migrations
     googleId: { type: String, default: null, sparse: true },
     phoneNumber: { type: String, default: null },
-    mfaEnabled: { type: Boolean, default: false }
+    mfaEnabled: { type: Boolean, default: false },
+
+    // Per-module notification toggles (Phase 2). Everything defaults to
+    // enabled; the delivery code treats a missing module/toggle as enabled
+    // so legacy documents without this field still receive notifications.
+    notificationPreferences: {
+      calendarReminders: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
+      habitReminders: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
+      system: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) }
+    }
   },
   { timestamps: true }
 );

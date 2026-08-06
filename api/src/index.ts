@@ -12,7 +12,9 @@ import { calendarRouter } from "./routes/calendar.js";
 import { goalsRouter } from "./routes/goals.js";
 import { habitsRouter } from "./routes/habits.js";
 import { notesRouter } from "./routes/notes.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import { passport } from "./auth/passport.js";
+import { startJobsWorker } from "./services/jobs.worker.js";
 
 async function main() {
   await connectDb();
@@ -34,7 +36,12 @@ async function main() {
   v1.use(goalsRouter);
   v1.use(habitsRouter);
   v1.use(notesRouter);
+  v1.use(notificationsRouter);
   app.use("/api/v1", v1);
+
+  // Start the single background job worker (queued deliveries, later OCR,
+  // embeddings, daily summaries). No-op under tests.
+  startJobsWorker();
 
   app.listen(env.PORT, () => {
     logger.info(`LifeOS API listening on :${env.PORT}`);

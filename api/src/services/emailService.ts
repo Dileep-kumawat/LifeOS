@@ -6,6 +6,76 @@ export interface SendPasswordResetEmailParams {
   resetToken: string;
 }
 
+export interface SendEmailParams {
+  toEmail: string;
+  subject: string;
+  text: string;
+  html?: string;
+}
+
+/**
+ * Generic transactional email used by the notification engine's `email`
+ * channel. Tries Resend then Postmark (mirrors the password-reset flow),
+ * falling back to a console log so local/dev runs never hard-fail. Returns
+ * void — failures are logged, not thrown, so the notification worker can mark
+ * the job delivered rather than retrying a non-transient provider error.
+ */
+export async function sendEmail({ toEmail, subject, text, html }: SendEmailParams): Promise<void> {
+  const bodyHtml = html ?? `<p>${text.replace(/\n/g, "<br/>")}</p>`;
+
+  if (env.RESEND_API_KEY) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "LifeOS <noreply@lifeos.app>",
+          to: [toEmail],
+          subject,
+          html: bodyHtml
+        })
+      });
+      if (response.ok) {
+        logger.info({ toEmail, subject }, "Notification email sent via Resend");
+        return;
+      }
+      logger.error({ status: response.status, subject }, "Failed to send email via Resend");
+    } catch (err) {
+      logger.error({ err, subject }, "Error sending email via Resend");
+    }
+  }
+
+  if (env.POSTMARK_API_KEY) {
+    try {
+      const response = await fetch("https://api.postmarkapp.com/email", {
+        method: "POST",
+        headers: {
+          "X-Postmark-Server-Token": env.POSTMARK_API_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          From: "noreply@lifeos.app",
+          To: toEmail,
+          Subject: subject,
+          HtmlBody: bodyHtml
+        })
+      });
+      if (response.ok) {
+        logger.info({ toEmail, subject }, "Notification email sent via Postmark");
+        return;
+      }
+      logger.error({ status: response.status, subject }, "Failed to send email via Postmark");
+    } catch (err) {
+      logger.error({ err, subject }, "Error sending email via Postmark");
+    }
+  }
+
+  logger.info({ toEmail, subject }, `[DEV/FALLBACK EMAIL] ${text}`);
+}
+
 export async function sendPasswordResetEmail({
   toEmail,
   resetToken

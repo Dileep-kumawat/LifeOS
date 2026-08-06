@@ -15,6 +15,14 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   POSTMARK_API_KEY: z.string().optional(),
 
+  // Web Push VAPID keys (Phase 2 notifications). REQUIRED — the API fails
+  // fast on boot if any are missing so push senders never start half-wired.
+  // webpush.generateVAPIDKeys() produces a public/private pair. The subject
+  // is a contact URL or mailto: that appears in the Authorization header.
+  VAPID_PUBLIC_KEY: z.string().min(1, "VAPID_PUBLIC_KEY is required for the notification engine"),
+  VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required for the notification engine"),
+  VAPID_SUBJECT: z.string().min(1, "VAPID_SUBJECT is required for the notification engine"),
+
   // Optional — unused until the Google OAuth strategy is enabled in Phase 10.
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
