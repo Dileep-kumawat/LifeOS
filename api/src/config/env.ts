@@ -17,7 +17,12 @@ const envSchema = z.object({
 
   // Optional — unused until the Google OAuth strategy is enabled in Phase 10.
   GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional()
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  // Comma-separated IP allowlist that can view /api/v1/docs. In non-local
+  // environments (test/production) Swagger is gated behind this list; when
+  // empty it is disabled entirely. Local development stays open by default.
+  SWAGGER_ALLOWED_IPS: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

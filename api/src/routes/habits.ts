@@ -68,6 +68,31 @@ async function updateHabitStats(habit: any, userId: any, refDateStr?: string) {
  *     responses:
  *       201:
  *         description: Habit created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Habit"
+ *             examples:
+ *               habit:
+ *                 value:
+ *                   _id: 662c9f1e9f0b2a001c3d4e5f
+ *                   userId: 662c9f1e9f0b2a001c3d4e5a
+ *                   title: Morning run
+ *                   frequency:
+ *                     type: weekly
+ *                     daysOfWeek: [2, 4, 6]
+ *                     timesPerPeriod: 3
+ *                   currentStreak: 4
+ *                   longestStreak: 12
+ *                   completionRate: 0.72
+ *                   lastCheckInDate: "2026-08-05"
+ *                   createdAt: 2026-01-10T08:00:00.000Z
+ *                   updatedAt: 2026-08-05T06:30:00.000Z
+ *                   __v: 0
+ *       400:
+ *         description: Validation error (title required)
+ *       401:
+ *         description: Authentication required
  */
 habitsRouter.post("/habits", async (req: Request, res: Response) => {
   try {
@@ -112,6 +137,14 @@ habitsRouter.post("/habits", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: List of habits with cached streak stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Habit"
+ *       401:
+ *         description: Authentication required
  */
 habitsRouter.get("/habits", async (req: Request, res: Response) => {
   try {
@@ -139,8 +172,14 @@ habitsRouter.get("/habits", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Habit details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Habit"
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Habit not found
+ *         description: Habit not found (or not owned by this user)
  */
 habitsRouter.get("/habits/:id", async (req: Request, res: Response) => {
   try {
@@ -178,6 +217,12 @@ habitsRouter.get("/habits/:id", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Updated habit
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Habit"
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Habit not found
  */
@@ -228,6 +273,16 @@ habitsRouter.patch("/habits/:id", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Habit deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Habit and check-in history deleted successfully.
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Habit not found
  */
@@ -259,7 +314,15 @@ habitsRouter.delete("/habits/:id", async (req: Request, res: Response) => {
  *     tags:
  *       - Habits
  *     summary: Log or update a habit check-in (Upsert)
- *     description: Upserts a check-in for the given date (format YYYY-MM-DD). Checking in twice for the same date updates the existing record rather than creating a duplicate. Triggers streak recalculation and writes updated stats back to the Habit document.
+ *     description: |
+ *       Upserts a check-in for the given date (format YYYY-MM-DD). Checking in
+ *       twice for the same date updates the existing record rather than
+ *       creating a duplicate — the check-in is keyed by (habitId, date), so
+ *       re-submitting `{ date, completed: false }` un-completes a day (e.g.
+ *       undoing a mistaken check-in) and rewinds the streak. The habit's
+ *       currentStreak / longestStreak / completionRate are recomputed from the
+ *       full history and written back to the Habit document in the same
+ *       request, so subsequent GETs are consistent.
  *     parameters:
  *       - in: path
  *         name: id
@@ -281,11 +344,47 @@ habitsRouter.delete("/habits/:id", async (req: Request, res: Response) => {
  *                 example: "2026-08-05"
  *               completed:
  *                 type: boolean
+ *                 description: Pass false to remove/undo the check-in for this date.
  *     responses:
  *       200:
  *         description: Check-in upserted and habit stats updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 checkIn:
+ *                   $ref: "#/components/schemas/HabitCheckIn"
+ *                 habit:
+ *                   $ref: "#/components/schemas/Habit"
+ *             examples:
+ *               result:
+ *                 value:
+ *                   checkIn:
+ *                     _id: 662c9f1e9f0b2a001c3d4e5f
+ *                     habitId: 662c9f1e9f0b2a001c3d4e5a
+ *                     userId: 662c9f1e9f0b2a001c3d4e50
+ *                     date: "2026-08-05"
+ *                     completed: true
+ *                     createdAt: 2026-08-05T06:30:00.000Z
+ *                     updatedAt: 2026-08-05T06:30:00.000Z
+ *                     __v: 0
+ *                   habit:
+ *                     _id: 662c9f1e9f0b2a001c3d4e5a
+ *                     userId: 662c9f1e9f0b2a001c3d4e50
+ *                     title: Morning run
+ *                     frequency: { type: daily, daysOfWeek: [], timesPerPeriod: 1 }
+ *                     currentStreak: 5
+ *                     longestStreak: 5
+ *                     completionRate: 0.83
+ *                     lastCheckInDate: "2026-08-05"
+ *                     createdAt: 2026-07-01T08:00:00.000Z
+ *                     updatedAt: 2026-08-05T06:30:00.000Z
+ *                     __v: 0
  *       400:
  *         description: Invalid date or parameters
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Habit not found
  */
@@ -356,6 +455,35 @@ habitsRouter.post("/habits/:id/check-in", async (req: Request, res: Response) =>
  *     responses:
  *       200:
  *         description: Check-in records array
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/HabitCheckIn"
+ *             examples:
+ *               checkIns:
+ *                 value:
+ *                   - _id: 662c9f1e9f0b2a001c3d4e5f
+ *                     habitId: 662c9f1e9f0b2a001c3d4e5a
+ *                     userId: 662c9f1e9f0b2a001c3d4e50
+ *                     date: "2026-08-03"
+ *                     completed: true
+ *                     createdAt: 2026-08-03T06:30:00.000Z
+ *                     updatedAt: 2026-08-03T06:30:00.000Z
+ *                     __v: 0
+ *                   - _id: 662c9f1e9f0b2a001c3d4e60
+ *                     habitId: 662c9f1e9f0b2a001c3d4e5a
+ *                     userId: 662c9f1e9f0b2a001c3d4e50
+ *                     date: "2026-08-04"
+ *                     completed: true
+ *                     createdAt: 2026-08-04T06:30:00.000Z
+ *                     updatedAt: 2026-08-04T06:30:00.000Z
+ *                     __v: 0
+ *       400:
+ *         description: Missing or invalid date range params
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Habit not found
  */
@@ -387,3 +515,41 @@ habitsRouter.get("/habits/:id/check-ins", async (req: Request, res: Response) =>
     return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
 });
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Habit:
+ *       type: object
+ *       description: A habit with cached streak statistics. Streak stats are recomputed on every check-in.
+ *       properties:
+ *         _id: { type: string }
+ *         userId: { type: string }
+ *         title: { type: string }
+ *         frequency:
+ *           type: object
+ *           properties:
+ *             type: { type: string, enum: [daily, weekly, custom] }
+ *             daysOfWeek:
+ *               type: array
+ *               items: { type: number, minimum: 0, maximum: 6 }
+ *             timesPerPeriod: { type: number, minimum: 1 }
+ *         currentStreak: { type: number }
+ *         longestStreak: { type: number }
+ *         completionRate: { type: number, minimum: 0, maximum: 1 }
+ *         lastCheckInDate: { type: string, nullable: true }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
+ *     HabitCheckIn:
+ *       type: object
+ *       description: A single day's check-in for a habit, keyed by (habitId, date).
+ *       properties:
+ *         _id: { type: string }
+ *         habitId: { type: string }
+ *         userId: { type: string }
+ *         date: { type: string, format: date, description: YYYY-MM-DD }
+ *         completed: { type: boolean }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
+ */

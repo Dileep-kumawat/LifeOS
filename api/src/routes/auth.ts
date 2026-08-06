@@ -47,31 +47,42 @@ function formatUserProfile(user: any) {
  *   post:
  *     tags: [Auth]
  *     summary: Register a new user
- *     description: Creates a user with email/password authentication and issues access/refresh tokens.
+ *     description: Creates a user with email/password authentication and issues access/refresh tokens. The refresh token is set as an httpOnly cookie (`refreshToken`); the access token is returned in the body.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [email, password, name]
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 example: Secret12345
- *               name:
- *                 type: string
- *                 example: Jane Doe
+ *             $ref: "#/components/schemas/RegisterInput"
+ *           examples:
+ *             register:
+ *               value:
+ *                 email: jane@example.com
+ *                 password: Secret12345
+ *                 name: Jane Doe
  *     responses:
  *       201:
  *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/AuthResponse"
+ *             examples:
+ *               registered:
+ *                 value:
+ *                   user:
+ *                     id: 662c9f1e9f0b2a001c3d4e5f
+ *                     email: jane@example.com
+ *                     name: Jane Doe
+ *                     role: user
+ *                     emailVerified: false
+ *                     status: active
+ *                     createdAt: 2026-01-01T10:00:00.000Z
+ *                   accessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjJjOWYxZSJ9.example-access-token
+ *       400:
+ *         description: Validation error (e.g. password shorter than 10 chars, or missing letter/number)
  *       409:
  *         description: Email already registered
- *       400:
- *         description: Validation error
  */
 authRouter.post(
   "/auth/register",
@@ -121,24 +132,37 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Log in with email and password
- *     description: Authenticates user credentials with rate limiting and issues tokens.
+ *     description: Authenticates user credentials with rate limiting and issues tokens. The refresh token is set as an httpOnly cookie (`refreshToken`).
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [email, password]
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 example: Secret12345
+ *             $ref: "#/components/schemas/LoginInput"
+ *           examples:
+ *             login:
+ *               value:
+ *                 email: jane@example.com
+ *                 password: Secret12345
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/AuthResponse"
+ *             examples:
+ *               loggedIn:
+ *                 value:
+ *                   user:
+ *                     id: 662c9f1e9f0b2a001c3d4e5f
+ *                     email: jane@example.com
+ *                     name: Jane Doe
+ *                     role: user
+ *                     emailVerified: false
+ *                     status: active
+ *                     createdAt: 2026-01-01T10:00:00.000Z
+ *                   accessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjJjOWYxZSJ9.example-access-token
  *       401:
  *         description: Invalid email or password
  *       429:
@@ -190,12 +214,38 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Refresh access token
- *     description: Rotates refresh token cookie and issues new access token. Revokes token family on reuse.
+ *     description: |
+ *       Rotates the refresh token cookie and issues a fresh access token.
+ *       Rotation: each call consumes the presented refresh token and issues a
+ *       NEW one (the old cookie value is invalidated immediately), so a token
+ *       is single-use. The client must update its cookie from the Set-Cookie
+ *       header on every refresh.
+ *
+ *       Reuse detection: if a rotated-out (already consumed) token is ever
+ *       presented again, the server assumes it has been leaked and revokes the
+ *       ENTIRE token family (every session for that user is invalidated) as a
+ *       defensive security measure — the user must log in again everywhere.
  *     responses:
  *       200:
  *         description: Tokens refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/AuthResponse"
+ *             examples:
+ *               refreshed:
+ *                 value:
+ *                   user:
+ *                     id: 662c9f1e9f0b2a001c3d4e5f
+ *                     email: jane@example.com
+ *                     name: Jane Doe
+ *                     role: user
+ *                     emailVerified: false
+ *                     status: active
+ *                     createdAt: 2026-01-01T10:00:00.000Z
+ *                   accessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjJjOWYxZSJ9.example-refreshed-access-token
  *       401:
- *         description: Invalid or revoked refresh token
+ *         description: Invalid, missing, or revoked refresh token (or user account inactive)
  */
 authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
   try {
@@ -241,10 +291,18 @@ authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
  *   post:
  *     tags: [Auth]
  *     summary: Log out user
- *     description: Revokes current refresh token and clears refresh token cookie.
+ *     description: Revokes current refresh token and clears refresh token cookie. Idempotent — succeeds even when no refresh cookie is present.
  *     responses:
  *       200:
  *         description: Successfully logged out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Logged out successfully
  */
 authRouter.post("/auth/logout", async (req: Request, res: Response) => {
   const rawToken = req.cookies?.refreshToken;
@@ -261,21 +319,28 @@ authRouter.post("/auth/logout", async (req: Request, res: Response) => {
  *   post:
  *     tags: [Auth]
  *     summary: Request password reset email
- *     description: Generates an expiring password reset token and dispatches reset link via email. Always returns 200.
+ *     description: Generates an expiring password reset token and dispatches reset link via email. Always returns 200 (even for unknown emails) to avoid leaking which addresses are registered.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [email]
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
+ *             $ref: "#/components/schemas/ForgotPasswordInput"
+ *           examples:
+ *             request:
+ *               value:
+ *                 email: jane@example.com
  *     responses:
  *       200:
- *         description: Reset email dispatch initiated
+ *         description: Reset email dispatch initiated (or email not found)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: If an account exists with that email, a password reset link has been sent.
  */
 authRouter.post(
   "/auth/forgot-password",
@@ -308,25 +373,31 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Reset password with token
- *     description: Validates reset token, updates password, and revokes all active refresh tokens for the user.
+ *     description: Validates reset token, updates password, and revokes all active refresh tokens for the user (forces re-login everywhere).
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [token, password]
- *             properties:
- *               token:
- *                 type: string
- *               password:
- *                 type: string
- *                 example: NewSecret12345
+ *             $ref: "#/components/schemas/ResetPasswordInput"
+ *           examples:
+ *             reset:
+ *               value:
+ *                 token: 6f3b2c8d9e0a1f4b5c6d7e8f9a0b1c2d
+ *                 password: NewSecret12345
  *     responses:
  *       200:
  *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Password reset successful. Please log in with your new password.
  *       400:
- *         description: Invalid or expired token
+ *         description: Invalid or expired token, or password fails validation rules
  */
 authRouter.post(
   "/auth/reset-password",
@@ -372,6 +443,24 @@ authRouter.post(
  *     responses:
  *       200:
  *         description: Profile returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: "#/components/schemas/UserProfile"
+ *             examples:
+ *               me:
+ *                 value:
+ *                   user:
+ *                     id: 662c9f1e9f0b2a001c3d4e5f
+ *                     email: jane@example.com
+ *                     name: Jane Doe
+ *                     role: user
+ *                     emailVerified: false
+ *                     status: active
+ *                     createdAt: 2026-01-01T10:00:00.000Z
  *       401:
  *         description: Authentication required
  */
@@ -392,6 +481,14 @@ authRouter.get("/auth/me", requireAuth, (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Account scheduled for deletion
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Account scheduled for deletion. Your account will be permanently purged in 30 days.
  *       401:
  *         description: Authentication required
  */
@@ -418,10 +515,35 @@ authRouter.delete("/auth/account", requireAuth, async (req: Request, res: Respon
  *   get:
  *     tags: [Auth]
  *     summary: List active user sessions
- *     description: Returns active non-revoked refresh token sessions for the current user.
+ *     description: Returns active non-revoked refresh token sessions for the current user, newest first. Each session is the current one if its token hash matches the request's refresh cookie.
  *     responses:
  *       200:
  *         description: Sessions listed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Session"
+ *             examples:
+ *               sessions:
+ *                 value:
+ *                   sessions:
+ *                     - id: 662c9f1e9f0b2a001c3d4e70
+ *                       deviceInfo: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0
+ *                       issuedAt: 2026-01-02T09:15:00.000Z
+ *                       expiresAt: 2026-01-16T09:15:00.000Z
+ *                       isCurrent: true
+ *                     - id: 662c9f1e9f0b2a001c3d4e71
+ *                       deviceInfo: LifeOS iOS App
+ *                       issuedAt: 2026-01-01T18:40:00.000Z
+ *                       expiresAt: 2026-01-15T18:40:00.000Z
+ *                       isCurrent: false
+ *       401:
+ *         description: Authentication required
  */
 authRouter.get("/auth/sessions", requireAuth, async (req: Request, res: Response) => {
   const user = req.user!;
@@ -451,11 +573,34 @@ authRouter.get("/auth/sessions", requireAuth, async (req: Request, res: Response
  *   delete:
  *     tags: [Auth]
  *     summary: Revoke a specific active session
+ *     description: |
+ *       Revokes a single active session (e.g. signing out an old device).
+ *       Ownership is enforced server-side — a user can only revoke their own
+ *       sessions. Presenting a session id that belongs to another user is
+ *       indistinguishable from a missing session and returns 404 (preserving
+ *       privacy), so no 403 is emitted for wrong-owner here. Authenticated
+ *       requests without a valid session are still 401.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Session revoked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Session revoked successfully.
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Active session not found (or not owned by the caller)
  */
 authRouter.delete("/auth/sessions/:id", requireAuth, async (req: Request, res: Response) => {
   const user = req.user!;
@@ -475,3 +620,84 @@ authRouter.delete("/auth/sessions/:id", requireAuth, async (req: Request, res: R
 
   return res.json({ message: "Session revoked successfully." });
 });
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     RegisterInput:
+ *       type: object
+ *       description: Registration payload. Mirrors the Zod `registerSchema` in `@lifeos/shared`.
+ *       required: [email, password, name]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Lowercased and trimmed before storage.
+ *         password:
+ *           type: string
+ *           minLength: 10
+ *           description: Must be at least 10 characters long and contain at least one letter and one number.
+ *           example: Secret12345
+ *         name:
+ *           type: string
+ *           minLength: 1
+ *     LoginInput:
+ *       type: object
+ *       description: Login payload. Mirrors the Zod `loginSchema` in `@lifeos/shared`.
+ *       required: [email, password]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *         password:
+ *           type: string
+ *           minLength: 1
+ *     ForgotPasswordInput:
+ *       type: object
+ *       required: [email]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *     ResetPasswordInput:
+ *       type: object
+ *       required: [token, password]
+ *       properties:
+ *         token:
+ *           type: string
+ *           minLength: 1
+ *         password:
+ *           type: string
+ *           minLength: 10
+ *           description: Must be at least 10 chars long and contain at least one letter and one number.
+ *           example: NewSecret12345
+ *     UserProfile:
+ *       type: object
+ *       required: [id, email, name, role, emailVerified, status, createdAt]
+ *       properties:
+ *         id: { type: string }
+ *         email: { type: string, format: email }
+ *         name: { type: string }
+ *         role: { type: string, enum: [user, admin] }
+ *         emailVerified: { type: boolean }
+ *         status: { type: string, enum: [active, soft_deleted] }
+ *         createdAt: { type: string, format: date-time }
+ *     AuthResponse:
+ *       type: object
+ *       description: Successful register/login/refresh response. The refresh token is issued as an httpOnly `refreshToken` cookie, not returned in the body.
+ *       required: [user, accessToken]
+ *       properties:
+ *         user:
+ *           $ref: "#/components/schemas/UserProfile"
+ *         accessToken: { type: string }
+ *     Session:
+ *       type: object
+ *       required: [id, deviceInfo, issuedAt, expiresAt]
+ *       properties:
+ *         id: { type: string }
+ *         deviceInfo: { type: string }
+ *         issuedAt: { type: string, format: date-time }
+ *         expiresAt: { type: string, format: date-time }
+ *         isCurrent: { type: boolean }
+ */

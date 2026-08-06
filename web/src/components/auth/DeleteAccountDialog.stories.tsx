@@ -13,10 +13,21 @@ const meta: Meta<typeof DeleteAccountDialog> = {
 export default meta;
 type Story = StoryObj<typeof DeleteAccountDialog>;
 
+const noop = {
+  onOpenChange: () => {},
+  onConfirmDelete: async () => {}
+};
+
 export const OpenDialog: Story = {
   args: {
     open: true,
-    onOpenChange: () => {},
-    onConfirmDelete: async () => {}
+    ...noop
+  }
+};
+
+export const ClosedDialog: Story = {
+  args: {
+    open: false,
+    ...noop
   }
 };

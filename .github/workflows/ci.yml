@@ -23,6 +23,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check OpenAPI coverage (fail on undocumented routes)
+        run: npm run check:openapi
+
       - name: Typecheck
         run: npm run typecheck
 

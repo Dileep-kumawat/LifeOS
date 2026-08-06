@@ -103,6 +103,8 @@ async function folderBelongsToUser(folderId: string, userId: any): Promise<boole
  *                 note: { $ref: "#/components/schemas/NoteDetail" }
  *       400:
  *         description: Validation error or unknown folder
+ *       401:
+ *         description: Authentication required
  */
 notesRouter.post("/notes", validate(createNoteSchema), async (req: Request, res: Response) => {
   try {
@@ -181,6 +183,8 @@ notesRouter.post("/notes", validate(createNoteSchema), async (req: Request, res:
  *                     hasMore: { type: boolean }
  *       400:
  *         description: Validation error (e.g. empty or over-long search)
+ *       401:
+ *         description: Authentication required
  */
 notesRouter.get("/notes", validate(listNotesQuerySchema, "query"), async (req: Request, res: Response) => {
   try {
@@ -249,6 +253,8 @@ notesRouter.get("/notes", validate(listNotesQuerySchema, "query"), async (req: R
  *         description: Folder created
  *       400:
  *         description: Unknown parent folder or nesting depth exceeded
+ *       401:
+ *         description: Authentication required
  */
 notesRouter.post("/notes/folders", validate(createFolderSchema), async (req: Request, res: Response) => {
   try {
@@ -291,6 +297,8 @@ notesRouter.post("/notes/folders", validate(createFolderSchema), async (req: Req
  *                 folders:
  *                   type: array
  *                   items: { $ref: "#/components/schemas/NoteFolder" }
+ *       401:
+ *         description: Authentication required
  */
 notesRouter.get("/notes/folders", async (req: Request, res: Response) => {
   try {
@@ -330,6 +338,8 @@ notesRouter.get("/notes/folders", async (req: Request, res: Response) => {
  *         description: Updated folder
  *       400:
  *         description: Cycle, depth cap, or unknown parent
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Folder not found
  */
@@ -410,6 +420,8 @@ notesRouter.patch(
  *     responses:
  *       200:
  *         description: Folder deleted; notes reassigned to root
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Folder not found
  */
@@ -461,6 +473,8 @@ notesRouter.delete(
  *                 tags:
  *                   type: array
  *                   items: { type: string }
+ *       401:
+ *         description: Authentication required
  */
 notesRouter.get("/notes/tags", async (req: Request, res: Response) => {
   try {
@@ -494,8 +508,10 @@ notesRouter.get("/notes/tags", async (req: Request, res: Response) => {
  *               type: object
  *               properties:
  *                 note: { $ref: "#/components/schemas/NoteDetail" }
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Note not found
+ *         description: Note not found (or not owned by this user)
  */
 notesRouter.get("/notes/:id", validate(noteParamsSchema, "params"), async (req: Request, res: Response) => {
   try {
@@ -540,6 +556,8 @@ notesRouter.get("/notes/:id", validate(noteParamsSchema, "params"), async (req: 
  *         description: Updated note
  *       400:
  *         description: Validation error or unknown folder
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Note not found
  */
@@ -600,6 +618,8 @@ notesRouter.patch(
  *     responses:
  *       200:
  *         description: Note deleted
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Note not found
  */

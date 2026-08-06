@@ -14,7 +14,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",
     "typecheck": "npm run typecheck --workspace=api && npm run typecheck --workspace=web && npm run typecheck --workspace=packages/shared",
-    "test": "npm run test --workspace=api --if-present && npm run test --workspace=web --if-present"
+    "test": "npm run test --workspace=api --if-present && npm run test --workspace=web --if-present",
+    "check:openapi": "tsx scripts/check-openapi-coverage.ts"
   },
   "devDependencies": {
     "eslint": "^9.9.0",

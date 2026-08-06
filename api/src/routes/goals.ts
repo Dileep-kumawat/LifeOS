@@ -64,10 +64,42 @@ function calculateMilestoneProgress(milestones: Array<{ completed: boolean }>): 
  *                 items:
  *                   type: string
  *     responses:
- *       210:
+ *       201:
  *         description: Goal created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Goal"
+ *             examples:
+ *               goal:
+ *                 value:
+ *                   _id: 662c9f1e9f0b2a001c3d4e5f
+ *                   userId: 662c9f1e9f0b2a001c3d4e5a
+ *                   title: Run a half marathon
+ *                   description: Finish the local March half marathon.
+ *                   targetDate: 2026-03-15T00:00:00.000Z
+ *                   status: active
+ *                   progressPercent: 50
+ *                   milestones:
+ *                     - _id: 662c9f1e9f0b2a001c3d4e60
+ *                       title: Run 5k
+ *                       completed: true
+ *                       completedAt: 2026-01-05T00:00:00.000Z
+ *                       order: 0
+ *                     - _id: 662c9f1e9f0b2a001c3d4e61
+ *                       title: Run 10k
+ *                       completed: false
+ *                       completedAt: null
+ *                       order: 1
+ *                   linkedEventIds: []
+ *                   linkedNoteIds: []
+ *                   createdAt: 2026-01-01T10:00:00.000Z
+ *                   updatedAt: 2026-01-05T12:00:00.000Z
+ *                   __v: 0
  *       400:
- *         description: Invalid input or manual progress edit on goal with milestones
+ *         description: Invalid input, missing title, or manual progressPercent on a goal that has milestones
+ *       401:
+ *         description: Authentication required
  */
 goalsRouter.post("/goals", async (req: Request, res: Response) => {
   try {
@@ -130,7 +162,31 @@ goalsRouter.post("/goals", async (req: Request, res: Response) => {
  *         description: Filter goals by status
  *     responses:
  *       200:
- *         description: List of goals
+ *         description: List of user goals
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Goal"
+ *             examples:
+ *               goals:
+ *                 value:
+ *                   - _id: 662c9f1e9f0b2a001c3d4e5f
+ *                     userId: 662c9f1e9f0b2a001c3d4e5a
+ *                     title: Run a half marathon
+ *                     description: Finish the local March half marathon.
+ *                     targetDate: 2026-03-15T00:00:00.000Z
+ *                     status: active
+ *                     progressPercent: 50
+ *                     milestones: []
+ *                     linkedEventIds: []
+ *                     linkedNoteIds: []
+ *                     createdAt: 2026-01-01T10:00:00.000Z
+ *                     updatedAt: 2026-01-05T12:00:00.000Z
+ *                     __v: 0
+ *       401:
+ *         description: Authentication required
  */
 goalsRouter.get("/goals", async (req: Request, res: Response) => {
   try {
@@ -165,8 +221,30 @@ goalsRouter.get("/goals", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Goal details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Goal"
+ *             examples:
+ *               goal:
+ *                 value:
+ *                   _id: 662c9f1e9f0b2a001c3d4e5f
+ *                   userId: 662c9f1e9f0b2a001c3d4e5a
+ *                   title: Run a half marathon
+ *                   description: Finish the local March half marathon.
+ *                   targetDate: 2026-03-15T00:00:00.000Z
+ *                   status: active
+ *                   progressPercent: 50
+ *                   milestones: []
+ *                   linkedEventIds: []
+ *                   linkedNoteIds: []
+ *                   createdAt: 2026-01-01T10:00:00.000Z
+ *                   updatedAt: 2026-01-05T12:00:00.000Z
+ *                   __v: 0
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Goal not found
+ *         description: Goal not found (or not owned by this user)
  */
 goalsRouter.get("/goals/:id", async (req: Request, res: Response) => {
   try {
@@ -195,17 +273,62 @@ goalsRouter.get("/goals/:id", async (req: Request, res: Response) => {
  *     tags:
  *       - Goals
  *     summary: Update a goal
+ *     description: |
+ *       Updates any subset of the goal's fields. Milestone-driven vs manual
+ *       progress rule: when the goal has at least one milestone,
+ *       `progressPercent` is ALWAYS recomputed from milestone completion and a
+ *       `progressPercent` in the request body is rejected with 400 — clients
+ *       must toggle milestones via PATCH /goals/{id}/milestones/{milestoneId}
+ *       instead. When the goal has no milestones, `progressPercent` may be
+ *       supplied directly (clamped to 0-100). Passing `milestones: []`
+ *       converts the goal back to manual mode.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string, example: Run a half marathon }
+ *               description: { type: string, example: Finish the local March half marathon. }
+ *               targetDate: { type: string, format: date-time, nullable: true }
+ *               status: { type: string, enum: [active, completed, abandoned] }
+ *               progressPercent:
+ *                 type: number
+ *                 minimum: 0
+ *                 maximum: 100
+ *                 description: Manual progress. Rejected with 400 when the goal has milestones.
+ *               milestones:
+ *                 type: array
+ *                 description: Replacing with an empty array reverts to manual progress mode.
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title: { type: string }
+ *                     completed: { type: boolean }
+ *                     order: { type: number }
+ *               linkedEventIds:
+ *                 type: array
+ *                 items: { type: string }
+ *               linkedNoteIds:
+ *                 type: array
+ *                 items: { type: string }
  *     responses:
  *       200:
  *         description: Updated goal
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Goal"
  *       400:
  *         description: Cannot manually update progress percent on goal with milestones
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Goal not found
  */
@@ -296,6 +419,14 @@ goalsRouter.patch("/goals/:id", async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Updated goal with recomputed progress percent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Goal"
+ *       400:
+ *         description: Invalid or non-boolean completed value
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Goal or milestone not found
  */
@@ -349,6 +480,16 @@ goalsRouter.patch("/goals/:id/milestones/:milestoneId", async (req: Request, res
  *     responses:
  *       200:
  *         description: Goal deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *             example:
+ *               message: Goal deleted successfully.
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Goal not found
  */
@@ -371,3 +512,38 @@ goalsRouter.delete("/goals/:id", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
 });
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Goal:
+ *       type: object
+ *       description: A user goal. `progressPercent` is either manually supplied (no milestones) or computed from milestone completion.
+ *       properties:
+ *         _id: { type: string }
+ *         userId: { type: string }
+ *         title: { type: string }
+ *         description: { type: string }
+ *         targetDate: { type: string, format: date-time, nullable: true }
+ *         status: { type: string, enum: [active, completed, abandoned] }
+ *         progressPercent: { type: number, minimum: 0, maximum: 100 }
+ *         milestones:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               _id: { type: string }
+ *               title: { type: string }
+ *               completed: { type: boolean }
+ *               completedAt: { type: string, format: date-time, nullable: true }
+ *               order: { type: number }
+ *         linkedEventIds:
+ *           type: array
+ *           items: { type: string }
+ *         linkedNoteIds:
+ *           type: array
+ *           items: { type: string }
+ *         createdAt: { type: string, format: date-time }
+ *         updatedAt: { type: string, format: date-time }
+ */
