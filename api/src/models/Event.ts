@@ -32,6 +32,8 @@ const eventSchema = new Schema(
     recurrenceRule: { type: String, default: null },
     recurrenceEndDate: { type: Date, default: null },
     exceptions: { type: [exceptionSchema], default: [] },
+    reminderLeadMinutes: { type: Number, default: null },
+    reminderJobId: { type: String, default: null },
     // Lightweight clone of a single occurrence. Never returned as a
     // standalone event; only surfaced through its parent's exception entry.
     isOverride: { type: Boolean, default: false, index: true },

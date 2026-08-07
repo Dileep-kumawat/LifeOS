@@ -20,6 +20,10 @@ const habitSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 300 },
     frequency: { type: frequencySchema, required: true },
     
+    // Per-habit reminder settings
+    reminderTime: { type: String, default: null }, // HH:mm format e.g. "08:00"
+    reminderEnabled: { type: Boolean, default: false },
+
     // Cached derived stats — updated on check-in, never recomputed on read
     currentStreak: { type: Number, default: 0, min: 0 },
     longestStreak: { type: Number, default: 0, min: 0 },

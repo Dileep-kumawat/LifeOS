@@ -23,6 +23,10 @@ import {
   utcMidnightForKey,
   validateRecurrenceRule
 } from "../services/recurrence.js";
+import {
+  cancelEventReminder,
+  scheduleEventReminder
+} from "../services/notifications/calendarReminders.js";
 
 export const calendarRouter = Router();
 
@@ -40,6 +44,7 @@ function formatEventDetail(doc: EventDoc) {
     recurrenceRule: doc.recurrenceRule ?? null,
     recurrenceEndDate: doc.recurrenceEndDate ? new Date(doc.recurrenceEndDate).toISOString() : null,
     recurrence: describeRecurrence(doc.recurrenceRule ?? null),
+    reminderLeadMinutes: doc.reminderLeadMinutes ?? null,
     exceptions: (doc.exceptions || []).map((e: any) => ({
       originalDate: new Date(e.originalDate).toISOString(),
       isCancelled: Boolean(e.isCancelled),
@@ -197,8 +202,17 @@ calendarRouter.post(
         timezone: body.timezone,
         isAllDay: body.isAllDay,
         recurrenceRule: body.recurrenceRule || null,
-        recurrenceEndDate: body.recurrenceEndDate ? new Date(body.recurrenceEndDate) : null
+        recurrenceEndDate: body.recurrenceEndDate ? new Date(body.recurrenceEndDate) : null,
+        reminderLeadMinutes: body.reminderLeadMinutes ?? null
       });
+
+      if (!doc.recurrenceRule && doc.reminderLeadMinutes != null) {
+        const jobId = await scheduleEventReminder(doc);
+        if (jobId) {
+          doc.reminderJobId = jobId;
+          await doc.save();
+        }
+      }
 
       return res.status(201).json({ event: formatEventDetail(doc) });
     } catch (err) {
@@ -518,12 +532,26 @@ calendarRouter.patch(
       if (body.recurrenceEndDate !== undefined) {
         doc.recurrenceEndDate = body.recurrenceEndDate ? new Date(body.recurrenceEndDate) : null;
       }
+      if (body.reminderLeadMinutes !== undefined) {
+        doc.reminderLeadMinutes = body.reminderLeadMinutes;
+      }
 
       if (doc.startTime >= doc.endTime) {
         return res.status(400).json({
           error: "ValidationError",
           message: "endTime must be after startTime."
         });
+      }
+
+      // Cancel previous reminder job if time/lead-time/recurrence changed
+      if (doc.reminderJobId) {
+        await cancelEventReminder(doc.reminderJobId);
+        doc.reminderJobId = null;
+      }
+
+      // Re-schedule reminder job for non-recurring events if lead time is set
+      if (!doc.recurrenceRule && doc.reminderLeadMinutes != null) {
+        doc.reminderJobId = await scheduleEventReminder(doc);
       }
 
       await doc.save();
@@ -796,6 +824,9 @@ calendarRouter.delete("/calendar/events/:id", requireAuth, async (req: Request, 
     if (!doc) {
       return res.status(404).json({ error: "NotFound", message: "Event not found." });
     }
+    if (doc.reminderJobId) {
+      await cancelEventReminder(doc.reminderJobId);
+    }
     await Event.deleteMany({ $or: [{ _id: doc._id }, { parentEventId: doc._id }] });
     return res.json({ message: "Event series deleted." });
   } catch {
@@ -855,6 +886,7 @@ calendarRouter.delete("/calendar/events/:id", requireAuth, async (req: Request, 
  *         isRecurring: { type: boolean }
  *         recurrenceRule: { type: string, nullable: true }
  *         recurrenceEndDate: { type: string, format: date-time, nullable: true }
+ *         reminderLeadMinutes: { type: integer, nullable: true, example: 10 }
  *         recurrence:
  *           type: object
  *           nullable: true

@@ -4,11 +4,13 @@ import { logger } from "../logger.js";
 import { JOBS_QUEUE_NAME } from "./queue.js";
 import { Notification } from "../models/Notification.js";
 import { User } from "../models/User.js";
+import { Event } from "../models/Event.js";
 import { PushSubscription } from "../models/PushSubscription.js";
 import { sendEmail } from "./emailService.js";
 import { sendPushNotification } from "./notifications/sendPush.js";
 import { dispatchNotification, type DeliveryDeps, type NotificationLike } from "./notifications/delivery.js";
-import { DELIVER_NOTIFICATION_TYPE } from "./notifications/scheduler.js";
+import { DELIVER_NOTIFICATION_TYPE, scheduleNotification } from "./notifications/scheduler.js";
+import { isPreferenceEnabled } from "./notifications/preferences.js";
 import type { NotificationPreferences } from "@lifeos/shared";
 
 /**
@@ -21,6 +23,57 @@ import type { NotificationPreferences } from "@lifeos/shared";
 interface DeliverNotificationJobData {
   notificationId: string;
   type?: string;
+}
+
+interface CalendarReminderJobData {
+  eventId: string;
+  userId: string;
+  occurrenceTime?: string;
+}
+
+async function handleCalendarReminder(job: Job<CalendarReminderJobData>): Promise<void> {
+  const { eventId, userId, occurrenceTime } = job.data;
+  const event = await Event.findById(eventId);
+  if (!event) {
+    logger.info({ eventId, jobId: job.id }, "calendar_reminder: event missing/deleted — dropping");
+    return;
+  }
+
+  if (event.reminderLeadMinutes == null) {
+    logger.info({ eventId, jobId: job.id }, "calendar_reminder: event reminder disabled — dropping");
+    return;
+  }
+
+  if (occurrenceTime && event.exceptions) {
+    const isCancelled = event.exceptions.some(
+      (e: any) => e.isCancelled && new Date(e.originalDate).toISOString() === occurrenceTime
+    );
+    if (isCancelled) {
+      logger.info({ eventId, occurrenceTime }, "calendar_reminder: occurrence cancelled — dropping");
+      return;
+    }
+  }
+
+  const user = await User.findById(userId);
+  if (!user || user.status !== "active") {
+    logger.info({ userId }, "calendar_reminder: user missing/inactive — dropping");
+    return;
+  }
+
+  if (!isPreferenceEnabled(user.notificationPreferences ?? undefined, "calendarReminders", "push")) {
+    logger.info({ userId, eventId }, "calendar_reminder: user disabled calendarReminders preference — dropping");
+    return;
+  }
+
+  await scheduleNotification({
+    userId,
+    type: "calendar_reminder",
+    channel: "push",
+    title: `Upcoming Event: ${event.title}`,
+    body: `Reminder: "${event.title}" starts soon.`,
+    data: { eventId: event._id.toString() },
+    scheduledFor: new Date()
+  });
 }
 
 async function handleDeliverNotification(job: Job<DeliverNotificationJobData>): Promise<void> {
@@ -94,7 +147,8 @@ async function handleDeliverNotification(job: Job<DeliverNotificationJobData>): 
 
 /** Dispatch table: job name -> handler. */
 const HANDLERS: Record<string, (job: Job) => Promise<void>> = {
-  [DELIVER_NOTIFICATION_TYPE]: handleDeliverNotification
+  [DELIVER_NOTIFICATION_TYPE]: handleDeliverNotification,
+  calendar_reminder: handleCalendarReminder
 };
 
 async function processJob(job: Job): Promise<void> {

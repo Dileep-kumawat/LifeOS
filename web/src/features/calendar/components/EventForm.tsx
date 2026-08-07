@@ -25,6 +25,8 @@ import {
   useUpdateOccurrence
 } from "../hooks/useCalendarEvents";
 
+import { useNotificationPreferences } from "../../notifications/hooks/useNotifications";
+
 const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
 const DEFAULT_DESCRIPTOR: RecurrenceDescriptor = {
@@ -33,6 +35,14 @@ const DEFAULT_DESCRIPTOR: RecurrenceDescriptor = {
   byDay: [],
   endType: "never"
 };
+
+const REMINDER_PRESETS = [
+  { label: "None", value: null },
+  { label: "10 minutes before", value: 10 },
+  { label: "30 minutes before", value: 30 },
+  { label: "1 hour before", value: 60 },
+  { label: "1 day before", value: 1440 }
+];
 
 interface FormValues {
   title: string;
@@ -43,6 +53,7 @@ interface FormValues {
   end: Date;
   repeat: boolean;
   descriptor: RecurrenceDescriptor;
+  reminderLeadMinutes: number | null;
 }
 
 interface EventFormProps {
@@ -94,6 +105,11 @@ export function EventForm({
   occurrence,
   onSaved
 }: EventFormProps) {
+  const { data: userPreferences } = useNotificationPreferences();
+  const areCalendarRemindersDisabled =
+    userPreferences?.calendarReminders?.push === false &&
+    userPreferences?.calendarReminders?.inApp === false;
+
   const [values, setValues] = useState<FormValues>(() => ({
     ...defaultTimes(initialStart, initialEnd),
     title: "",
@@ -101,7 +117,8 @@ export function EventForm({
     location: "",
     isAllDay: false,
     repeat: false,
-    descriptor: DEFAULT_DESCRIPTOR
+    descriptor: DEFAULT_DESCRIPTOR,
+    reminderLeadMinutes: null
   }));
   const [scope, setScope] = useState<RecurrenceScope>(occurrence ? "occurrence" : "series");
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +143,8 @@ export function EventForm({
         start: new Date(event.startTime),
         end: new Date(event.endTime),
         repeat: !!event.recurrence,
-        descriptor: event.recurrence ?? DEFAULT_DESCRIPTOR
+        descriptor: event.recurrence ?? DEFAULT_DESCRIPTOR,
+        reminderLeadMinutes: event.reminderLeadMinutes ?? null
       });
     } else {
       setValues({
@@ -136,7 +154,8 @@ export function EventForm({
         location: "",
         isAllDay: false,
         repeat: false,
-        descriptor: DEFAULT_DESCRIPTOR
+        descriptor: DEFAULT_DESCRIPTOR,
+        reminderLeadMinutes: null
       });
     }
   }, [open, event?.id, occurrence?.occurrenceId]);
@@ -180,7 +199,8 @@ export function EventForm({
       location: values.location,
       startTime: values.start.toISOString(),
       endTime: values.end.toISOString(),
-      isAllDay: values.isAllDay
+      isAllDay: values.isAllDay,
+      reminderLeadMinutes: values.reminderLeadMinutes
     };
 
     try {
@@ -327,6 +347,30 @@ export function EventForm({
             placeholder="e.g. Zoom, Office, Home"
             onChange={(e) => setValues((v) => ({ ...v, location: e.target.value }))}
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="event-reminder">Reminder</Label>
+          <select
+            id="event-reminder"
+            value={values.reminderLeadMinutes ?? ""}
+            onChange={(e) => {
+              const val = e.target.value === "" ? null : Number(e.target.value);
+              setValues((v) => ({ ...v, reminderLeadMinutes: val }));
+            }}
+            className="w-full rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-[#000000] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0075de] focus-visible:border-transparent"
+          >
+            {REMINDER_PRESETS.map((preset) => (
+              <option key={preset.label} value={preset.value ?? ""}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+          {areCalendarRemindersDisabled && (
+            <p className="text-xs text-[#dd5b00] bg-[#fff8f0] p-2.5 rounded-md border border-[#fce3cf]">
+              ⚠️ Calendar reminders are disabled in your notification settings.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNotificationPreferences } from "../notifications/hooks/useNotifications";
 
 export interface HabitFormData {
   _id?: string;
@@ -8,6 +9,8 @@ export interface HabitFormData {
     daysOfWeek?: number[];
     timesPerPeriod?: number;
   };
+  reminderTime?: string | null;
+  reminderEnabled?: boolean;
 }
 
 export interface HabitFormProps {
@@ -28,6 +31,11 @@ const WEEKDAYS = [
 ];
 
 export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = false }: HabitFormProps) {
+  const { data: userPreferences } = useNotificationPreferences();
+  const areHabitRemindersDisabled =
+    userPreferences?.habitReminders?.push === false &&
+    userPreferences?.habitReminders?.inApp === false;
+
   const [title, setTitle] = useState(initialValues?.title || "");
   const [freqType, setFreqType] = useState<"daily" | "weekly" | "custom">(
     initialValues?.frequency?.type || "daily"
@@ -37,6 +45,12 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
   );
   const [timesPerPeriod, setTimesPerPeriod] = useState<number>(
     initialValues?.frequency?.timesPerPeriod || 3
+  );
+  const [reminderEnabled, setReminderEnabled] = useState<boolean>(
+    initialValues?.reminderEnabled ?? Boolean(initialValues?.reminderTime)
+  );
+  const [reminderTime, setReminderTime] = useState<string>(
+    initialValues?.reminderTime || "08:00"
   );
 
   const toggleDay = (day: number) => {
@@ -55,7 +69,9 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
         type: freqType,
         daysOfWeek: freqType === "weekly" ? daysOfWeek : [],
         timesPerPeriod: freqType === "custom" ? timesPerPeriod : 1
-      }
+      },
+      reminderEnabled,
+      reminderTime: reminderEnabled ? reminderTime : null
     });
   };
 
@@ -180,6 +196,40 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
               <span className="text-xs text-[#615d59]">times per week (any days)</span>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Daily Reminder Section */}
+      <div className="flex flex-col gap-3 rounded-lg bg-[#f6f5f4] p-3 border border-[#e6e6e6]">
+        <label className="flex items-center gap-2 text-xs font-semibold text-[#31302e]">
+          <input
+            type="checkbox"
+            checked={reminderEnabled}
+            onChange={(e) => setReminderEnabled(e.target.checked)}
+            className="size-4 accent-[#0075de]"
+          />
+          Enable Daily Reminder
+        </label>
+
+        {reminderEnabled && (
+          <div className="flex items-center gap-3 pt-1">
+            <label htmlFor="habit-reminder-time" className="text-xs font-medium text-[#615d59]">
+              Reminder Time:
+            </label>
+            <input
+              id="habit-reminder-time"
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="rounded-lg border border-[#e6e6e6] bg-white px-3 py-1.5 text-sm font-semibold text-[#000000] focus:border-[#0075de] focus:outline-none"
+            />
+          </div>
+        )}
+
+        {areHabitRemindersDisabled && (
+          <p className="text-xs text-[#dd5b00] bg-[#fff8f0] p-2.5 rounded-md border border-[#fce3cf] mt-1">
+            ⚠️ Habit reminders are disabled in your notification settings.
+          </p>
         )}
       </div>
 

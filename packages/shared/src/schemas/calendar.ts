@@ -71,6 +71,7 @@ export const calendarEventDetailSchema = z.object({
   recurrenceRule: z.string().nullable(),
   recurrenceEndDate: z.string().nullable(),
   recurrence: recurrenceDescriptorSchema.nullable(),
+  reminderLeadMinutes: z.number().int().min(0).nullable().optional(),
   exceptions: z.array(calendarExceptionSchema).optional()
 });
 
@@ -103,7 +104,8 @@ export const createEventSchema = z
     timezone: z.string().min(1, "timezone is required"),
     isAllDay: z.boolean().optional().default(false),
     recurrenceRule: z.string().max(2000).nullable().optional().default(null),
-    recurrenceEndDate: isoDateTime().nullable().optional().default(null)
+    recurrenceEndDate: isoDateTime().nullable().optional().default(null),
+    reminderLeadMinutes: z.number().int().min(0).nullable().optional().default(null)
   })
   .superRefine(refineStartBeforeEnd);
 
@@ -120,6 +122,7 @@ export const updateEventSchema = z
     isAllDay: z.boolean().optional(),
     recurrenceRule: z.string().max(2000).nullable().optional(),
     recurrenceEndDate: isoDateTime().nullable().optional(),
+    reminderLeadMinutes: z.number().int().min(0).nullable().optional(),
     scope: z.enum(["series", "occurrence"]).optional().default("series")
   })
   .superRefine(refineStartBeforeEnd);

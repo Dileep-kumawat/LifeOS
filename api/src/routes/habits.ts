@@ -97,7 +97,7 @@ async function updateHabitStats(habit: any, userId: any, refDateStr?: string) {
 habitsRouter.post("/habits", async (req: Request, res: Response) => {
   try {
     const userId = req.user!._id;
-    const { title, frequency } = req.body;
+    const { title, frequency, reminderTime, reminderEnabled } = req.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return res.status(400).json({ error: "Validation Error", message: "Title is required." });
@@ -115,6 +115,8 @@ habitsRouter.post("/habits", async (req: Request, res: Response) => {
         daysOfWeek,
         timesPerPeriod
       },
+      reminderTime: reminderTime ?? null,
+      reminderEnabled: reminderEnabled !== undefined ? Boolean(reminderEnabled) : Boolean(reminderTime),
       currentStreak: 0,
       longestStreak: 0,
       completionRate: 0,
@@ -240,13 +242,15 @@ habitsRouter.patch("/habits/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Not Found", message: "Habit not found." });
     }
 
-    const { title, frequency } = req.body;
+    const { title, frequency, reminderTime, reminderEnabled } = req.body;
     if (title !== undefined) habit.title = title.trim();
     if (frequency !== undefined) {
       if (frequency.type) habit.frequency.type = frequency.type;
       if (Array.isArray(frequency.daysOfWeek)) habit.frequency.daysOfWeek = frequency.daysOfWeek;
       if (typeof frequency.timesPerPeriod === "number") habit.frequency.timesPerPeriod = frequency.timesPerPeriod;
     }
+    if (reminderTime !== undefined) habit.reminderTime = reminderTime;
+    if (reminderEnabled !== undefined) habit.reminderEnabled = Boolean(reminderEnabled);
 
     await habit.save();
     await updateHabitStats(habit, userId);
@@ -539,6 +543,8 @@ habitsRouter.get("/habits/:id/check-ins", async (req: Request, res: Response) =>
  *         longestStreak: { type: number }
  *         completionRate: { type: number, minimum: 0, maximum: 1 }
  *         lastCheckInDate: { type: string, nullable: true }
+ *         reminderTime: { type: string, nullable: true, example: "08:00" }
+ *         reminderEnabled: { type: boolean, example: true }
  *         createdAt: { type: string, format: date-time }
  *         updatedAt: { type: string, format: date-time }
  *     HabitCheckIn:
