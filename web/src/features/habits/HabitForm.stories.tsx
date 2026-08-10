@@ -32,3 +32,18 @@ export const EditWeeklyHabit: Story = {
     onCancel: () => {}
   }
 };
+
+export const WithDailyReminder: Story = {
+  name: "With Daily Reminder",
+  args: {
+    initialValues: {
+      _id: "habit-2",
+      title: "Morning Meditation",
+      frequency: { type: "daily" },
+      reminderEnabled: true,
+      reminderTime: "08:00"
+    },
+    onSubmit: () => {},
+    onCancel: () => {}
+  }
+};

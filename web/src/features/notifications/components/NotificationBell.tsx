@@ -38,7 +38,7 @@ export function NotificationBell() {
               {badgeLabel}
             </span>
           )}
-          <span className="sr-only" role="status">
+          <span className="sr-only" role="status" aria-live="polite">
             {unread > 0 ? `${unread} unread notifications` : ""}
           </span>
         </Button>

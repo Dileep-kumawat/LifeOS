@@ -93,3 +93,17 @@ export const EditRecurringSeries: Story = {
     event: recurringSeries()
   }
 };
+
+export const WithReminder: Story = {
+  name: "With Reminder Preset",
+  args: {
+    initialStart: START,
+    initialEnd: END,
+    event: {
+      ...nonRecurring(),
+      id: "evt-reminder",
+      title: "Team Standup",
+      reminderLeadMinutes: 30
+    }
+  }
+};

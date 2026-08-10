@@ -65,6 +65,13 @@ async function updateHabitStats(habit: any, userId: any, refDateStr?: string) {
  *                       type: number
  *                   timesPerPeriod:
  *                     type: number
+ *               reminderTime:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "08:00"
+ *               reminderEnabled:
+ *                 type: boolean
+ *                 example: true
  *     responses:
  *       201:
  *         description: Habit created successfully
@@ -216,6 +223,22 @@ habitsRouter.get("/habits/:id", async (req: Request, res: Response) => {
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               frequency:
+ *                 type: object
+ *                 properties:
+ *                   type: { type: string, enum: [daily, weekly, custom] }
+ *                   daysOfWeek: { type: array, items: { type: number } }
+ *                   timesPerPeriod: { type: number }
+ *               reminderTime: { type: string, nullable: true, example: "08:00" }
+ *               reminderEnabled: { type: boolean, example: true }
  *     responses:
  *       200:
  *         description: Updated habit

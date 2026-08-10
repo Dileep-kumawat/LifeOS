@@ -154,6 +154,10 @@ function occurrenceFor(values: {
  *                 format: date-time
  *                 nullable: true
  *                 example: 2026-12-31T00:00:00.000Z
+ *               reminderLeadMinutes:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 15
  *     responses:
  *       201:
  *         description: Event created. Returns the stored source document.
@@ -466,6 +470,7 @@ calendarRouter.get("/calendar/events/:id", requireAuth, async (req: Request, res
  *               isAllDay: { type: boolean }
  *               recurrenceRule: { type: string, nullable: true }
  *               recurrenceEndDate: { type: string, format: date-time, nullable: true }
+ *               reminderLeadMinutes: { type: integer, nullable: true, example: 15 }
  *               scope: { type: string, enum: [series, occurrence], default: series }
  *     responses:
  *       200:

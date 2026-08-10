@@ -106,6 +106,8 @@ function serializePreferences(
  *                       readAt: null
  *                       createdAt: "2026-08-06T07:59:00.000Z"
  *                   pagination: { page: 1, limit: 20, total: 1, pages: 1 }
+ *       400:
+ *         description: Invalid query parameters
  *       401:
  *         description: Authentication required
  */
@@ -199,6 +201,8 @@ notificationsRouter.get("/notifications/unread-count", async (req: Request, res:
  *             examples:
  *               done:
  *                 value: { updatedCount: 3 }
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Authentication required
  */
@@ -235,6 +239,8 @@ notificationsRouter.patch(
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Notification"
+ *       400:
+ *         description: Invalid notification ID format
  *       401:
  *         description: Authentication required
  *       404:
@@ -338,6 +344,8 @@ notificationsRouter.get("/notifications/preferences", async (req: Request, res: 
  *               properties:
  *                 preferences:
  *                   $ref: "#/components/schemas/NotificationPreferences"
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Authentication required
  */
@@ -383,6 +391,14 @@ notificationsRouter.patch(
  *                   auth: { type: string }
  *               userAgent:
  *                 type: string
+ *           examples:
+ *             subscription:
+ *               value:
+ *                 endpoint: "https://fcm.googleapis.com/fcm/send/f5a9b7c8-0123-4567-89ab-cdef01234567"
+ *                 keys:
+ *                   p256dh: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-Skv69yViEuiBIa-Ib9"
+ *                   auth: "tHUN86N_xIkv69yViEuiBI"
+ *                 userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
  *     responses:
  *       201:
  *         description: Subscription stored
@@ -402,6 +418,8 @@ notificationsRouter.patch(
  *                   subscription:
  *                     id: 662c9f1e9f0b2a001c3d4e90
  *                     endpoint: https://fcm.googleapis.com/.../abc123
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Authentication required
  */
@@ -460,6 +478,10 @@ notificationsRouter.post(
  *               endpoint:
  *                 type: string
  *                 format: uri
+ *           examples:
+ *             subscription:
+ *               value:
+ *                 endpoint: "https://fcm.googleapis.com/fcm/send/f5a9b7c8-0123-4567-89ab-cdef01234567"
  *     responses:
  *       200:
  *         description: Subscription removed
@@ -472,6 +494,8 @@ notificationsRouter.post(
  *             examples:
  *               removed:
  *                 value: { deleted: 1 }
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Authentication required
  */
