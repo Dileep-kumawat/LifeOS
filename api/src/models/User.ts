@@ -34,6 +34,12 @@ const userSchema = new Schema(
       required: true,
       index: true
     },
+    subscriptionTier: {
+      type: String,
+      enum: ["free", "pro"],
+      default: "free",
+      required: true
+    },
     deletedAt: { type: Date, default: null },
 
     // Password reset fields

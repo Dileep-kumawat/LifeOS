@@ -30,7 +30,14 @@ const envSchema = z.object({
   // Comma-separated IP allowlist that can view /api/v1/docs. In non-local
   // environments (test/production) Swagger is gated behind this list; when
   // empty it is disabled entirely. Local development stays open by default.
-  SWAGGER_ALLOWED_IPS: z.string().optional()
+  SWAGGER_ALLOWED_IPS: z.string().optional(),
+
+  // Phase 3 AI Provider Config & API Keys
+  AI_PROVIDER_ORDER: z.string().default("mistral,groq,gemini"),
+  MISTRAL_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  GOOGLE_API_KEY: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

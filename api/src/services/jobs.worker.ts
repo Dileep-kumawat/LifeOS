@@ -145,10 +145,33 @@ async function handleDeliverNotification(job: Job<DeliverNotificationJobData>): 
   }
 }
 
+interface AiRetryJobData {
+  userId: string;
+  requestType?: string;
+  messages: any[];
+  options: any;
+}
+
+async function handleAiRetry(job: Job<AiRetryJobData>): Promise<void> {
+  const { messages, options } = job.data;
+  // Dynamically import callAI to prevent circular dependencies
+  const { callAI } = await import("./ai/callAI.js");
+  const res = await callAI(messages, {
+    ...options,
+    isAsyncContext: false
+  });
+
+  if (!res.success) {
+    throw new Error(`ai_retry_job failed: ${res.error ?? "Unknown error"}`);
+  }
+  logger.info({ jobId: job.id, providerServed: res.providerServed }, "ai_retry_job completed successfully");
+}
+
 /** Dispatch table: job name -> handler. */
 const HANDLERS: Record<string, (job: Job) => Promise<void>> = {
   [DELIVER_NOTIFICATION_TYPE]: handleDeliverNotification,
-  calendar_reminder: handleCalendarReminder
+  calendar_reminder: handleCalendarReminder,
+  ai_retry_job: handleAiRetry
 };
 
 async function processJob(job: Job): Promise<void> {

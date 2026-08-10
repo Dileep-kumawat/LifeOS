@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@lifeos/shared": "*",
+    "@lifeos/shared": "file:../packages/shared",
     "@types/web-push": "^3.6.4",
     "bcryptjs": "^3.0.3",
     "bullmq": "^6.0.6",
@@ -29,6 +29,10 @@
     "rrule": "^2.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "@langchain/core": "*",
+    "@langchain/google-genai": "*",
+    "@langchain/groq": "*",
+    "@langchain/mistralai": "*",
     "web-push": "^3.6.7",
     "zod": "^3.23.8"
   },
