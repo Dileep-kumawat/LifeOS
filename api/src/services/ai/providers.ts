@@ -35,8 +35,8 @@ export interface ProviderExecutionResult {
 
 export const FREE_TIER_LIMITS_RPM: Record<ProviderName, number> = {
   mistral: 30, // ~30 requests per minute ceiling
-  groq: 30,    // ~30 requests per minute ceiling
-  gemini: 15   // ~15 requests per minute ceiling
+  groq: 30, // ~30 requests per minute ceiling
+  gemini: 15 // ~15 requests per minute ceiling
 };
 
 /**
@@ -56,10 +56,7 @@ export function normalizeMessages(messages: (MessageInput | BaseMessage)[]): Bas
 /**
  * Instantiates the appropriate LangChain Chat model for the given provider.
  */
-export function createProviderModel(
-  provider: ProviderName,
-  opts: ProviderCallOptions = {}
-) {
+export function createProviderModel(provider: ProviderName, opts: ProviderCallOptions = {}) {
   const temperature = opts.temperature ?? 0.7;
   const maxTokens = opts.maxTokens;
 
@@ -83,7 +80,12 @@ export function createProviderModel(
       });
     }
     case "gemini": {
-      const apiKey = opts.apiKeyOverride ?? env.GEMINI_API_KEY ?? env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+      const apiKey =
+        opts.apiKeyOverride ??
+        env.GEMINI_API_KEY ??
+        env.GOOGLE_API_KEY ??
+        process.env.GEMINI_API_KEY ??
+        process.env.GOOGLE_API_KEY;
       return new ChatGoogleGenerativeAI({
         apiKey: apiKey ?? "placeholder_gemini_key",
         model: opts.modelName ?? "gemini-1.5-flash",
@@ -114,10 +116,20 @@ export function classifyError(err: unknown): {
   if (lower.includes("429") || lower.includes("rate limit") || lower.includes("quota")) {
     return { errorType: "rate_limit", message };
   }
-  if (lower.includes("401") || lower.includes("403") || lower.includes("unauthorized") || lower.includes("invalid api key")) {
+  if (
+    lower.includes("401") ||
+    lower.includes("403") ||
+    lower.includes("unauthorized") ||
+    lower.includes("invalid api key")
+  ) {
     return { errorType: "auth_error", message };
   }
-  if (lower.includes("500") || lower.includes("502") || lower.includes("503") || lower.includes("api error")) {
+  if (
+    lower.includes("500") ||
+    lower.includes("502") ||
+    lower.includes("503") ||
+    lower.includes("api error")
+  ) {
     return { errorType: "api_error", message };
   }
 
@@ -154,11 +166,12 @@ export async function executeProviderWithRetry(
       const durationMs = Date.now() - startTime;
 
       // Extract text content
-      const content = typeof response.content === "string" 
-        ? response.content 
-        : Array.isArray(response.content)
-          ? response.content.map(c => (typeof c === "string" ? c : JSON.stringify(c))).join("")
-          : String(response.content ?? "");
+      const content =
+        typeof response.content === "string"
+          ? response.content
+          : Array.isArray(response.content)
+            ? response.content.map((c) => (typeof c === "string" ? c : JSON.stringify(c))).join("")
+            : String(response.content ?? "");
 
       // Extract tokens if available in response.usage_metadata
       const usage = (response as any).usage_metadata;

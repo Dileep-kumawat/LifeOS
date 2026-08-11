@@ -1,7 +1,13 @@
 import { BellRing, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "../../../components/ui/Card";
 import { usePushPermission, type UsePushPermission } from "../hooks/usePushPermission";
 
 export interface PushOptInCardProps {
@@ -100,7 +106,11 @@ export function PushOptInCard({ permission: injectedPermission }: PushOptInCardP
       <CardContent className="flex flex-col items-start gap-3">
         <Button onClick={() => void request()} disabled={isUpdating}>
           <BellRing className="size-4" data-icon="inline-start" />
-          {isUpdating ? "Enabling…" : alreadyGranted ? "Register this device" : "Allow notifications"}
+          {isUpdating
+            ? "Enabling…"
+            : alreadyGranted
+              ? "Register this device"
+              : "Allow notifications"}
         </Button>
         {error && (
           <p role="alert" className="text-xs text-red-600">

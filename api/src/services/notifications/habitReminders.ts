@@ -17,8 +17,7 @@ export async function processHabitReminders(
   targetDateStr?: string
 ): Promise<{ scheduledUsers: number; totalHabitsReminded: number }> {
   const now = new Date();
-  const hourStr =
-    targetHourStr ?? `${String(now.getHours()).padStart(2, "0")}:00`;
+  const hourStr = targetHourStr ?? `${String(now.getHours()).padStart(2, "0")}:00`;
   const dateStr = targetDateStr ?? formatDateString(now);
 
   // Find habits enabled for this reminder time
@@ -49,7 +48,10 @@ export async function processHabitReminders(
 
     // Preference check: check global habitReminders preference before scheduling
     if (!isPreferenceEnabled(user.notificationPreferences ?? undefined, "habitReminders", "push")) {
-      logger.info({ userId, hourStr }, "skipping habit reminders — user disabled habitReminders preference");
+      logger.info(
+        { userId, hourStr },
+        "skipping habit reminders — user disabled habitReminders preference"
+      );
       continue;
     }
 

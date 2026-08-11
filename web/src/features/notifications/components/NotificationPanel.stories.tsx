@@ -141,13 +141,17 @@ export const MarkAllReadClearsBadge: Story = {
   decorators: [panelWrap({ unread: 2, list: [UNREAD, READ] })],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const markAllSpy = spyOn(notificationsApi, "markAllRead").mockResolvedValue({ updatedCount: 2 });
+    const markAllSpy = spyOn(notificationsApi, "markAllRead").mockResolvedValue({
+      updatedCount: 2
+    });
 
     try {
       const bell = await canvas.findByRole("button", { name: /2 unread notifications/i });
       await userEvent.click(bell);
 
-      const markAll = await canvas.findByRole("button", { name: /mark all notifications as read/i });
+      const markAll = await canvas.findByRole("button", {
+        name: /mark all notifications as read/i
+      });
       await userEvent.click(markAll);
 
       await waitFor(() => {

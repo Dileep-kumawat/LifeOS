@@ -20,7 +20,12 @@ export interface GoalFormProps {
   isSubmitting?: boolean;
 }
 
-export function GoalForm({ initialValues, onSubmit, onCancel, isSubmitting = false }: GoalFormProps) {
+export function GoalForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  isSubmitting = false
+}: GoalFormProps) {
   const [title, setTitle] = useState(initialValues?.title || "");
   const [description, setDescription] = useState(initialValues?.description || "");
   const [targetDate, setTargetDate] = useState(
@@ -29,7 +34,9 @@ export function GoalForm({ initialValues, onSubmit, onCancel, isSubmitting = fal
   const [status, setStatus] = useState<"active" | "completed" | "abandoned">(
     initialValues?.status || "active"
   );
-  const [progressPercent, setProgressPercent] = useState<number>(initialValues?.progressPercent || 0);
+  const [progressPercent, setProgressPercent] = useState<number>(
+    initialValues?.progressPercent || 0
+  );
 
   const [milestones, setMilestones] = useState<
     Array<{ _id?: string; title: string; completed: boolean; order: number }>
@@ -87,7 +94,10 @@ export function GoalForm({ initialValues, onSubmit, onCancel, isSubmitting = fal
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-md max-w-xl w-full">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-6 rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-md max-w-xl w-full"
+    >
       <div className="flex items-center justify-between border-b border-[#e6e6e6] pb-4">
         <h2 className="text-xl font-bold text-[#000000]">
           {initialValues?._id ? "Edit Goal" : "Create New Goal"}
@@ -187,7 +197,8 @@ export function GoalForm({ initialValues, onSubmit, onCancel, isSubmitting = fal
         <div className="rounded-lg bg-blue-50/50 p-3 border border-blue-100 text-xs text-blue-800 flex items-center gap-2">
           <ListChecks className="size-4 text-[#0075de] shrink-0" />
           <span>
-            Progress is automatically computed ({progressPercent}%) based on milestone completion below.
+            Progress is automatically computed ({progressPercent}%) based on milestone completion
+            below.
           </span>
         </div>
       )}

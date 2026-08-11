@@ -31,7 +31,7 @@ export interface EnqueueOptions {
    * being double-enqueued without every caller re-implementing a uniqueness
    * check. Pretty-print batch content here, e.g.
    * `habit_reminder__662c9f1e__2026-08-06T08-00`. Note BullMQ jobIds cannot
-    * contain `:`, so callers must keep dedupe keys colon-free.
+   * contain `:`, so callers must keep dedupe keys colon-free.
    */
   dedupeKey?: string;
 }

@@ -16,6 +16,7 @@ View, list, and send Sentry events
 View details of one or more events
 
 **Flags:**
+
 - `-w, --web - Open in browser`
 - `--spans <value> - Span tree depth limit (number, "all" for unlimited, "no" to disable) - (default: "3")`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
@@ -34,6 +35,7 @@ sentry event view abc123def456abc123def456abc12345 -w
 List events for an issue
 
 **Flags:**
+
 - `-n, --limit <value> - Number of events (1-1000) - (default: "25")`
 - `-q, --query <value> - Search query (Sentry search syntax)`
 - `--full - Include full event body (stacktraces)`
@@ -43,23 +45,23 @@ List events for an issue
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Internal event ID |
-| `event.type` | string | Event type (error, default, transaction) |
-| `groupID` | string \| null | Group (issue) ID |
-| `eventID` | string | UUID-format event ID |
-| `projectID` | string | Project ID |
-| `message` | string | Event message |
-| `title` | string | Event title |
-| `location` | string \| null | Source location (file:line) |
-| `culprit` | string \| null | Culprit function/module |
-| `user` | object \| null | User context |
-| `tags` | array | Event tags |
-| `platform` | string \| null | Platform (python, javascript, etc.) |
-| `dateCreated` | string | ISO 8601 creation timestamp |
-| `crashFile` | string \| null | Crash file URL |
-| `metadata` | object \| null | Event metadata |
+| Field         | Type           | Description                              |
+| ------------- | -------------- | ---------------------------------------- |
+| `id`          | string         | Internal event ID                        |
+| `event.type`  | string         | Event type (error, default, transaction) |
+| `groupID`     | string \| null | Group (issue) ID                         |
+| `eventID`     | string         | UUID-format event ID                     |
+| `projectID`   | string         | Project ID                               |
+| `message`     | string         | Event message                            |
+| `title`       | string         | Event title                              |
+| `location`    | string \| null | Source location (file:line)              |
+| `culprit`     | string \| null | Culprit function/module                  |
+| `user`        | object \| null | User context                             |
+| `tags`        | array          | Event tags                               |
+| `platform`    | string \| null | Platform (python, javascript, etc.)      |
+| `dateCreated` | string         | ISO 8601 creation timestamp              |
+| `crashFile`   | string \| null | Crash file URL                           |
+| `metadata`    | object \| null | Event metadata                           |
 
 **Examples:**
 
@@ -92,6 +94,7 @@ sentry event list PROJ-ABC --json
 Send a Sentry event
 
 **Flags:**
+
 - `--dsn <value> - DSN to send events to (overrides SENTRY_DSN env var)`
 - `-m, --message <value>... - Event message (repeat for multi-line)`
 - `-a, --message-arg <value>... - Arguments for message template (repeat for multiple)`

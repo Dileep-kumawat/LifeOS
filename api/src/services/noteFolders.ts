@@ -34,7 +34,10 @@ export function computeFolderDepth(folders: FolderLike[], folderId: string): num
  * Would placing a new child folder under `parentFolderId` exceed the nesting
  * cap? Root-level placement (no parent) is always allowed.
  */
-export function wouldExceedMaxDepth(folders: FolderLike[], parentFolderId: string | null | undefined): boolean {
+export function wouldExceedMaxDepth(
+  folders: FolderLike[],
+  parentFolderId: string | null | undefined
+): boolean {
   if (!parentFolderId) return false;
   return computeFolderDepth(folders, parentFolderId) + 1 > MAX_FOLDER_DEPTH;
 }
@@ -62,7 +65,11 @@ export function folderChain(folders: FolderLike[], folderId: string): string[] {
 /**
  * True when `fromFolderId` is `targetFolderId` or a descendant of it.
  */
-export function isFolderInChain(folders: FolderLike[], fromFolderId: string, targetFolderId: string): boolean {
+export function isFolderInChain(
+  folders: FolderLike[],
+  fromFolderId: string,
+  targetFolderId: string
+): boolean {
   return folderChain(folders, fromFolderId).includes(targetFolderId);
 }
 
@@ -83,9 +90,8 @@ export async function reassignNotesToRoot(
   folderId: string,
   userId: string
 ): Promise<{ updatedCount: number }> {
-  const result = (await notes.updateMany(
-    { folderId, userId },
-    { $set: { folderId: null } }
-  )) as { modifiedCount?: number };
+  const result = (await notes.updateMany({ folderId, userId }, { $set: { folderId: null } })) as {
+    modifiedCount?: number;
+  };
   return { updatedCount: result?.modifiedCount ?? 0 };
 }

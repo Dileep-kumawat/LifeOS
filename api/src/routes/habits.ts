@@ -4,6 +4,7 @@ import { Habit } from "../models/Habit.js";
 import { HabitCheckIn } from "../models/HabitCheckIn.js";
 import { calculateHabitStats, formatDateString } from "../services/streak.js";
 import mongoose from "mongoose";
+import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
 
 export const habitsRouter = Router();
 
@@ -13,7 +14,9 @@ habitsRouter.use(requireAuth);
  * Helper to recalculate and save habit stats upon check-in updates.
  */
 async function updateHabitStats(habit: any, userId: any, refDateStr?: string) {
-  const allCheckIns = await HabitCheckIn.find({ habitId: habit._id, userId }).select("date completed");
+  const allCheckIns = await HabitCheckIn.find({ habitId: habit._id, userId }).select(
+    "date completed"
+  );
   const checkIns = allCheckIns.map((c) => ({
     date: c.date,
     completed: c.completed
@@ -112,7 +115,8 @@ habitsRouter.post("/habits", async (req: Request, res: Response) => {
 
     const freqType = frequency?.type || "daily";
     const daysOfWeek = Array.isArray(frequency?.daysOfWeek) ? frequency.daysOfWeek : [];
-    const timesPerPeriod = typeof frequency?.timesPerPeriod === "number" ? frequency.timesPerPeriod : 1;
+    const timesPerPeriod =
+      typeof frequency?.timesPerPeriod === "number" ? frequency.timesPerPeriod : 1;
 
     const habit = await Habit.create({
       userId,
@@ -123,12 +127,15 @@ habitsRouter.post("/habits", async (req: Request, res: Response) => {
         timesPerPeriod
       },
       reminderTime: reminderTime ?? null,
-      reminderEnabled: reminderEnabled !== undefined ? Boolean(reminderEnabled) : Boolean(reminderTime),
+      reminderEnabled:
+        reminderEnabled !== undefined ? Boolean(reminderEnabled) : Boolean(reminderTime),
       currentStreak: 0,
       longestStreak: 0,
       completionRate: 0,
       lastCheckInDate: null
     });
+
+    await enqueueEmbeddingJob("habit", habit._id, userId);
 
     return res.status(201).json(habit);
   } catch (err: any) {
@@ -270,13 +277,15 @@ habitsRouter.patch("/habits/:id", async (req: Request, res: Response) => {
     if (frequency !== undefined) {
       if (frequency.type) habit.frequency.type = frequency.type;
       if (Array.isArray(frequency.daysOfWeek)) habit.frequency.daysOfWeek = frequency.daysOfWeek;
-      if (typeof frequency.timesPerPeriod === "number") habit.frequency.timesPerPeriod = frequency.timesPerPeriod;
+      if (typeof frequency.timesPerPeriod === "number")
+        habit.frequency.timesPerPeriod = frequency.timesPerPeriod;
     }
     if (reminderTime !== undefined) habit.reminderTime = reminderTime;
     if (reminderEnabled !== undefined) habit.reminderEnabled = Boolean(reminderEnabled);
 
     await habit.save();
     await updateHabitStats(habit, userId);
+    await enqueueEmbeddingJob("habit", habit._id, userId);
 
     return res.json(habit);
   } catch (err: any) {
@@ -328,6 +337,8 @@ habitsRouter.delete("/habits/:id", async (req: Request, res: Response) => {
     }
 
     await HabitCheckIn.deleteMany({ habitId: id, userId });
+    await deleteEmbedding("habit", id);
+
     return res.json({ message: "Habit and check-in history deleted successfully." });
   } catch (err: any) {
     return res.status(500).json({ error: "Internal Server Error", message: err.message });

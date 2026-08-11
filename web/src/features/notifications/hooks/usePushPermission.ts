@@ -11,12 +11,7 @@ import {
   storePushEndpoint
 } from "../lib/push";
 
-export type PushPermissionStatus =
-  | "unsupported"
-  | "default"
-  | "granted"
-  | "subscribed"
-  | "denied";
+export type PushPermissionStatus = "unsupported" | "default" | "granted" | "subscribed" | "denied";
 
 export interface UsePushPermission {
   status: PushPermissionStatus;

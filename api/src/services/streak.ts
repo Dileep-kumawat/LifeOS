@@ -107,8 +107,10 @@ export function calculateHabitStats(
     // Weekly or Custom habit streak computation (measured in period units / weeks)
     const expectedQuota =
       frequency.type === "weekly"
-        ? (frequency.daysOfWeek && frequency.daysOfWeek.length > 0 ? frequency.daysOfWeek.length : 1)
-        : (frequency.timesPerPeriod || 1);
+        ? frequency.daysOfWeek && frequency.daysOfWeek.length > 0
+          ? frequency.daysOfWeek.length
+          : 1
+        : frequency.timesPerPeriod || 1;
 
     // Group completed check-ins by week start date (Monday)
     const weekCompletedCounts = new Map<string, number>();
@@ -162,8 +164,10 @@ export function calculateHabitStats(
   } else {
     const weeklyQuota =
       frequency.type === "weekly"
-        ? (frequency.daysOfWeek && frequency.daysOfWeek.length > 0 ? frequency.daysOfWeek.length : 1)
-        : (frequency.timesPerPeriod || 1);
+        ? frequency.daysOfWeek && frequency.daysOfWeek.length > 0
+          ? frequency.daysOfWeek.length
+          : 1
+        : frequency.timesPerPeriod || 1;
     expectedCountInWindow = Math.ceil((30 / 7) * weeklyQuota);
   }
 

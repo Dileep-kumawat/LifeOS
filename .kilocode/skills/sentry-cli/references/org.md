@@ -16,6 +16,7 @@ Work with Sentry organizations
 List organizations
 
 **Flags:**
+
 - `-n, --limit <value> - Maximum number of organizations to list - (default: "25")`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 
@@ -24,6 +25,7 @@ List organizations
 View details of an organization
 
 **Flags:**
+
 - `-w, --web - Open in browser`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 

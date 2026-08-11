@@ -23,7 +23,9 @@ export interface RateLimitResult {
  */
 function getSecondsUntilMidnightUTC(): number {
   const now = new Date();
-  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+  const midnight = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+  );
   return Math.max(1, Math.floor((midnight.getTime() - now.getTime()) / 1000));
 }
 
@@ -32,7 +34,9 @@ function getSecondsUntilMidnightUTC(): number {
  */
 function getResetDateUTC(): Date {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+  );
 }
 
 /**
@@ -69,7 +73,10 @@ export async function checkAiRateLimit(
     const allowed = currentCount <= limit;
 
     if (!allowed) {
-      logger.warn({ userId, tier, currentCount, limit, resetAt }, "AI rate limit exceeded for user");
+      logger.warn(
+        { userId, tier, currentCount, limit, resetAt },
+        "AI rate limit exceeded for user"
+      );
     }
 
     return {

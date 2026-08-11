@@ -20,6 +20,7 @@ Inspect a debug information file
 Locate debug files for given debug identifiers
 
 **Flags:**
+
 - `-t, --type <value>... - Only consider debug files of the given type (repeatable). Default: all`
 - `--no-well-known - Do not look for debug files in well-known locations`
 - `--no-cwd - Do not look for debug files in the current directory`
@@ -30,6 +31,7 @@ Locate debug files for given debug identifiers
 Upload debug information files to Sentry
 
 **Flags:**
+
 - `-t, --type <value>... - Only upload files of this type (repeatable): dsym, elf, pe, pdb, portablepdb, wasm, breakpad, sourcebundle, jvm`
 - `--id <value>... - Only upload the object with this debug id (repeatable)`
 - `--require-all - Fail if any --id value was not found among scanned files`
@@ -53,6 +55,7 @@ List the source files a debug file references
 Bundle a debug file's source files for source context
 
 **Flags:**
+
 - `-o, --output <value> - Output path for the source bundle ZIP (default: <path>.src.zip)`
 
 ### `sentry debug-files bundle-jvm <path>`
@@ -60,6 +63,7 @@ Bundle a debug file's source files for source context
 Create a JVM source bundle for source context
 
 **Flags:**
+
 - `-o, --output <value> - Output directory for the bundle ZIP`
 - `-d, --debug-id <value> - Debug ID (UUID) to stamp on the bundle`
 - `-e, --exclude <value>... - Additional directory names to exclude (repeatable)`

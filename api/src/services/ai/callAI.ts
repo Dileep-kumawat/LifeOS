@@ -3,15 +3,15 @@ import { env } from "../../config/env.js";
 import { logger } from "../../logger.js";
 import { User } from "../../models/User.js";
 import { AiRequestLog, type FallbackAttempt } from "../../models/AiRequestLog.js";
-import { checkAiRateLimit, type RateLimitResult } from "./rateLimiter.ts";
+import { checkAiRateLimit } from "./rateLimiter.js";
 import {
   executeProviderWithRetry,
   checkFreeTierCeilings,
   normalizeMessages,
   type MessageInput,
   type ProviderName
-} from "./providers.ts";
-import { enqueueJob } from "../queue.ts";
+} from "./providers.js";
+import { enqueueJob } from "../queue.js";
 
 export interface CallAIOptions {
   userId: string;
@@ -220,7 +220,10 @@ export async function callAI(
         }
       });
       queuedForRetry = enqueueRes.queued;
-      logger.info({ userId, requestType, jobId: enqueueRes.jobId }, "Async AI call enqueued for retry");
+      logger.info(
+        { userId, requestType, jobId: enqueueRes.jobId },
+        "Async AI call enqueued for retry"
+      );
     } catch (enqueueErr) {
       logger.error({ enqueueErr, userId }, "Failed to enqueue async AI retry job");
     }

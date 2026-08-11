@@ -113,7 +113,8 @@ export function NotesListPage() {
   }
 
   function handleDeleteFolder(folder: NoteFolder) {
-    if (!confirm(`Delete folder "${folder.name}"? Its notes move to root and are NOT deleted.`)) return;
+    if (!confirm(`Delete folder "${folder.name}"? Its notes move to root and are NOT deleted.`))
+      return;
     void notesApi
       .deleteFolder(folder.id)
       .then(() => {
@@ -139,8 +140,8 @@ export function NotesListPage() {
             {isSearching
               ? `Showing results for “${search}”`
               : activeFolder
-              ? `In folder “${activeFolder.name}”`
-              : "All your notes, organized in folders."}
+                ? `In folder “${activeFolder.name}”`
+                : "All your notes, organized in folders."}
           </p>
         </div>
         <Button onClick={handleCreateNote}>
@@ -153,7 +154,9 @@ export function NotesListPage() {
         {/* Sidebar */}
         <aside className="w-full shrink-0 lg:w-60">
           <div className="flex items-center justify-between px-1 pb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#615d59]">Folders</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#615d59]">
+              Folders
+            </span>
             <button
               type="button"
               aria-label="New folder"
@@ -218,7 +221,14 @@ export function NotesListPage() {
                 Showing results for <strong>“{search}”</strong>
                 {selectedFolder ? ` in “${activeFolder?.name}”` : ""} — {total} found.
               </span>
-              <Button variant="ghost" size="sm" onClick={() => { setSearchInput(""); setSearch(""); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                }}
+              >
                 Clear
               </Button>
             </div>
@@ -233,7 +243,11 @@ export function NotesListPage() {
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] p-12 text-center">
               <StickyNote className="size-12 text-[#a39e98] mb-3" />
               <h3 className="text-base font-semibold text-[#000000]">
-                {isSearching ? "No matching notes" : activeFolder ? "This folder is empty" : "No notes yet"}
+                {isSearching
+                  ? "No matching notes"
+                  : activeFolder
+                    ? "This folder is empty"
+                    : "No notes yet"}
               </h3>
               <p className="max-w-sm text-xs text-[#615d59] mt-1 mb-4">
                 {isSearching
@@ -282,7 +296,9 @@ export function NotesListPage() {
         open={folderManager !== null}
         mode={folderManager?.mode ?? "create"}
         initialName={folderManager?.mode === "rename" ? folderManager.folder.name : ""}
-        initialParentFolderId={folderManager?.mode === "create" ? folderManager.parentFolderId : null}
+        initialParentFolderId={
+          folderManager?.mode === "create" ? folderManager.parentFolderId : null
+        }
         folders={folders}
         onClose={() => setFolderManager(null)}
         onSubmit={handleFolderSubmit}

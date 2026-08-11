@@ -48,7 +48,9 @@ export const Disabled: Story = {
 export const TogglesAreIndependent: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const pushToggle = canvas.getByRole("switch", { name: /calendar reminders, push notifications/i });
+    const pushToggle = canvas.getByRole("switch", {
+      name: /calendar reminders, push notifications/i
+    });
     const inAppToggle = canvas.getByRole("switch", {
       name: /calendar reminders, in-app notifications/i
     });

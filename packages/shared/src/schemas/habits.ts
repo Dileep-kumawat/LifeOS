@@ -26,7 +26,12 @@ export type Habit = z.infer<typeof habitSchema>;
 export const createHabitSchema = z.object({
   title: z.string().min(1, "Title is required").max(300).trim(),
   frequency: habitFrequencySchema,
-  reminderTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "reminderTime must be HH:mm format").nullable().optional().default(null),
+  reminderTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "reminderTime must be HH:mm format")
+    .nullable()
+    .optional()
+    .default(null),
   reminderEnabled: z.boolean().optional().default(false)
 });
 
@@ -35,7 +40,11 @@ export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 export const updateHabitSchema = z.object({
   title: z.string().min(1, "Title is required").max(300).trim().optional(),
   frequency: habitFrequencySchema.optional(),
-  reminderTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "reminderTime must be HH:mm format").nullable().optional(),
+  reminderTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "reminderTime must be HH:mm format")
+    .nullable()
+    .optional(),
   reminderEnabled: z.boolean().optional()
 });
 

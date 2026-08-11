@@ -24,7 +24,12 @@ export function buildRruleString(descriptor: RecurrenceDescriptor | null): strin
   }
   if (descriptor.endType === "onDate" && descriptor.until) {
     const until = new Date(descriptor.until);
-    parts.push(`UNTIL=${until.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`);
+    parts.push(
+      `UNTIL=${until
+        .toISOString()
+        .replace(/[-:]/g, "")
+        .replace(/\.\d{3}/, "")}`
+    );
   } else if (descriptor.endType === "after" && descriptor.count) {
     parts.push(`COUNT=${descriptor.count}`);
   }

@@ -1,11 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type {
-  Note,
-  NoteFolder,
-  NotesListResponse,
-  FoldersResponse,
-  TagsResponse
-} from "./types";
+import type { Note, NoteFolder, NotesListResponse, FoldersResponse, TagsResponse } from "./types";
 
 export interface ListNotesParams {
   folderId?: string | null;
@@ -63,7 +57,10 @@ export const notesApi = {
     return response.data.folder;
   },
 
-  async renameFolder(id: string, input: { name?: string; parentFolderId?: string | null }): Promise<NoteFolder> {
+  async renameFolder(
+    id: string,
+    input: { name?: string; parentFolderId?: string | null }
+  ): Promise<NoteFolder> {
     const response = await apiClient.patch(`/notes/folders/${id}`, input);
     return response.data.folder;
   },

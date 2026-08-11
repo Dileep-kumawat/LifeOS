@@ -23,6 +23,7 @@ import {
   utcMidnightForKey,
   validateRecurrenceRule
 } from "../services/recurrence.js";
+import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
 import {
   cancelEventReminder,
   scheduleEventReminder
@@ -70,7 +71,12 @@ async function collectOverrides(events: EventDoc[]): Promise<Map<string, EventDo
 // Shared predicate for finding candidate events that could overlap a window.
 // Recurring events can't be range-filtered exactly in the DB (the rule needs
 // expanding), so we pre-filter them on a rough bound then expand in memory.
-function overlapWindowQuery(userId: any, start: Date, end: Date, exclude?: { _id: { $ne: string } }) {
+function overlapWindowQuery(
+  userId: any,
+  start: Date,
+  end: Date,
+  exclude?: { _id: { $ne: string } }
+) {
   return {
     userId,
     isOverride: { $ne: true },
@@ -218,9 +224,13 @@ calendarRouter.post(
         }
       }
 
+      await enqueueEmbeddingJob("event", doc._id, userId);
+
       return res.status(201).json({ event: formatEventDetail(doc) });
     } catch (err) {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to create event" });
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to create event" });
     }
   }
 );
@@ -313,7 +323,9 @@ calendarRouter.get(
 
       return res.json({ events: occurrences });
     } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to list events" });
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to list events" });
     }
   }
 );
@@ -383,15 +395,19 @@ calendarRouter.get(
       const end = new Date(query.endTime);
       const userId = req.user!._id;
 
-      const events = await Event.find(overlapWindowQuery(userId, start, end, safeExclude(query.excludeEventId)));
+      const events = await Event.find(
+        overlapWindowQuery(userId, start, end, safeExclude(query.excludeEventId))
+      );
       const overrides = await collectOverrides(events);
       const occurrences = expandRange(events, start, end, overrides);
 
       const conflicts = filterOverlapping(occurrences, start, end, query.excludeOccurrenceId);
 
       return res.json({ conflicts });
-      } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to detect conflicts" });
+    } catch {
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to detect conflicts" });
     }
   }
 );
@@ -432,9 +448,9 @@ calendarRouter.get("/calendar/events/:id", requireAuth, async (req: Request, res
       return res.status(404).json({ error: "NotFound", message: "Event not found." });
     }
     return res.json({ event: formatEventDetail(doc) });
-      } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to get event" });
-    }
+  } catch {
+    return res.status(500).json({ error: "InternalServerError", message: "Failed to get event" });
+  }
 });
 
 /**
@@ -501,7 +517,8 @@ calendarRouter.patch(
       if (body.scope === "occurrence") {
         return res.status(400).json({
           error: "BadRequest",
-          message: "Use PATCH /calendar/events/:id/occurrence/:occurrenceId to edit a single instance."
+          message:
+            "Use PATCH /calendar/events/:id/occurrence/:occurrenceId to edit a single instance."
         });
       }
 
@@ -560,9 +577,13 @@ calendarRouter.patch(
       }
 
       await doc.save();
+      await enqueueEmbeddingJob("event", doc._id, req.user!._id);
+
       return res.json({ event: formatEventDetail(doc) });
     } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to update event" });
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to update event" });
     }
   }
 );
@@ -709,7 +730,11 @@ calendarRouter.patch(
         existingEntry.isCancelled = false;
         existingEntry.overrideEventId = overrideId;
       } else {
-        doc.exceptions.push({ originalDate: utcMidnightForKey(key), isCancelled: false, overrideEventId: overrideId });
+        doc.exceptions.push({
+          originalDate: utcMidnightForKey(key),
+          isCancelled: false,
+          overrideEventId: overrideId
+        });
       }
       await doc.save();
 
@@ -727,7 +752,9 @@ calendarRouter.patch(
 
       return res.json({ occurrence });
     } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to update occurrence" });
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to update occurrence" });
     }
   }
 );
@@ -789,13 +816,19 @@ calendarRouter.delete(
         existing.isCancelled = true;
         existing.overrideEventId = null;
       } else {
-        doc.exceptions.push({ originalDate: utcMidnightForKey(key), isCancelled: true, overrideEventId: null });
+        doc.exceptions.push({
+          originalDate: utcMidnightForKey(key),
+          isCancelled: true,
+          overrideEventId: null
+        });
       }
       await doc.save();
 
       return res.json({ message: "Occurrence deleted." });
     } catch {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to delete occurrence" });
+      return res
+        .status(500)
+        .json({ error: "InternalServerError", message: "Failed to delete occurrence" });
     }
   }
 );
@@ -833,9 +866,13 @@ calendarRouter.delete("/calendar/events/:id", requireAuth, async (req: Request, 
       await cancelEventReminder(doc.reminderJobId);
     }
     await Event.deleteMany({ $or: [{ _id: doc._id }, { parentEventId: doc._id }] });
+    await deleteEmbedding("event", doc._id);
+
     return res.json({ message: "Event series deleted." });
   } catch {
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to delete event" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to delete event" });
   }
 });
 

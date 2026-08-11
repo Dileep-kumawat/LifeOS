@@ -75,7 +75,9 @@ function main(): number {
   for (const route of routes) {
     const pathDoc = paths[route.openApiPath];
     if (!pathDoc || !pathDoc[route.method]) {
-      missing.push(`${route.method.toUpperCase().padEnd(6)} ${route.openApiPath.padEnd(40)} (${route.file})`);
+      missing.push(
+        `${route.method.toUpperCase().padEnd(6)} ${route.openApiPath.padEnd(40)} (${route.file})`
+      );
     }
   }
 
@@ -85,11 +87,15 @@ function main(): number {
     return 0;
   }
 
-  console.error(`✗ ${missing.length} route(s) registered in Express but missing from the OpenAPI spec:`);
+  console.error(
+    `✗ ${missing.length} route(s) registered in Express but missing from the OpenAPI spec:`
+  );
   for (const line of missing) {
     console.error(`  ${line}`);
   }
-  console.error("Add an `@openapi` block documenting each route (see routes/calendar.ts for the pattern).");
+  console.error(
+    "Add an `@openapi` block documenting each route (see routes/calendar.ts for the pattern)."
+  );
   return 1;
 }
 

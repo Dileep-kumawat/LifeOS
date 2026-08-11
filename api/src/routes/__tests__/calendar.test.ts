@@ -24,29 +24,61 @@ describe("conflict detection", () => {
   it("catches partial overlaps, not just exact matches", () => {
     // Candidate 11:00-13:00; existing event 10:00-12:00 overlaps on the tail.
     const events = [single("a", "2026-08-03T10:00:00Z", "2026-08-03T12:00:00Z", "Morning block")];
-    const occurrences = expandRange(events, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T13:00:00Z"));
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T13:00:00Z"));
+    const occurrences = expandRange(
+      events,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T13:00:00Z")
+    );
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T13:00:00Z")
+    );
     expect(conflicts.map((c) => c.eventId)).toEqual(["a"]);
   });
 
   it("treats a candidate fully inside an existing event as a conflict", () => {
     const events = [single("a", "2026-08-03T10:00:00Z", "2026-08-03T14:00:00Z")];
-    const occurrences = expandRange(events, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T12:00:00Z"));
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T12:00:00Z"));
+    const occurrences = expandRange(
+      events,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
     expect(conflicts).toHaveLength(1);
   });
 
   it("treats an existing event fully inside the candidate window as a conflict", () => {
     const events = [single("a", "2026-08-03T11:30:00Z", "2026-08-03T11:45:00Z")];
-    const occurrences = expandRange(events, new Date("2026-08-03T10:00:00Z"), new Date("2026-08-03T12:00:00Z"));
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T10:00:00Z"), new Date("2026-08-03T12:00:00Z"));
+    const occurrences = expandRange(
+      events,
+      new Date("2026-08-03T10:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T10:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
     expect(conflicts).toHaveLength(1);
   });
 
   it("does not flag back-to-back adjacent events (end == next start)", () => {
     const events = [single("a", "2026-08-03T10:00:00Z", "2026-08-03T11:00:00Z")];
-    const occurrences = expandRange(events, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T12:00:00Z"));
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T11:00:00Z"), new Date("2026-08-03T12:00:00Z"));
+    const occurrences = expandRange(
+      events,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T11:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
     expect(conflicts).toHaveLength(0);
   });
 
@@ -65,17 +97,34 @@ describe("conflict detection", () => {
       recurrenceEndDate: null,
       exceptions: []
     };
-    const occurrences = expandRange([recurring], new Date("2026-08-03T13:15:00Z"), new Date("2026-08-03T13:45:00Z"));
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T13:15:00Z"), new Date("2026-08-03T13:45:00Z"));
+    const occurrences = expandRange(
+      [recurring],
+      new Date("2026-08-03T13:15:00Z"),
+      new Date("2026-08-03T13:45:00Z")
+    );
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T13:15:00Z"),
+      new Date("2026-08-03T13:45:00Z")
+    );
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0].eventId).toBe("series-1");
   });
 
   it("excludes a single occurrence id when requested", () => {
     const events = [single("a", "2026-08-03T10:00:00Z", "2026-08-03T12:00:00Z")];
-    const occurrences = expandRange(events, new Date("2026-08-03T10:00:00Z"), new Date("2026-08-03T12:00:00Z"));
+    const occurrences = expandRange(
+      events,
+      new Date("2026-08-03T10:00:00Z"),
+      new Date("2026-08-03T12:00:00Z")
+    );
     const id = occurrences[0].occurrenceId;
-    const conflicts = filterOverlapping(occurrences, new Date("2026-08-03T10:00:00Z"), new Date("2026-08-03T12:00:00Z"), id);
+    const conflicts = filterOverlapping(
+      occurrences,
+      new Date("2026-08-03T10:00:00Z"),
+      new Date("2026-08-03T12:00:00Z"),
+      id
+    );
     expect(conflicts).toHaveLength(0);
   });
 });

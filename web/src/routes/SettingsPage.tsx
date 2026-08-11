@@ -77,7 +77,9 @@ export function SettingsPage() {
           <CardContent className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-[#000000]">Delete Account</span>
-              <span className="text-xs text-[#615d59]">Soft-delete account with 30-day permanent purge delay</span>
+              <span className="text-xs text-[#615d59]">
+                Soft-delete account with 30-day permanent purge delay
+              </span>
             </div>
             <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
               Delete Account

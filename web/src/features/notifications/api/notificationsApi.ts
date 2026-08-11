@@ -39,9 +39,12 @@ export const notificationsApi = {
   },
 
   async markAllRead(readStatus: "unread" | "read" = "unread"): Promise<{ updatedCount: number }> {
-    const response = await apiClient.patch<{ updatedCount: number }>("/notifications/mark-all-read", {
-      readStatus
-    });
+    const response = await apiClient.patch<{ updatedCount: number }>(
+      "/notifications/mark-all-read",
+      {
+        readStatus
+      }
+    );
     return response.data;
   },
 
@@ -73,9 +76,12 @@ export const notificationsApi = {
   },
 
   async unregisterPushSubscription(endpoint: string): Promise<{ deleted: number }> {
-    const response = await apiClient.delete<{ deleted: number }>("/notifications/push-subscription", {
-      data: { endpoint }
-    });
+    const response = await apiClient.delete<{ deleted: number }>(
+      "/notifications/push-subscription",
+      {
+        data: { endpoint }
+      }
+    );
     return response.data;
   }
 };

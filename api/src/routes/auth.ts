@@ -84,47 +84,45 @@ function formatUserProfile(user: any) {
  *       409:
  *         description: Email already registered
  */
-authRouter.post(
-  "/auth/register",
-  validate(registerSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { email, password, name } = req.body;
+authRouter.post("/auth/register", validate(registerSchema), async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = req.body;
 
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(409).json({
-          error: "Conflict",
-          message: "An account with this email address already exists."
-        });
-      }
-
-      const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-
-      const user = await User.create({
-        email,
-        passwordHash,
-        name,
-        role: "user",
-        emailVerified: false,
-        status: "active"
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        error: "Conflict",
+        message: "An account with this email address already exists."
       });
-
-      const accessToken = generateAccessToken(user);
-      const deviceInfo = req.headers["user-agent"] || "Unknown Device";
-      const { rawToken } = await createRefreshToken(user._id.toString(), deviceInfo);
-
-      setRefreshCookie(res, rawToken);
-
-      return res.status(201).json({
-        user: formatUserProfile(user),
-        accessToken
-      });
-    } catch (err) {
-      return res.status(500).json({ error: "InternalServerError", message: "Failed to register user" });
     }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+    const user = await User.create({
+      email,
+      passwordHash,
+      name,
+      role: "user",
+      emailVerified: false,
+      status: "active"
+    });
+
+    const accessToken = generateAccessToken(user);
+    const deviceInfo = req.headers["user-agent"] || "Unknown Device";
+    const { rawToken } = await createRefreshToken(user._id.toString(), deviceInfo);
+
+    setRefreshCookie(res, rawToken);
+
+    return res.status(201).json({
+      user: formatUserProfile(user),
+      accessToken
+    });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to register user" });
   }
-);
+});
 
 /**
  * @openapi

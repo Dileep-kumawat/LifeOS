@@ -1,12 +1,5 @@
-import type {
-  NotificationChannel,
-  NotificationItem,
-  NotificationPayload
-} from "@lifeos/shared";
-import {
-  isPreferenceEnabled,
-  preferenceModuleForType
-} from "./preferences.js";
+import type { NotificationChannel, NotificationItem, NotificationPayload } from "@lifeos/shared";
+import { isPreferenceEnabled, preferenceModuleForType } from "./preferences.js";
 
 /**
  * Pure delivery dispatch. The worker calls this with a live Notification doc
@@ -40,11 +33,7 @@ export interface DeliveryDeps {
   sendPush(sub: PushSubscriptionLike, payload: object): Promise<PushSendLike>;
   deleteSubscriptions(ids: string[]): Promise<void>;
   markDelivered(id: string, sentAt: Date): Promise<void>;
-  sendEmail?(args: {
-    toEmail: string;
-    subject: string;
-    text: string;
-  }): Promise<void>;
+  sendEmail?(args: { toEmail: string; subject: string; text: string }): Promise<void>;
   prefsUserEmail?: string;
 }
 
@@ -68,7 +57,7 @@ export function buildPushPayload(notification: NotificationLike): object {
   const { title, body, data, items } = notification.payload;
   const count = (items ?? []).length;
   return {
-    title: count > 1 && title ? `You have ${count} notifications` : title ?? "",
+    title: count > 1 && title ? `You have ${count} notifications` : (title ?? ""),
     body: body ?? "",
     data: data ?? {},
     items: items ?? []

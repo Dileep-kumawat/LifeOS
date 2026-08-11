@@ -16,6 +16,7 @@ View Sentry logs
 List logs from a project
 
 **Flags:**
+
 - `-n, --limit <value> - Number of log entries (1-1000) - (default: "100")`
 - `-q, --query <value> - Filter query (e.g., "level:error", "project:backend", "project:[a,b]")`
 - `-f, --follow <value> - Stream logs (optionally specify poll interval in seconds)`
@@ -25,14 +26,14 @@ List logs from a project
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `sentry.item_id` | string | Unique log entry ID |
-| `timestamp` | string | Log timestamp (ISO 8601) |
-| `timestamp_precise` | number | Nanosecond-precision timestamp |
-| `message` | string \| null | Log message |
-| `severity` | string \| null | Severity level (error, warning, info, debug) |
-| `trace` | string \| null | Trace ID for correlation |
+| Field               | Type           | Description                                  |
+| ------------------- | -------------- | -------------------------------------------- |
+| `sentry.item_id`    | string         | Unique log entry ID                          |
+| `timestamp`         | string         | Log timestamp (ISO 8601)                     |
+| `timestamp_precise` | number         | Nanosecond-precision timestamp               |
+| `message`           | string \| null | Log message                                  |
+| `severity`          | string \| null | Severity level (error, warning, info, debug) |
+| `trace`             | string \| null | Trace ID for correlation                     |
 
 **Examples:**
 
@@ -66,6 +67,7 @@ sentry log list --json | jq '.data[] | select(.severity == "error")'
 View details of one or more log entries
 
 **Flags:**
+
 - `-w, --web - Open in browser`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 

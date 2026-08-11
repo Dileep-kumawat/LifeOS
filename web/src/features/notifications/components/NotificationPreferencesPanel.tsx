@@ -1,7 +1,13 @@
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import {
   useNotificationPreferences,

@@ -61,9 +61,7 @@ describe("notification batching / de-duplication (FR-13.4)", () => {
     const range = filter.scheduledFor as { $gte: Date; $lte: Date };
     expect(range.$lte).toEqual(scheduledFor);
     // Start of the window is exactly BATCH_WINDOW_MS before the anchor.
-    expect(range.$gte.getTime()).toBe(
-      anchor.getTime() - BATCH_WINDOW_MS
-    );
+    expect(range.$gte.getTime()).toBe(anchor.getTime() - BATCH_WINDOW_MS);
   });
 
   it("does NOT find a batch carrier when scheduled outside the window", async () => {

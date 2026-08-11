@@ -16,6 +16,7 @@ Initialize Sentry in your project (experimental)
 Initialize Sentry in your project (experimental)
 
 **Flags:**
+
 - `-y, --yes - Accept non-interactive defaults (requires --features outside a TTY)`
 - `-n, --dry-run - Show what would happen without making changes`
 - `--features <value>... - Features to enable: errors,tracing,logs,replay,metrics,profiling,sourcemaps,crons,ai-monitoring,user-feedback`

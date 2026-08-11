@@ -32,7 +32,12 @@ interface PopoverProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function Popover({ children, open: openProp, defaultOpen = false, onOpenChange }: PopoverProps) {
+export function Popover({
+  children,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange
+}: PopoverProps) {
   const [uncontrolled, setUncontrolled] = React.useState(defaultOpen);
   const triggerRef = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -117,13 +122,16 @@ export function PopoverTrigger({ asChild, className, children }: PopoverTriggerP
 
   let trigger: React.ReactNode;
   if (asChild && React.isValidElement(children)) {
-    trigger = React.cloneElement(children as React.ReactElement<{ onClick?: unknown; className?: string }>, {
-      ...triggerProps,
-      onClick: (event: React.MouseEvent) => {
-        (children.props as { onClick?: (e: React.MouseEvent) => void }).onClick?.(event);
-        if (!event.defaultPrevented) handleClick(event);
+    trigger = React.cloneElement(
+      children as React.ReactElement<{ onClick?: unknown; className?: string }>,
+      {
+        ...triggerProps,
+        onClick: (event: React.MouseEvent) => {
+          (children.props as { onClick?: (e: React.MouseEvent) => void }).onClick?.(event);
+          if (!event.defaultPrevented) handleClick(event);
+        }
       }
-    });
+    );
   } else {
     trigger = (
       <button type="button" className={className} {...triggerProps}>
@@ -143,11 +151,17 @@ interface PopoverContentProps extends React.HTMLAttributes<HTMLDivElement> {
   align?: "start" | "center" | "end";
 }
 
-export function PopoverContent({ className, align = "end", children, ...props }: PopoverContentProps) {
+export function PopoverContent({
+  className,
+  align = "end",
+  children,
+  ...props
+}: PopoverContentProps) {
   const ctx = usePopoverContext();
   if (!ctx.open) return null;
 
-  const alignClass = align === "end" ? "right-0" : align === "center" ? "left-1/2 -translate-x-1/2" : "left-0";
+  const alignClass =
+    align === "end" ? "right-0" : align === "center" ? "left-1/2 -translate-x-1/2" : "left-0";
 
   return (
     <div

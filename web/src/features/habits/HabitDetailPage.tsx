@@ -2,17 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../lib/apiClient";
-import {
-  ArrowLeft,
-  Flame,
-  Trophy,
-  Activity,
-  Calendar,
-  Check,
-  X,
-  Trash2,
-  Edit
-} from "lucide-react";
+import { ArrowLeft, Flame, Trophy, Activity, Calendar, Check, X, Trash2, Edit } from "lucide-react";
 import { HabitStreakBadge } from "./HabitStreakBadge";
 import { HabitForm, type HabitFormData } from "./HabitForm";
 import type { HabitCardItem } from "./HabitCard";
@@ -91,7 +81,11 @@ export function HabitDetailPage() {
   });
 
   if (isHabitLoading) {
-    return <div className="flex justify-center py-12 text-sm text-[#615d59]">Loading habit details...</div>;
+    return (
+      <div className="flex justify-center py-12 text-sm text-[#615d59]">
+        Loading habit details...
+      </div>
+    );
   }
 
   if (!habit) {
@@ -106,7 +100,12 @@ export function HabitDetailPage() {
   }
 
   // Generate 60-day calendar matrix
-  const daysList: Array<{ dateStr: string; dayNumber: number; monthLabel: string; record?: { completed: boolean } }> = [];
+  const daysList: Array<{
+    dateStr: string;
+    dayNumber: number;
+    monthLabel: string;
+    record?: { completed: boolean };
+  }> = [];
   const [y, m, dayNum] = todayDateStr.split("-").map(Number);
 
   for (let i = 59; i >= 0; i--) {

@@ -16,6 +16,7 @@ Manage and compare snapshots
 Compare two directories of snapshot images
 
 **Flags:**
+
 - `-o, --output <value> - Directory for diff mask images (default: ./diff-output/)`
 - `--threshold <value> - Pixel color difference threshold (0.0-1.0) - (default: "0.01")`
 - `--no-antialiasing - Disable antialiasing detection`
@@ -27,6 +28,7 @@ Compare two directories of snapshot images
 Download baseline snapshot images
 
 **Flags:**
+
 - `--app-id <value> - App identifier (e.g. my-app) to resolve the latest baseline; mutually exclusive with --snapshot-id`
 - `--snapshot-id <value> - Direct snapshot artifact ID; mutually exclusive with --app-id`
 - `--branch <value> - Git branch filter (only with --app-id)`
@@ -37,6 +39,7 @@ Download baseline snapshot images
 Upload snapshots to a project
 
 **Flags:**
+
 - `--app-id <value> - The application identifier`
 - `--diff-threshold <value> - Only report an image as changed when its difference exceeds this fraction (0.0–1.0, e.g. 0.01 = 1%)`
 - `--selective - This upload contains only a subset of images (removals/renames won't be detected on PRs)`

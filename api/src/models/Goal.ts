@@ -37,7 +37,9 @@ const goalSchema = new Schema(
 
 goalSchema.index({ userId: 1, status: 1 });
 
-export type MilestoneItem = InferSchemaType<typeof milestoneSchema> & { _id: Schema.Types.ObjectId };
+export type MilestoneItem = InferSchemaType<typeof milestoneSchema> & {
+  _id: Schema.Types.ObjectId;
+};
 export type GoalDoc = InferSchemaType<typeof goalSchema> & Document;
 
 export const Goal = model<GoalDoc>("Goal", goalSchema);

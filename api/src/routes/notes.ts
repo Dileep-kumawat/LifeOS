@@ -22,6 +22,7 @@ import {
   wouldExceedMaxDepth,
   type FolderLike
 } from "../services/noteFolders.js";
+import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
 
 export const notesRouter = Router();
 
@@ -124,6 +125,8 @@ notesRouter.post("/notes", validate(createNoteSchema), async (req: Request, res:
       tags
     });
 
+    await enqueueEmbeddingJob("note", note._id, userId);
+
     return res.status(201).json({ note: formatNote(note, true) });
   } catch (err: any) {
     return res.status(500).json({ error: "Internal Server Error", message: err.message });
@@ -186,44 +189,53 @@ notesRouter.post("/notes", validate(createNoteSchema), async (req: Request, res:
  *       401:
  *         description: Authentication required
  */
-notesRouter.get("/notes", validate(listNotesQuerySchema, "query"), async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!._id;
-    const { folderId, tag, search, page, limit } = req.query as unknown as {
-      folderId?: string;
-      tag?: string;
-      search?: string;
-      page: number;
-      limit: number;
-    };
+notesRouter.get(
+  "/notes",
+  validate(listNotesQuerySchema, "query"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id;
+      const { folderId, tag, search, page, limit } = req.query as unknown as {
+        folderId?: string;
+        tag?: string;
+        search?: string;
+        page: number;
+        limit: number;
+      };
 
-    let searchTerm: string | null = null;
-    if (search !== undefined) {
-      try {
-        searchTerm = normalizeSearchTerm(search);
-      } catch (err: any) {
-        return res.status(400).json({ error: "ValidationError", message: err.message });
+      let searchTerm: string | null = null;
+      if (search !== undefined) {
+        try {
+          searchTerm = normalizeSearchTerm(search);
+        } catch (err: any) {
+          return res.status(400).json({ error: "ValidationError", message: err.message });
+        }
       }
+
+      const { filter, sort } = buildNotesListFilter({
+        userId: userId.toString(),
+        folderId,
+        tag,
+        search: searchTerm ?? undefined
+      });
+
+      const query = filter as FilterQuery<NoteDoc>;
+      const total = await Note.countDocuments(query);
+      const docs = await Note.find(query)
+        .select("-content")
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      return res.json({
+        notes: docs.map((d) => formatNote(d, false)),
+        pagination: { page, limit, total, hasMore: page * limit < total }
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
     }
-
-    const { filter, sort } = buildNotesListFilter({ userId: userId.toString(), folderId, tag, search: searchTerm ?? undefined });
-
-    const query = filter as FilterQuery<NoteDoc>;
-    const total = await Note.countDocuments(query);
-    const docs = await Note.find(query)
-      .select("-content")
-      .sort(sort)
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    return res.json({
-      notes: docs.map((d) => formatNote(d, false)),
-      pagination: { page, limit, total, hasMore: page * limit < total }
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
-});
+);
 
 /**
  * @openapi
@@ -256,29 +268,35 @@ notesRouter.get("/notes", validate(listNotesQuerySchema, "query"), async (req: R
  *       401:
  *         description: Authentication required
  */
-notesRouter.post("/notes/folders", validate(createFolderSchema), async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!._id;
-    const { name, parentFolderId } = req.body;
+notesRouter.post(
+  "/notes/folders",
+  validate(createFolderSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id;
+      const { name, parentFolderId } = req.body;
 
-    if (parentFolderId && !(await folderBelongsToUser(parentFolderId, userId))) {
-      return res.status(400).json({ error: "ValidationError", message: "Parent folder not found." });
+      if (parentFolderId && !(await folderBelongsToUser(parentFolderId, userId))) {
+        return res
+          .status(400)
+          .json({ error: "ValidationError", message: "Parent folder not found." });
+      }
+
+      const folders = await NoteFolder.find({ userId });
+      if (wouldExceedMaxDepth(folders.map(toFolderLike), parentFolderId)) {
+        return res.status(400).json({
+          error: "ValidationError",
+          message: `Folders can only nest ${MAX_FOLDER_DEPTH} levels deep.`
+        });
+      }
+
+      const folder = await NoteFolder.create({ userId, name, parentFolderId });
+      return res.status(201).json({ folder: formatFolder(folder) });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
     }
-
-    const folders = await NoteFolder.find({ userId });
-    if (wouldExceedMaxDepth(folders.map(toFolderLike), parentFolderId)) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: `Folders can only nest ${MAX_FOLDER_DEPTH} levels deep.`
-      });
-    }
-
-    const folder = await NoteFolder.create({ userId, name, parentFolderId });
-    return res.status(201).json({ folder: formatFolder(folder) });
-  } catch (err: any) {
-    return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
-});
+);
 
 /**
  * @openapi
@@ -360,7 +378,9 @@ notesRouter.patch(
 
       if (parentFolderId !== undefined) {
         if (parentFolderId === id) {
-          return res.status(400).json({ error: "ValidationError", message: "A folder cannot be its own parent." });
+          return res
+            .status(400)
+            .json({ error: "ValidationError", message: "A folder cannot be its own parent." });
         }
 
         const folders = await NoteFolder.find({ userId });
@@ -368,7 +388,9 @@ notesRouter.patch(
 
         if (parentFolderId) {
           if (!(await folderBelongsToUser(parentFolderId, userId))) {
-            return res.status(400).json({ error: "ValidationError", message: "Parent folder not found." });
+            return res
+              .status(400)
+              .json({ error: "ValidationError", message: "Parent folder not found." });
           }
           if (isFolderInChain(folderLikes, parentFolderId, id)) {
             return res.status(400).json({
@@ -513,17 +535,21 @@ notesRouter.get("/notes/tags", async (req: Request, res: Response) => {
  *       404:
  *         description: Note not found (or not owned by this user)
  */
-notesRouter.get("/notes/:id", validate(noteParamsSchema, "params"), async (req: Request, res: Response) => {
-  try {
-    const doc = await Note.findOne({ _id: req.params.id, userId: req.user!._id });
-    if (!doc) {
-      return res.status(404).json({ error: "Not Found", message: "Note not found." });
+notesRouter.get(
+  "/notes/:id",
+  validate(noteParamsSchema, "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const doc = await Note.findOne({ _id: req.params.id, userId: req.user!._id });
+      if (!doc) {
+        return res.status(404).json({ error: "Not Found", message: "Note not found." });
+      }
+      return res.json({ note: formatNote(doc, true) });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
     }
-    return res.json({ note: formatNote(doc, true) });
-  } catch (err: any) {
-    return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
-});
+);
 
 /**
  * @openapi
@@ -594,6 +620,8 @@ notesRouter.patch(
       if (tags !== undefined) note.tags = tags;
 
       await note.save();
+      await enqueueEmbeddingJob("note", note._id, userId);
+
       return res.json({ note: formatNote(note, true) });
     } catch (err: any) {
       return res.status(500).json({ error: "Internal Server Error", message: err.message });
@@ -623,21 +651,27 @@ notesRouter.patch(
  *       404:
  *         description: Note not found
  */
-notesRouter.delete("/notes/:id", validate(noteParamsSchema, "params"), async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!._id;
-    const { id } = req.params as { id: string };
+notesRouter.delete(
+  "/notes/:id",
+  validate(noteParamsSchema, "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id;
+      const { id } = req.params as { id: string };
 
-    const note = await Note.findOneAndDelete({ _id: id, userId });
-    if (!note) {
-      return res.status(404).json({ error: "Not Found", message: "Note not found." });
+      const note = await Note.findOneAndDelete({ _id: id, userId });
+      if (!note) {
+        return res.status(404).json({ error: "Not Found", message: "Note not found." });
+      }
+
+      await deleteEmbedding("note", id);
+
+      return res.json({ message: "Note deleted." });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
     }
-
-    return res.json({ message: "Note deleted." });
-  } catch (err: any) {
-    return res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
-});
+);
 
 /**
  * @openapi

@@ -16,6 +16,7 @@ Search and inspect User Feedback
 List and search User Feedback
 
 **Flags:**
+
 - `--status <value> - Mailbox: unresolved, resolved, spam, or all - (default: "unresolved")`
 - `-n, --limit <value> - Number of feedback items (1-1000) - (default: "25")`
 - `-q, --query <value> - Search query (Sentry issue search syntax)`
@@ -25,31 +26,31 @@ List and search User Feedback
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Numeric issue ID |
-| `shortId` | string | Human-readable short ID (e.g. PROJ-ABC) |
-| `title` | string | Issue title |
-| `culprit` | string \| null | Culprit string |
-| `count` | string | Total event count |
-| `userCount` | number | Number of affected users |
-| `firstSeen` | string \| null | First occurrence (ISO 8601) |
-| `lastSeen` | string \| null | Most recent occurrence (ISO 8601) |
-| `level` | string | Severity level |
-| `status` | string | Issue status |
-| `permalink` | string | URL to the issue in Sentry |
-| `project` | object | Project info |
-| `metadata` | object | Feedback metadata |
-| `assignedTo` | object \| null | Assigned user or team |
-| `priority` | string | Triage priority |
-| `platform` | string | Platform |
-| `substatus` | string \| null | Issue substatus |
-| `isUnhandled` | boolean | Whether the issue is unhandled |
-| `seerFixabilityScore` | number \| null | Seer AI fixability score (0-1) |
-| `issueCategory` | string | Issue category discriminator |
-| `issueType` | string | Issue type discriminator |
-| `hasSeen` | boolean | Whether the feedback has been read |
-| `latestEventHasAttachments` | boolean | Whether the latest event has attachments |
+| Field                       | Type           | Description                              |
+| --------------------------- | -------------- | ---------------------------------------- |
+| `id`                        | string         | Numeric issue ID                         |
+| `shortId`                   | string         | Human-readable short ID (e.g. PROJ-ABC)  |
+| `title`                     | string         | Issue title                              |
+| `culprit`                   | string \| null | Culprit string                           |
+| `count`                     | string         | Total event count                        |
+| `userCount`                 | number         | Number of affected users                 |
+| `firstSeen`                 | string \| null | First occurrence (ISO 8601)              |
+| `lastSeen`                  | string \| null | Most recent occurrence (ISO 8601)        |
+| `level`                     | string         | Severity level                           |
+| `status`                    | string         | Issue status                             |
+| `permalink`                 | string         | URL to the issue in Sentry               |
+| `project`                   | object         | Project info                             |
+| `metadata`                  | object         | Feedback metadata                        |
+| `assignedTo`                | object \| null | Assigned user or team                    |
+| `priority`                  | string         | Triage priority                          |
+| `platform`                  | string         | Platform                                 |
+| `substatus`                 | string \| null | Issue substatus                          |
+| `isUnhandled`               | boolean        | Whether the issue is unhandled           |
+| `seerFixabilityScore`       | number \| null | Seer AI fixability score (0-1)           |
+| `issueCategory`             | string         | Issue category discriminator             |
+| `issueType`                 | string         | Issue type discriminator                 |
+| `hasSeen`                   | boolean        | Whether the feedback has been read       |
+| `latestEventHasAttachments` | boolean        | Whether the latest event has attachments |
 
 **Examples:**
 
@@ -77,40 +78,41 @@ sentry feedback list my-org/frontend --query "message:*checkout*"
 View a User Feedback item
 
 **Flags:**
+
 - `-w, --web - Open in browser`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Numeric issue ID |
-| `shortId` | string | Human-readable short ID (e.g. PROJ-ABC) |
-| `title` | string | Issue title |
-| `culprit` | string \| null | Culprit string |
-| `count` | string | Total event count |
-| `userCount` | number | Number of affected users |
-| `firstSeen` | string \| null | First occurrence (ISO 8601) |
-| `lastSeen` | string \| null | Most recent occurrence (ISO 8601) |
-| `level` | string | Severity level |
-| `status` | string | Issue status |
-| `permalink` | string | URL to the issue in Sentry |
-| `project` | object | Project info |
-| `metadata` | object | Feedback metadata |
-| `assignedTo` | object \| null | Assigned user or team |
-| `priority` | string | Triage priority |
-| `platform` | string | Platform |
-| `substatus` | string \| null | Issue substatus |
-| `isUnhandled` | boolean | Whether the issue is unhandled |
-| `seerFixabilityScore` | number \| null | Seer AI fixability score (0-1) |
-| `issueCategory` | string | Issue category discriminator |
-| `issueType` | string | Issue type discriminator |
-| `hasSeen` | boolean | Whether the feedback has been read |
-| `latestEventHasAttachments` | boolean | Whether the latest event has attachments |
-| `org` | string \| null | Organization slug |
-| `event` | unknown \| null | Latest feedback event |
-| `replayIds` | array | Related Session Replay IDs |
-| `attachments` | array | Attachments on the latest feedback event |
+| Field                       | Type            | Description                              |
+| --------------------------- | --------------- | ---------------------------------------- |
+| `id`                        | string          | Numeric issue ID                         |
+| `shortId`                   | string          | Human-readable short ID (e.g. PROJ-ABC)  |
+| `title`                     | string          | Issue title                              |
+| `culprit`                   | string \| null  | Culprit string                           |
+| `count`                     | string          | Total event count                        |
+| `userCount`                 | number          | Number of affected users                 |
+| `firstSeen`                 | string \| null  | First occurrence (ISO 8601)              |
+| `lastSeen`                  | string \| null  | Most recent occurrence (ISO 8601)        |
+| `level`                     | string          | Severity level                           |
+| `status`                    | string          | Issue status                             |
+| `permalink`                 | string          | URL to the issue in Sentry               |
+| `project`                   | object          | Project info                             |
+| `metadata`                  | object          | Feedback metadata                        |
+| `assignedTo`                | object \| null  | Assigned user or team                    |
+| `priority`                  | string          | Triage priority                          |
+| `platform`                  | string          | Platform                                 |
+| `substatus`                 | string \| null  | Issue substatus                          |
+| `isUnhandled`               | boolean         | Whether the issue is unhandled           |
+| `seerFixabilityScore`       | number \| null  | Seer AI fixability score (0-1)           |
+| `issueCategory`             | string          | Issue category discriminator             |
+| `issueType`                 | string          | Issue type discriminator                 |
+| `hasSeen`                   | boolean         | Whether the feedback has been read       |
+| `latestEventHasAttachments` | boolean         | Whether the latest event has attachments |
+| `org`                       | string \| null  | Organization slug                        |
+| `event`                     | unknown \| null | Latest feedback event                    |
+| `replayIds`                 | array           | Related Session Replay IDs               |
+| `attachments`               | array           | Attachments on the latest feedback event |
 
 **Examples:**
 

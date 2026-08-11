@@ -8,10 +8,7 @@ process.env.TZ = "UTC";
 // erased at runtime so it coexists with the value binding of the same name.
 import rrulePkg from "rrule";
 import type { RRule } from "rrule";
-import type {
-  CalendarOccurrence,
-  RecurrenceDescriptor
-} from "@lifeos/shared";
+import type { CalendarOccurrence, RecurrenceDescriptor } from "@lifeos/shared";
 import { buildRruleString } from "@lifeos/shared";
 
 const rrule = (rrulePkg as unknown as typeof import("rrule")).RRule;
@@ -70,7 +67,7 @@ export function isValidTimezone(tzid: string): boolean {
 export function parseRecurrenceRule(ruleString: string, dtstart: Date, tzid: string): RRule {
   try {
     if (!ruleString || !ruleString.trim()) {
-      throw new RecurrenceParseError('Recurrence rule is empty.');
+      throw new RecurrenceParseError("Recurrence rule is empty.");
     }
     const parsed = rrule.fromString(ruleString);
     const freq = parsed.origOptions.freq;
@@ -167,7 +164,9 @@ export function occurrenceIdFor(eventId: string, occurrenceStart: Date): string 
   return `${eventId}@${occurrenceStart.toISOString()}`;
 }
 
-export function parseOccurrenceId(occurrenceId: string): { eventId: string; occurrenceStart: Date } | null {
+export function parseOccurrenceId(
+  occurrenceId: string
+): { eventId: string; occurrenceStart: Date } | null {
   const at = occurrenceId.lastIndexOf("@");
   if (at <= 0 || at === occurrenceId.length - 1) return null;
   const eventId = occurrenceId.slice(0, at);
@@ -176,7 +175,10 @@ export function parseOccurrenceId(occurrenceId: string): { eventId: string; occu
   return { eventId, occurrenceStart };
 }
 
-export function exceptionByDateKey(event: CalendarEventLike, key: string): ExceptionLike | undefined {
+export function exceptionByDateKey(
+  event: CalendarEventLike,
+  key: string
+): ExceptionLike | undefined {
   return (event.exceptions || []).find((e) => keyOfUtcMidnight(e.originalDate) === key);
 }
 
@@ -249,7 +251,11 @@ export function expandEvent(
     return [buildOccurrence(event, start, end, eventId, start, false, false)];
   }
 
-  const rule = parseRecurrenceRule(event.recurrenceRule as string, toWallClockInZone(start, tzid), tzid);
+  const rule = parseRecurrenceRule(
+    event.recurrenceRule as string,
+    toWallClockInZone(start, tzid),
+    tzid
+  );
 
   // Pad the start boundary by at least one duration/day so occurrences that
   // begin just before the range (and spill into it) are still considered.
@@ -270,8 +276,24 @@ export function expandEvent(
     const override = overrideId ? overrides.get(overrideId) : undefined;
 
     const occurrence = override
-      ? buildOccurrence(override, new Date(override.startTime), new Date(override.endTime), eventId, occStart, true, true)
-      : buildOccurrence(event, occStart, new Date(occStart.getTime() + duration), eventId, occStart, true, false);
+      ? buildOccurrence(
+          override,
+          new Date(override.startTime),
+          new Date(override.endTime),
+          eventId,
+          occStart,
+          true,
+          true
+        )
+      : buildOccurrence(
+          event,
+          occStart,
+          new Date(occStart.getTime() + duration),
+          eventId,
+          occStart,
+          true,
+          false
+        );
 
     if (
       new Date(occurrence.endTime).getTime() <= rangeStart.getTime() ||

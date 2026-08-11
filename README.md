@@ -62,14 +62,14 @@ Runs at http://localhost:6006. The `Button` component's stories are the first ex
 
 ## Scripts (root)
 
-| Command | What it does |
-|---|---|
-| `npm run dev:api` | Start the API in watch mode |
-| `npm run dev:web` | Start the Vite dev server |
-| `npm run lint` | ESLint across the monorepo |
-| `npm run typecheck` | TypeScript project-wide check |
-| `npm run test` | Run tests in api + web |
-| `npm run build` | Production build of shared → api → web |
+| Command             | What it does                           |
+| ------------------- | -------------------------------------- |
+| `npm run dev:api`   | Start the API in watch mode            |
+| `npm run dev:web`   | Start the Vite dev server              |
+| `npm run lint`      | ESLint across the monorepo             |
+| `npm run typecheck` | TypeScript project-wide check          |
+| `npm run test`      | Run tests in api + web                 |
+| `npm run build`     | Production build of shared → api → web |
 
 ## Exit criteria for Phase 0 (from the build plan)
 
@@ -87,11 +87,12 @@ Passport.js is wired per the SRS's auth standardization (`api/src/auth/passport.
 - **`requireAuth` middleware** (`api/src/auth/requireAuth.ts`) — drop it on any route that needs a logged-in user: `v1.get("/me", requireAuth, handler)`. There's nothing to protect yet since no routes exist beyond `/health`.
 - **Google OAuth strategy** — present but commented out; deferred to Phase 10 per the build plan. Uncomment once `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set.
 
-What's *not* here yet, because it's Phase 1 work: register/login endpoints, password hashing, refresh-token rotation, RBAC middleware, password reset flow. The strategy above just means Phase 1 only has to add those routes, not set up Passport from scratch.
+What's _not_ here yet, because it's Phase 1 work: register/login endpoints, password hashing, refresh-token rotation, RBAC middleware, password reset flow. The strategy above just means Phase 1 only has to add those routes, not set up Passport from scratch.
 
 ## What's deliberately not here yet
 
 Per the build plan, Phase 0 explicitly defers:
+
 - Mobile scaffold (Phase 5)
 - Any real feature code — auth, calendar, goals, habits, notes all start in Phase 1
 

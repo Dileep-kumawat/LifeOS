@@ -167,15 +167,13 @@ export function NoteDetailPage() {
           <span
             className={`inline-flex shrink-0 items-center gap-1 text-[11px] font-medium ${saveMeta.className}`}
           >
-            <SaveIcon className={`size-3.5 ${saveState === "saving" ? "animate-spin" : ""}`} aria-hidden="true" />
+            <SaveIcon
+              className={`size-3.5 ${saveState === "saving" ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
             {saveMeta.label}
           </span>
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={handleDelete}
-            aria-label="Delete note"
-          >
+          <Button variant="destructive" size="icon" onClick={handleDelete} aria-label="Delete note">
             <Trash2 className="size-4" />
           </Button>
         </div>

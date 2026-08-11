@@ -23,7 +23,11 @@ export function GoalDetailPage() {
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const { data: goal, isLoading, isError } = useQuery<GoalItem>({
+  const {
+    data: goal,
+    isLoading,
+    isError
+  } = useQuery<GoalItem>({
     queryKey: ["goal", id],
     queryFn: async () => {
       const response = await apiClient.get(`/goals/${id}`);

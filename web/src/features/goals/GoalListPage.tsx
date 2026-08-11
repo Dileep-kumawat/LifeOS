@@ -24,7 +24,11 @@ export function GoalListPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { data: goals = [], isLoading, isError } = useQuery<GoalItem[]>({
+  const {
+    data: goals = [],
+    isLoading,
+    isError
+  } = useQuery<GoalItem[]>({
     queryKey: ["goals", statusFilter],
     queryFn: async () => {
       const url = statusFilter === "all" ? "/goals" : `/goals?status=${statusFilter}`;
@@ -150,8 +154,8 @@ export function GoalListPage() {
                         goal.status === "completed"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : goal.status === "abandoned"
-                          ? "bg-rose-50 text-rose-700 border-rose-200"
-                          : "bg-blue-50 text-[#0075de] border-blue-200"
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-blue-50 text-[#0075de] border-blue-200"
                       }`}
                     >
                       {goal.status === "completed" ? (

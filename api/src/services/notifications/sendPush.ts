@@ -18,11 +18,7 @@ export interface PushSendResult {
  * on every send without harm.
  */
 export function ensureVapidConfigured(): void {
-  webpush.setVapidDetails(
-    env.VAPID_SUBJECT,
-    env.VAPID_PUBLIC_KEY,
-    env.VAPID_PRIVATE_KEY
-  );
+  webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
 }
 
 /**
@@ -62,7 +58,11 @@ export async function sendPushNotification(
     // 404 / 410 Gone: the endpoint is dead — the caller deletes the
     // subscription rather than retrying a corpse.
     if (statusCode === 404 || statusCode === 410) {
-      return { status: "unsubscribed", subscriptionId: subscription.id, detail: String(statusCode) };
+      return {
+        status: "unsubscribed",
+        subscriptionId: subscription.id,
+        detail: String(statusCode)
+      };
     }
     return {
       status: "failed",

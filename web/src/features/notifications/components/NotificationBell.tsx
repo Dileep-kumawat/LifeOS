@@ -26,9 +26,7 @@ export function NotificationBell() {
           variant="ghost"
           size="icon"
           aria-label={
-            unread > 0
-              ? `${unread} unread notifications`
-              : "Notifications, no unread notifications"
+            unread > 0 ? `${unread} unread notifications` : "Notifications, no unread notifications"
           }
           className="relative"
         >

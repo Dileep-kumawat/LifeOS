@@ -96,11 +96,7 @@ export const Batched: Story = {
       payload: {
         title: "You have 3 notifications",
         body: "",
-        items: [
-          { title: "Morning run" },
-          { title: "Read 20 pages" },
-          { title: "Drink water" }
-        ]
+        items: [{ title: "Morning run" }, { title: "Read 20 pages" }, { title: "Drink water" }]
       }
     })
   }

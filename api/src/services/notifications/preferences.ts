@@ -1,7 +1,4 @@
-import type {
-  NotificationChannel,
-  NotificationPreferences
-} from "@lifeos/shared";
+import type { NotificationChannel, NotificationPreferences } from "@lifeos/shared";
 
 /**
  * Modules a user can toggle per channel. This is the ONLY place the mapping

@@ -16,6 +16,7 @@ Sentry for local development
 Start the local dev server and tail events
 
 **Flags:**
+
 - `-p, --port <value> - Port to listen on (default 8969) - (default: "8969")`
 - `-H, --host <value> - Hostname to bind to (default localhost) - (default: "localhost")`
 - `-q, --quiet - Suppress per-envelope tail output`
@@ -28,6 +29,7 @@ Start the local dev server and tail events
 Run a command with the local dev server enabled
 
 **Flags:**
+
 - `-p, --port <value> - Port for the local server (default 8969) - (default: "8969")`
 - `--host <value> - Hostname for the local server (default localhost) - (default: "localhost")`
 - `-V, --verify - Verify SDK sends events, then exit`

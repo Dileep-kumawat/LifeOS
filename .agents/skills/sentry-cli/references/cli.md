@@ -16,6 +16,7 @@ CLI-related commands
 View and manage default settings
 
 **Flags:**
+
 - `--clear - Clear the specified default, or all defaults if no key is given`
 - `-y, --yes - Skip confirmation prompt`
 - `-f, --force - Force the operation without confirmation`
@@ -70,6 +71,7 @@ sentry cli feedback the issue view is confusing
 Diagnose and repair CLI database issues
 
 **Flags:**
+
 - `--dry-run - Show what would be fixed without making changes`
 
 **Examples:**
@@ -83,6 +85,7 @@ sentry cli fix
 Import settings from legacy .sentryclirc files
 
 **Flags:**
+
 - `-y, --yes - Skip confirmation prompt`
 - `-n, --dry-run - Show what would happen without making changes`
 - `--url <value> - Explicitly trust this URL (bypasses same-file trust check)`
@@ -112,6 +115,7 @@ sentry cli import --skip-validation
 Configure shell integration
 
 **Flags:**
+
 - `--install - Install the binary from a temp location to the system path`
 - `--method <value> - Installation method (curl, npm, pnpm, bun, yarn)`
 - `--channel <value> - Release channel to persist (stable or nightly)`
@@ -138,6 +142,7 @@ sentry cli setup --no-modify-path --no-completions
 Uninstall Sentry CLI
 
 **Flags:**
+
 - `--keep-config - Keep the config directory (~/.sentry) and auth tokens`
 - `-y, --yes - Skip confirmation prompt`
 - `-f, --force - Force the operation without confirmation`
@@ -161,6 +166,7 @@ sentry cli uninstall
 Update the Sentry CLI to the latest version
 
 **Flags:**
+
 - `--check - Check for updates without installing`
 - `--force - Force upgrade even if already on the latest version`
 - `--offline - Upgrade using only cached version info and patches (no network)`

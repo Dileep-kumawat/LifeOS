@@ -8,7 +8,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", isLoading, disabled, children, ...props }, ref) => {
+  (
+    { className, variant = "default", size = "default", isLoading, disabled, children, ...props },
+    ref
+  ) => {
     const variants = {
       default: "bg-[#0075de] text-white hover:bg-[#005bab] shadow-sm",
       secondary: "bg-[#f6f5f4] text-[#31302e] hover:bg-[#e6e6e6]",
@@ -37,7 +40,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading && (
-          <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg
+            className="animate-spin size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
             <circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25" />
             <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" className="opacity-75" />
           </svg>

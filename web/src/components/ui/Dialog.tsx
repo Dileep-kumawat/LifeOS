@@ -33,10 +33,18 @@ export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHe
   return <h2 className={cn("text-lg font-bold text-[#000000]", className)} {...props} />;
 }
 
-export function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function DialogDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("text-sm text-[#615d59]", className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6", className)} {...props} />;
+  return (
+    <div
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6", className)}
+      {...props}
+    />
+  );
 }

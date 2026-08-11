@@ -109,7 +109,9 @@ describe("push delivery + stale subscription cleanup", () => {
   it("returns pending_retry (worker throws → BullMQ retries) when sends fail transiently with no cleanup", async () => {
     const d = deps({
       getSubscriptions: vi.fn().mockResolvedValue([sub("s1")]),
-      sendPush: vi.fn().mockResolvedValue({ status: "failed", subscriptionId: "s1", detail: "network" })
+      sendPush: vi
+        .fn()
+        .mockResolvedValue({ status: "failed", subscriptionId: "s1", detail: "network" })
     });
 
     const outcome = await dispatchNotification(notification(), undefined, d);

@@ -78,9 +78,7 @@ export function NotificationItem({ notification, onOpen }: NotificationItemProps
         <span className="text-[11px] text-[#a39e98]">{relativeTime(notification)}</span>
 
         {batched > 1 && (
-          <span className="text-[11px] font-medium text-[#0075de]">
-            +{batched - 1} more
-          </span>
+          <span className="text-[11px] font-medium text-[#0075de]">+{batched - 1} more</span>
         )}
       </span>
     </button>

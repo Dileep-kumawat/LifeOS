@@ -16,6 +16,7 @@ Work with Dart/Flutter symbol maps
 Upload a Dart/Flutter symbol map to Sentry
 
 **Flags:**
+
 - `-d, --debug-id <value> - Debug ID (UUID) from the companion native debug file`
 - `--no-upload - Validate the file without uploading (dry-run)`
 

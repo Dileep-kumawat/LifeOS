@@ -15,7 +15,7 @@ export function serializeNotification(doc: NotificationDoc): NotificationShape {
       title: doc.payload?.title ?? "",
       body: doc.payload?.body ?? "",
       data: (doc.payload?.data ?? {}) as Record<string, unknown>,
-      items: ((doc.payload?.items ?? []) as unknown[]) as NotificationShape["payload"]["items"]
+      items: (doc.payload?.items ?? []) as unknown[] as NotificationShape["payload"]["items"]
     },
     deliveryStatus: doc.deliveryStatus,
     readStatus: doc.readStatus,

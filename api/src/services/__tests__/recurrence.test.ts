@@ -11,17 +11,19 @@ import {
 
 const TZ = "America/New_York";
 
-function series(overrides: Partial<{
-  _id: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  timezone: string;
-  isAllDay: boolean;
-  recurrenceRule: string | null;
-  recurrenceEndDate: string | null;
-  exceptions: any[];
-}>) {
+function series(
+  overrides: Partial<{
+    _id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
+    isAllDay: boolean;
+    recurrenceRule: string | null;
+    recurrenceEndDate: string | null;
+    exceptions: any[];
+  }>
+) {
   return {
     _id: overrides._id ?? "event-1",
     title: overrides.title ?? "Recurring standup",
@@ -41,7 +43,11 @@ function series(overrides: Partial<{
 describe("RRULE expansion correctness", () => {
   it("expands a daily rule across the requested range", () => {
     const event = series({ recurrenceRule: "FREQ=DAILY" });
-    const out = expandEvent(event, new Date("2026-08-03T00:00:00Z"), new Date("2026-08-08T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-03T00:00:00Z"),
+      new Date("2026-08-08T00:00:00Z")
+    );
     // 09:00 EDT == 13:00 UTC, 30-minute duration
     expect(out.map((o) => o.startTime)).toEqual([
       "2026-08-03T13:00:00.000Z",
@@ -56,7 +62,11 @@ describe("RRULE expansion correctness", () => {
 
   it("expands a weekly rule honoring BYDAY (MO,WE)", () => {
     const event = series({ recurrenceRule: "FREQ=WEEKLY;BYDAY=MO,WE" });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-08-15T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-15T00:00:00Z")
+    );
     expect(out.map((o) => o.startTime)).toEqual([
       "2026-08-03T13:00:00.000Z", // Monday
       "2026-08-05T13:00:00.000Z", // Wednesday
@@ -68,7 +78,11 @@ describe("RRULE expansion correctness", () => {
   it("expands a monthly rule", () => {
     // Jan 15 at 09:00 EST == 14:00Z (UTC-5); Apr 15 is EDT (UTC-4) → 13:00Z.
     const event = series({ startTime: "2026-01-15T14:00:00.000Z", recurrenceRule: "FREQ=MONTHLY" });
-    const out = expandEvent(event, new Date("2026-01-01T00:00:00Z"), new Date("2026-05-01T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-01-01T00:00:00Z"),
+      new Date("2026-05-01T00:00:00Z")
+    );
     expect(out).toHaveLength(4);
     expect(out[0].startTime).toBe("2026-01-15T14:00:00.000Z");
     expect(out[3].startTime).toBe("2026-04-15T13:00:00.000Z");
@@ -76,7 +90,11 @@ describe("RRULE expansion correctness", () => {
 
   it("expands a custom interval rule (every other week)", () => {
     const event = series({ recurrenceRule: "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO" });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-09-15T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-09-15T00:00:00Z")
+    );
     expect(out.map((o) => o.startTime)).toEqual([
       "2026-08-03T13:00:00.000Z",
       "2026-08-17T13:00:00.000Z",
@@ -86,22 +104,38 @@ describe("RRULE expansion correctness", () => {
   });
 
   it("bounds an infinite rule by recurrenceEndDate", () => {
-    const event = series({ recurrenceRule: "FREQ=WEEKLY;BYDAY=MO", recurrenceEndDate: "2026-08-16T00:00:00Z" });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-09-01T00:00:00Z"));
+    const event = series({
+      recurrenceRule: "FREQ=WEEKLY;BYDAY=MO",
+      recurrenceEndDate: "2026-08-16T00:00:00Z"
+    });
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-09-01T00:00:00Z")
+    );
     // Recurrence end date is Aug 16, so only Mondays Aug 3 and Aug 10.
-    expect(out.map((o) => o.startTime)).toEqual(["2026-08-03T13:00:00.000Z", "2026-08-10T13:00:00.000Z"]);
+    expect(out.map((o) => o.startTime)).toEqual([
+      "2026-08-03T13:00:00.000Z",
+      "2026-08-10T13:00:00.000Z"
+    ]);
   });
 
   it("respects UNTIL embedded in the RRULE string", () => {
     // UNTIL is inclusive; the Aug 5 13:00Z occurrence is the last one at or
     // before 2026-08-06T00:00:00Z.
     const event = series({ recurrenceRule: "FREQ=DAILY;UNTIL=20260806T000000Z" });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-08-15T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-15T00:00:00Z")
+    );
     expect(out).toHaveLength(3); // Aug 3, 4, 5
   });
 
   it("rejects malformed RRULE strings with a clear error (not a 500)", () => {
-    expect(() => validateRecurrenceRule("FREQ=THIS_IS_NOT_VALID", new Date(), TZ)).toThrow(RecurrenceParseError);
+    expect(() => validateRecurrenceRule("FREQ=THIS_IS_NOT_VALID", new Date(), TZ)).toThrow(
+      RecurrenceParseError
+    );
     expect(() => validateRecurrenceRule("", new Date(), TZ)).toThrow(RecurrenceParseError);
     expect(() => validateRecurrenceRule("BYDAY=MO", new Date(), TZ)).toThrow(RecurrenceParseError);
   });
@@ -112,7 +146,11 @@ describe("RRULE expansion correctness", () => {
       endTime: "2026-01-01T10:00:00Z",
       recurrenceRule: null
     });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-08-31T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-31T00:00:00Z")
+    );
     expect(out).toEqual([]);
   });
 });
@@ -194,7 +232,12 @@ describe("single-occurrence edits do not affect the rest of the series", () => {
         }
       ]
     };
-    const out = expandEvent(eventWithException, new Date("2026-08-01T00:00:00Z"), new Date("2026-08-15T00:00:00Z"), overrides);
+    const out = expandEvent(
+      eventWithException,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-15T00:00:00Z"),
+      overrides
+    );
 
     expect(out).toHaveLength(4); // other Mondays/Wednesdays unchanged
     const overridden = out.find((o) => o.startTime === "2026-08-05T18:00:00.000Z");
@@ -217,7 +260,11 @@ describe("single-occurrence edits do not affect the rest of the series", () => {
         { originalDate: "2026-08-05T00:00:00.000Z", isCancelled: true, overrideEventId: null }
       ]
     });
-    const out = expandEvent(event, new Date("2026-08-01T00:00:00Z"), new Date("2026-08-15T00:00:00Z"));
+    const out = expandEvent(
+      event,
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-15T00:00:00Z")
+    );
     expect(out).toHaveLength(3); // Aug 3, Aug 10, Aug 12 — Aug 5 is gone
     expect(out.some((o) => o.startTime === "2026-08-05T13:00:00.000Z")).toBe(false);
     expect(out.map((o) => o.startTime)).toEqual([
@@ -229,7 +276,11 @@ describe("single-occurrence edits do not affect the rest of the series", () => {
 
   it("keeps the deterministic occurrenceId stable when only the series document is expanded", () => {
     const event = series({ recurrenceRule: "FREQ=DAILY" });
-    const out = expandRange([event], new Date("2026-08-01T00:00:00Z"), new Date("2026-08-08T00:00:00Z"));
+    const out = expandRange(
+      [event],
+      new Date("2026-08-01T00:00:00Z"),
+      new Date("2026-08-08T00:00:00Z")
+    );
     expect(out).toHaveLength(5); // Aug 3-7
     expect(out[0].eventId).toBe("event-1");
     expect(out[0].occurrenceId).toBe("event-1@2026-08-03T13:00:00.000Z");

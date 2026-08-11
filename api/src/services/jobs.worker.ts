@@ -8,7 +8,11 @@ import { Event } from "../models/Event.js";
 import { PushSubscription } from "../models/PushSubscription.js";
 import { sendEmail } from "./emailService.js";
 import { sendPushNotification } from "./notifications/sendPush.js";
-import { dispatchNotification, type DeliveryDeps, type NotificationLike } from "./notifications/delivery.js";
+import {
+  dispatchNotification,
+  type DeliveryDeps,
+  type NotificationLike
+} from "./notifications/delivery.js";
 import { DELIVER_NOTIFICATION_TYPE, scheduleNotification } from "./notifications/scheduler.js";
 import { isPreferenceEnabled } from "./notifications/preferences.js";
 import type { NotificationPreferences } from "@lifeos/shared";
@@ -40,7 +44,10 @@ async function handleCalendarReminder(job: Job<CalendarReminderJobData>): Promis
   }
 
   if (event.reminderLeadMinutes == null) {
-    logger.info({ eventId, jobId: job.id }, "calendar_reminder: event reminder disabled — dropping");
+    logger.info(
+      { eventId, jobId: job.id },
+      "calendar_reminder: event reminder disabled — dropping"
+    );
     return;
   }
 
@@ -49,7 +56,10 @@ async function handleCalendarReminder(job: Job<CalendarReminderJobData>): Promis
       (e: any) => e.isCancelled && new Date(e.originalDate).toISOString() === occurrenceTime
     );
     if (isCancelled) {
-      logger.info({ eventId, occurrenceTime }, "calendar_reminder: occurrence cancelled — dropping");
+      logger.info(
+        { eventId, occurrenceTime },
+        "calendar_reminder: occurrence cancelled — dropping"
+      );
       return;
     }
   }
@@ -60,8 +70,13 @@ async function handleCalendarReminder(job: Job<CalendarReminderJobData>): Promis
     return;
   }
 
-  if (!isPreferenceEnabled(user.notificationPreferences ?? undefined, "calendarReminders", "push")) {
-    logger.info({ userId, eventId }, "calendar_reminder: user disabled calendarReminders preference — dropping");
+  if (
+    !isPreferenceEnabled(user.notificationPreferences ?? undefined, "calendarReminders", "push")
+  ) {
+    logger.info(
+      { userId, eventId },
+      "calendar_reminder: user disabled calendarReminders preference — dropping"
+    );
     return;
   }
 
@@ -106,16 +121,13 @@ async function handleDeliverNotification(job: Job<DeliverNotificationJobData>): 
           }))
         ),
     sendPush: (sub, payload) =>
-      sendPushNotification(
-        { id: sub._id, endpoint: sub.endpoint, keys: sub.keys },
-        payload
-      ),
-    deleteSubscriptions: (ids) => PushSubscription.deleteMany({ _id: { $in: ids } }).then(() => undefined),
+      sendPushNotification({ id: sub._id, endpoint: sub.endpoint, keys: sub.keys }, payload),
+    deleteSubscriptions: (ids) =>
+      PushSubscription.deleteMany({ _id: { $in: ids } }).then(() => undefined),
     markDelivered: (id, sentAt) =>
-      Notification.updateOne(
-        { _id: id },
-        { $set: { deliveryStatus: "sent", sentAt } }
-      ).then(() => undefined),
+      Notification.updateOne({ _id: id }, { $set: { deliveryStatus: "sent", sentAt } }).then(
+        () => undefined
+      ),
     sendEmail: (args) => sendEmail(args),
     prefsUserEmail: user.email
   };
@@ -164,14 +176,20 @@ async function handleAiRetry(job: Job<AiRetryJobData>): Promise<void> {
   if (!res.success) {
     throw new Error(`ai_retry_job failed: ${res.error ?? "Unknown error"}`);
   }
-  logger.info({ jobId: job.id, providerServed: res.providerServed }, "ai_retry_job completed successfully");
+  logger.info(
+    { jobId: job.id, providerServed: res.providerServed },
+    "ai_retry_job completed successfully"
+  );
 }
 
+import { processEmbeddingJob } from "./ai/embeddingJob.js";
+
 /** Dispatch table: job name -> handler. */
-const HANDLERS: Record<string, (job: Job) => Promise<void>> = {
+const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
   [DELIVER_NOTIFICATION_TYPE]: handleDeliverNotification,
   calendar_reminder: handleCalendarReminder,
-  ai_retry_job: handleAiRetry
+  ai_retry_job: handleAiRetry,
+  embedding: processEmbeddingJob
 };
 
 async function processJob(job: Job): Promise<void> {

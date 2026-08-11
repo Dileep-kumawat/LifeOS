@@ -68,7 +68,7 @@ export async function scheduleNotification(
   });
   if (existing && existing._id) {
     const carrier = existing as unknown as NotificationDoc;
-    const prev = ((carrier.payload?.items ?? []) as unknown) as NotificationItem[];
+    const prev = (carrier.payload?.items ?? []) as unknown as NotificationItem[];
     await Notification.updateOne(
       { _id: existing._id },
       { $set: { "payload.items": appendBatchItem(prev, item) } }

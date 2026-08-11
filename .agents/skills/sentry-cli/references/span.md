@@ -16,6 +16,7 @@ List and view spans in projects or traces
 List spans in a project or trace
 
 **Flags:**
+
 - `-n, --limit <value> - Number of spans (<=1000) - (default: "25")`
 - `-q, --query <value> - Filter spans (e.g., "op:db", "project:backend", "project:[cli,api]")`
 - `-s, --sort <value> - Sort order: date, duration - (default: "date")`
@@ -25,17 +26,17 @@ List spans in a project or trace
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Span ID |
-| `parent_span` | string \| null | Parent span ID |
-| `span.op` | string \| null | Span operation (e.g. http.client, db) |
-| `description` | string \| null | Span description |
-| `span.duration` | number \| null | Duration (ms) |
-| `timestamp` | string | Timestamp (ISO 8601) |
-| `project` | string | Project slug |
-| `transaction` | string \| null | Transaction name |
-| `trace` | string | Trace ID |
+| Field           | Type           | Description                           |
+| --------------- | -------------- | ------------------------------------- |
+| `id`            | string         | Span ID                               |
+| `parent_span`   | string \| null | Parent span ID                        |
+| `span.op`       | string \| null | Span operation (e.g. http.client, db) |
+| `description`   | string \| null | Span description                      |
+| `span.duration` | number \| null | Duration (ms)                         |
+| `timestamp`     | string         | Timestamp (ISO 8601)                  |
+| `project`       | string         | Project slug                          |
+| `transaction`   | string \| null | Transaction name                      |
+| `trace`         | string         | Trace ID                              |
 
 **Examples:**
 
@@ -70,6 +71,7 @@ sentry span list abc123def456abc123def456abc12345 -q "project:[cli-server,api]"
 View details of specific spans
 
 **Flags:**
+
 - `--spans <value> - Span tree depth limit (number, "all" for unlimited, "no" to disable) - (default: "3")`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 

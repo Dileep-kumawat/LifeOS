@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { Goal } from "../models/Goal.js";
 import mongoose from "mongoose";
+import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
 
 export const goalsRouter = Router();
 
@@ -125,7 +126,8 @@ goalsRouter.post("/goals", async (req: Request, res: Response) => {
     if (hasMilestones) {
       computedProgress = calculateMilestoneProgress(milestones);
     } else {
-      computedProgress = typeof progressPercent === "number" ? Math.min(100, Math.max(0, progressPercent)) : 0;
+      computedProgress =
+        typeof progressPercent === "number" ? Math.min(100, Math.max(0, progressPercent)) : 0;
     }
 
     const goal = await Goal.create({
@@ -139,6 +141,8 @@ goalsRouter.post("/goals", async (req: Request, res: Response) => {
       linkedEventIds: linkedEventIds || [],
       linkedNoteIds: linkedNoteIds || []
     });
+
+    await enqueueEmbeddingJob("goal", goal._id, userId);
 
     return res.status(201).json(goal);
   } catch (err: any) {
@@ -364,7 +368,8 @@ goalsRouter.patch("/goals/:id", async (req: Request, res: Response) => {
     if (hasMilestones && progressPercent !== undefined) {
       return res.status(400).json({
         error: "Bad Request",
-        message: "Cannot manually update progress percent on a goal with milestones. Please update milestones instead."
+        message:
+          "Cannot manually update progress percent on a goal with milestones. Please update milestones instead."
       });
     }
 
@@ -384,6 +389,8 @@ goalsRouter.patch("/goals/:id", async (req: Request, res: Response) => {
     }
 
     await goal.save();
+    await enqueueEmbeddingJob("goal", goal._id, userId);
+
     return res.json(goal);
   } catch (err: any) {
     return res.status(500).json({ error: "Internal Server Error", message: err.message });
@@ -457,6 +464,7 @@ goalsRouter.patch("/goals/:id/milestones/:milestoneId", async (req: Request, res
 
     goal.progressPercent = calculateMilestoneProgress(goal.milestones);
     await goal.save();
+    await enqueueEmbeddingJob("goal", goal._id, userId);
 
     return res.json(goal);
   } catch (err: any) {
@@ -506,6 +514,8 @@ goalsRouter.delete("/goals/:id", async (req: Request, res: Response) => {
     if (!goal) {
       return res.status(404).json({ error: "Not Found", message: "Goal not found." });
     }
+
+    await deleteEmbedding("goal", id);
 
     return res.json({ message: "Goal deleted successfully." });
   } catch (err: any) {

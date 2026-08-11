@@ -1,10 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { NotificationPreferences, UpdateNotificationPreferencesInput } from "@lifeos/shared";
-import {
-  notificationsApi,
-  type NotificationsListResponse
-} from "../api/notificationsApi";
+import { notificationsApi, type NotificationsListResponse } from "../api/notificationsApi";
 import { notificationKeys } from "../api/queryKeys";
 
 const UNREAD_POLL_INTERVAL_MS = 30_000;
@@ -157,7 +154,8 @@ export function useUpdateNotificationPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (patch: UpdateNotificationPreferencesInput) => notificationsApi.updatePreferences(patch),
+    mutationFn: (patch: UpdateNotificationPreferencesInput) =>
+      notificationsApi.updatePreferences(patch),
     onMutate: async (patch: UpdateNotificationPreferencesInput) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.preferences() });
       const previous = queryClient.getQueryData<NotificationPreferences>(

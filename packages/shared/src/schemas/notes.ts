@@ -22,9 +22,7 @@ export const prosemirrorDocSchema = z.object({
 
 export type ProseMirrorDoc = z.infer<typeof prosemirrorDocSchema>;
 
-const objectIdString = z
-  .string()
-  .regex(/^[a-fA-F0-9]{24}$/, "Invalid ObjectId");
+const objectIdString = z.string().regex(/^[a-fA-F0-9]{24}$/, "Invalid ObjectId");
 
 // ─── Notes ─────────────────────────────────────────────────────────────────
 export const createNoteSchema = z.object({
@@ -46,10 +44,7 @@ export const updateNoteSchema = z.object({
   title: z.string().max(MAX_NOTE_TITLE_LENGTH).trim().optional(),
   content: prosemirrorDocSchema.optional(),
   folderId: objectIdString.nullable().optional(),
-  tags: z
-    .array(z.string().trim().min(1).max(MAX_TAG_LENGTH))
-    .max(MAX_TAGS_PER_NOTE)
-    .optional()
+  tags: z.array(z.string().trim().min(1).max(MAX_TAG_LENGTH)).max(MAX_TAGS_PER_NOTE).optional()
 });
 
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
@@ -57,7 +52,12 @@ export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export const listNotesQuerySchema = z.object({
   folderId: objectIdString.optional(),
   tag: z.string().trim().min(1).max(MAX_TAG_LENGTH).optional(),
-  search: z.string().trim().min(1, "Search query must be non-empty").max(MAX_SEARCH_LENGTH).optional(),
+  search: z
+    .string()
+    .trim()
+    .min(1, "Search query must be non-empty")
+    .max(MAX_SEARCH_LENGTH)
+    .optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20)
 });

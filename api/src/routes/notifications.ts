@@ -31,7 +31,10 @@ notificationsRouter.use(requireAuth);
 function serializePreferences(
   prefs: Partial<NotificationPreferences> | null | undefined
 ): NotificationPreferences {
-  return applyPreferenceUpdates(DEFAULT_PREFERENCES, (prefs ?? {}) as Partial<NotificationPreferences>);
+  return applyPreferenceUpdates(
+    DEFAULT_PREFERENCES,
+    (prefs ?? {}) as Partial<NotificationPreferences>
+  );
 }
 
 /**
@@ -357,11 +360,12 @@ notificationsRouter.patch(
     const current = serializePreferences(user.notificationPreferences);
     const updated = applyPreferenceUpdates(current, req.body as Partial<NotificationPreferences>);
 
-  user.notificationPreferences = updated;
-  await user.save();
+    user.notificationPreferences = updated;
+    await user.save();
 
-  return res.json({ preferences: updated });
-});
+    return res.json({ preferences: updated });
+  }
+);
 
 /**
  * @openapi

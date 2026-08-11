@@ -16,6 +16,7 @@ Query aggregate event data (Explore)
 Query aggregate event data (Explore)
 
 **Flags:**
+
 - `-F, --field <value>... - API field or aggregate (repeatable). E.g., title, "count()", "p50(transaction.duration)"`
 - `-m, --metric <value> - Metric name for --dataset metrics. Auto-resolves type/unit via API.`
 - `--agg <value> - Aggregation for --metric (sum, avg, count, p50, p95, etc.) - (default: "sum")`

@@ -55,8 +55,14 @@ const userSchema = new Schema(
     // enabled; the delivery code treats a missing module/toggle as enabled
     // so legacy documents without this field still receive notifications.
     notificationPreferences: {
-      calendarReminders: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
-      habitReminders: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
+      calendarReminders: {
+        type: modulePreferenceSchema,
+        default: () => ({ push: true, inApp: true })
+      },
+      habitReminders: {
+        type: modulePreferenceSchema,
+        default: () => ({ push: true, inApp: true })
+      },
       system: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) }
     }
   },

@@ -70,9 +70,7 @@ export function LoginForm({
               aria-invalid={!!errors.email}
               {...register("email")}
             />
-            {errors.email && (
-              <span className="text-xs text-red-500">{errors.email.message}</span>
-            )}
+            {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
           </div>
 
           <div className="flex flex-col gap-1.5">

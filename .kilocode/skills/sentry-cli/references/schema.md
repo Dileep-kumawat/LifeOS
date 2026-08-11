@@ -16,6 +16,7 @@ Browse the Sentry API schema
 Browse the Sentry API schema
 
 **Flags:**
+
 - `--all - Show all endpoints in a flat list`
 - `-q, --search <value> - Search endpoints by keyword`
 

@@ -44,7 +44,7 @@ export function HabitCard({
   // Build 7-day trailing date matrix ending today
   const last7Days: Array<{ date: string; dayLabel: string; record?: { completed: boolean } }> = [];
   const [y, m, d] = todayDateStr.split("-").map(Number);
-  
+
   for (let i = 6; i >= 0; i--) {
     const dateObj = new Date(Date.UTC(y, m - 1, d - i));
     const dateStr = dateObj.toISOString().split("T")[0];
@@ -65,7 +65,10 @@ export function HabitCard({
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-[#e6e6e6] bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1 cursor-pointer" onClick={() => onSelectHabit?.(habit._id)}>
+        <div
+          className="flex flex-col gap-1 cursor-pointer"
+          onClick={() => onSelectHabit?.(habit._id)}
+        >
           <h3 className="text-lg font-semibold text-[#000000] hover:text-[#0075de] transition-colors">
             {habit.title}
           </h3>
@@ -133,8 +136,8 @@ export function HabitCard({
                   item.record?.completed === true
                     ? "Completed"
                     : item.record?.completed === false
-                    ? "Missed"
-                    : "Not done"
+                      ? "Missed"
+                      : "Not done"
                 }`}
               >
                 <div

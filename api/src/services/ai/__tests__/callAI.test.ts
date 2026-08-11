@@ -38,12 +38,14 @@ vi.mock("../../../models/AiRequestLog.js", () => ({
 }));
 
 vi.mock("../../queue.ts", () => ({
-  enqueueJob: vi.fn().mockResolvedValue({ queued: true, duplicate: false, jobId: "mock-retry-job-id" })
+  enqueueJob: vi
+    .fn()
+    .mockResolvedValue({ queued: true, duplicate: false, jobId: "mock-retry-job-id" })
 }));
 
 import { callAI, getProviderOrder } from "../callAI.js";
-import * as providersModule from "../providers.ts";
-import { enqueueJob } from "../../queue.ts";
+import * as providersModule from "../providers.js";
+import { enqueueJob } from "../../queue.js";
 import { redis } from "../../../db/redis.js";
 
 describe("callAI Infrastructure Service", () => {
@@ -77,8 +79,20 @@ describe("callAI Infrastructure Service", () => {
               tokensIn: 0,
               tokensOut: 0,
               attempts: [
-                { provider: "mistral", success: false, durationMs: 50, errorType: "auth_error", errorMessage: "Invalid API Key" },
-                { provider: "mistral", success: false, durationMs: 50, errorType: "auth_error", errorMessage: "Invalid API Key" }
+                {
+                  provider: "mistral",
+                  success: false,
+                  durationMs: 50,
+                  errorType: "auth_error",
+                  errorMessage: "Invalid API Key"
+                },
+                {
+                  provider: "mistral",
+                  success: false,
+                  durationMs: 50,
+                  errorType: "auth_error",
+                  errorMessage: "Invalid API Key"
+                }
               ],
               lastErrorType: "auth_error",
               lastErrorMessage: "Invalid API Key"
@@ -99,10 +113,10 @@ describe("callAI Infrastructure Service", () => {
         }
       );
 
-      const res = await callAI(
-        [{ role: "user", content: "Hi" }],
-        { userId: "user-123", bypassRateLimit: true }
-      );
+      const res = await callAI([{ role: "user", content: "Hi" }], {
+        userId: "user-123",
+        bypassRateLimit: true
+      });
 
       expect(res.success).toBe(true);
       expect(res.providerServed).toBe("groq");
@@ -121,7 +135,15 @@ describe("callAI Infrastructure Service", () => {
               durationMs: 100,
               tokensIn: 0,
               tokensOut: 0,
-              attempts: [{ provider, success: false, durationMs: 100, errorType: "timeout", errorMessage: "Request timed out" }],
+              attempts: [
+                {
+                  provider,
+                  success: false,
+                  durationMs: 100,
+                  errorType: "timeout",
+                  errorMessage: "Request timed out"
+                }
+              ],
               lastErrorType: "timeout"
             };
           }
@@ -137,10 +159,10 @@ describe("callAI Infrastructure Service", () => {
         }
       );
 
-      const res = await callAI(
-        [{ role: "user", content: "Test prompt" }],
-        { userId: "user-123", bypassRateLimit: true }
-      );
+      const res = await callAI([{ role: "user", content: "Test prompt" }], {
+        userId: "user-123",
+        bypassRateLimit: true
+      });
 
       expect(res.success).toBe(true);
       expect(res.providerServed).toBe("gemini");
@@ -159,14 +181,23 @@ describe("callAI Infrastructure Service", () => {
           durationMs: 100,
           tokensIn: 0,
           tokensOut: 0,
-          attempts: [{ provider, success: false, durationMs: 100, errorType: "api_error", errorMessage: "Service Down" }]
+          attempts: [
+            {
+              provider,
+              success: false,
+              durationMs: 100,
+              errorType: "api_error",
+              errorMessage: "Service Down"
+            }
+          ]
         })
       );
 
-      const res = await callAI(
-        [{ role: "user", content: "Live sync prompt" }],
-        { userId: "user-123", isAsyncContext: false, bypassRateLimit: true }
-      );
+      const res = await callAI([{ role: "user", content: "Live sync prompt" }], {
+        userId: "user-123",
+        isAsyncContext: false,
+        bypassRateLimit: true
+      });
 
       expect(res.success).toBe(false);
       expect(res.content).toBeNull();
@@ -184,21 +215,34 @@ describe("callAI Infrastructure Service", () => {
           durationMs: 100,
           tokensIn: 0,
           tokensOut: 0,
-          attempts: [{ provider, success: false, durationMs: 100, errorType: "api_error", errorMessage: "Service Down" }]
+          attempts: [
+            {
+              provider,
+              success: false,
+              durationMs: 100,
+              errorType: "api_error",
+              errorMessage: "Service Down"
+            }
+          ]
         })
       );
 
-      const res = await callAI(
-        [{ role: "user", content: "Generate daily summary" }],
-        { userId: "user-123", requestType: "daily_summary", isAsyncContext: true, bypassRateLimit: true }
-      );
+      const res = await callAI([{ role: "user", content: "Generate daily summary" }], {
+        userId: "user-123",
+        requestType: "daily_summary",
+        isAsyncContext: true,
+        bypassRateLimit: true
+      });
 
       expect(res.success).toBe(false);
       expect(res.queuedForRetry).toBe(true);
-      expect(enqueueJob).toHaveBeenCalledWith("ai_retry_job", expect.objectContaining({
-        userId: "user-123",
-        requestType: "daily_summary"
-      }));
+      expect(enqueueJob).toHaveBeenCalledWith(
+        "ai_retry_job",
+        expect.objectContaining({
+          userId: "user-123",
+          requestType: "daily_summary"
+        })
+      );
     });
   });
 

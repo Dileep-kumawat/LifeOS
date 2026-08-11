@@ -30,7 +30,12 @@ const WEEKDAYS = [
   { label: "Sat", value: 6 }
 ];
 
-export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = false }: HabitFormProps) {
+export function HabitForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  isSubmitting = false
+}: HabitFormProps) {
   const { data: userPreferences } = useNotificationPreferences();
   const areHabitRemindersDisabled =
     userPreferences?.habitReminders?.push === false &&
@@ -49,9 +54,7 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
   const [reminderEnabled, setReminderEnabled] = useState<boolean>(
     initialValues?.reminderEnabled ?? Boolean(initialValues?.reminderTime)
   );
-  const [reminderTime, setReminderTime] = useState<string>(
-    initialValues?.reminderTime || "08:00"
-  );
+  const [reminderTime, setReminderTime] = useState<string>(initialValues?.reminderTime || "08:00");
 
   const toggleDay = (day: number) => {
     setDaysOfWeek((prev) =>
@@ -76,7 +79,10 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-md max-w-lg w-full">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-6 rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-md max-w-lg w-full"
+    >
       <div className="flex items-center justify-between border-b border-[#e6e6e6] pb-4">
         <h2 className="text-xl font-bold text-[#000000]">
           {initialValues?._id ? "Edit Habit" : "Create New Habit"}
@@ -190,7 +196,9 @@ export function HabitForm({ initialValues, onSubmit, onCancel, isSubmitting = fa
                 min="1"
                 max="7"
                 value={timesPerPeriod}
-                onChange={(e) => setTimesPerPeriod(Math.min(7, Math.max(1, Number(e.target.value))))}
+                onChange={(e) =>
+                  setTimesPerPeriod(Math.min(7, Math.max(1, Number(e.target.value))))
+                }
                 className="w-20 rounded-lg border border-[#e6e6e6] bg-white px-3 py-1.5 text-sm font-semibold text-[#000000] focus:border-[#0075de] focus:outline-none"
               />
               <span className="text-xs text-[#615d59]">times per week (any days)</span>

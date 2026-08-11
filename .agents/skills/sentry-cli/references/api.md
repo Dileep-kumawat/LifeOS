@@ -16,6 +16,7 @@ Make an authenticated API request
 Make an authenticated API request
 
 **Flags:**
+
 - `-X, --method <value> - The HTTP method for the request - (default: "GET")`
 - `-d, --data <value> - Inline JSON body for the request (like curl -d)`
 - `-F, --field <value>... - Add a typed parameter (key=value, key[sub]=value, key[]=value)`

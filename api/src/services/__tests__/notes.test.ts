@@ -29,8 +29,14 @@ describe("extractContentText", () => {
         {
           type: "bulletList",
           content: [
-            { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "First" }] }] },
-            { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Second" }] }] }
+            {
+              type: "listItem",
+              content: [{ type: "paragraph", content: [{ type: "text", text: "First" }] }]
+            },
+            {
+              type: "listItem",
+              content: [{ type: "paragraph", content: [{ type: "text", text: "Second" }] }]
+            }
           ]
         }
       ]
@@ -45,8 +51,18 @@ describe("extractContentText", () => {
         {
           type: "taskList",
           content: [
-            { type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: "Buy milk" }] }] },
-            { type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Write notes spec" }] }] }
+            {
+              type: "taskItem",
+              attrs: { checked: false },
+              content: [{ type: "paragraph", content: [{ type: "text", text: "Buy milk" }] }]
+            },
+            {
+              type: "taskItem",
+              attrs: { checked: true },
+              content: [
+                { type: "paragraph", content: [{ type: "text", text: "Write notes spec" }] }
+              ]
+            }
           ]
         }
       ]
@@ -75,7 +91,10 @@ describe("extractContentText", () => {
   });
 
   it("yields empty string for documents with no text (e.g. only an image)", () => {
-    const doc = { type: "doc", content: [{ type: "image", attrs: { src: "data:image/png;base64,abc" } }] };
+    const doc = {
+      type: "doc",
+      content: [{ type: "image", attrs: { src: "data:image/png;base64,abc" } }]
+    };
     expect(extractContentText(doc)).toBe("");
   });
 
@@ -114,10 +133,12 @@ describe("buildNotesListFilter", () => {
   });
 
   it("adds folderId only when it is a valid ObjectId", () => {
-    expect(buildNotesListFilter({ userId: "u", folderId: "not-object-id" }).filter.folderId).toBeUndefined();
-    expect(buildNotesListFilter({ userId: "u", folderId: "507f1f77bcf86cd799439011" }).filter.folderId).toBe(
-      "507f1f77bcf86cd799439011"
-    );
+    expect(
+      buildNotesListFilter({ userId: "u", folderId: "not-object-id" }).filter.folderId
+    ).toBeUndefined();
+    expect(
+      buildNotesListFilter({ userId: "u", folderId: "507f1f77bcf86cd799439011" }).filter.folderId
+    ).toBe("507f1f77bcf86cd799439011");
   });
 
   it("adds tag filter to the tags array", () => {
@@ -131,7 +152,11 @@ describe("buildNotesListFilter", () => {
   });
 
   it("adds $text search and sorts by textScore relevance — the query path that ranks title matches above body matches (title carries higher index weight)", () => {
-    const { filter, sort } = buildNotesListFilter({ userId: "u", search: "meeting", folderId: "507f1f77bcf86cd799439011" });
+    const { filter, sort } = buildNotesListFilter({
+      userId: "u",
+      search: "meeting",
+      folderId: "507f1f77bcf86cd799439011"
+    });
     expect(filter.$text).toEqual({ $search: "meeting" });
     expect(sort).toEqual({ score: { $meta: "textScore" } });
   });
@@ -185,7 +210,10 @@ describe("reassignNotesToRoot", () => {
     let capturedFilter: unknown;
     let capturedUpdate: unknown;
     const fakeNotes: {
-      updateMany(filter: Record<string, unknown>, update: Record<string, unknown>): Promise<{ modifiedCount: number }>;
+      updateMany(
+        filter: Record<string, unknown>,
+        update: Record<string, unknown>
+      ): Promise<{ modifiedCount: number }>;
     } = {
       updateMany: async (filter, update) => {
         capturedFilter = filter;

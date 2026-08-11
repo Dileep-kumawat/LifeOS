@@ -252,10 +252,7 @@ export function NoteEditor({
         </button>
       </div>
 
-      <EditorContent
-        editor={editor}
-        className="rounded-lg border border-[#e6e6e6] bg-white p-4"
-      />
+      <EditorContent editor={editor} className="rounded-lg border border-[#e6e6e6] bg-white p-4" />
     </div>
   );
 }

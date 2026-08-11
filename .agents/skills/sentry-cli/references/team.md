@@ -16,21 +16,22 @@ Work with Sentry teams
 List teams
 
 **Flags:**
+
 - `-n, --limit <value> - Maximum number of teams to list - (default: "25")`
 - `-f, --fresh - Bypass cache, re-detect projects, and fetch fresh data`
 - `-c, --cursor <value> - Navigate pages: "next", "prev", "first" (or raw cursor string)`
 
 **JSON Fields** (use `--json --fields` to select specific fields):
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Team ID |
-| `slug` | string | Team slug |
-| `name` | string | Team name |
+| Field         | Type           | Description              |
+| ------------- | -------------- | ------------------------ |
+| `id`          | string         | Team ID                  |
+| `slug`        | string         | Team slug                |
+| `name`        | string         | Team name                |
 | `dateCreated` | string \| null | Creation date (ISO 8601) |
-| `isMember` | boolean | Whether you are a member |
-| `teamRole` | string \| null | Your role in the team |
-| `memberCount` | number | Number of members |
+| `isMember`    | boolean        | Whether you are a member |
+| `teamRole`    | string \| null | Your role in the team    |
+| `memberCount` | number         | Number of members        |
 
 **Examples:**
 

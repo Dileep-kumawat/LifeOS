@@ -5,8 +5,14 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   MONGO_URI: z.string().default("mongodb://localhost:27017/lifeos_dev"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
-  JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET must be at least 16 chars").default("dev-access-secret-change-me"),
-  JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be at least 16 chars").default("dev-refresh-secret-change-me"),
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(16, "JWT_ACCESS_SECRET must be at least 16 chars")
+    .default("dev-access-secret-change-me"),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(16, "JWT_REFRESH_SECRET must be at least 16 chars")
+    .default("dev-refresh-secret-change-me"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
   SENTRY_DSN: z.string().optional(),

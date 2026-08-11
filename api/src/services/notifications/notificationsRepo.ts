@@ -46,10 +46,9 @@ export async function markAllNotificationsRead(
     readStatus: readStatus ?? "unread"
   };
 
-  const result = await collection.updateMany(
-    filter,
-    { $set: { readStatus: "read", readAt: new Date() } }
-  );
+  const result = await collection.updateMany(filter, {
+    $set: { readStatus: "read", readAt: new Date() }
+  });
   return { updatedCount: result.modifiedCount ?? 0 };
 }
 

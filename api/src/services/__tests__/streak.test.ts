@@ -11,7 +11,7 @@ describe("Habit Streak Calculation Service", () => {
         { date: "2026-08-01", completed: true },
         { date: "2026-08-02", completed: true },
         { date: "2026-08-03", completed: false }, // Missed day
-        { date: "2026-08-04", completed: true }  // Next check-in after miss
+        { date: "2026-08-04", completed: true } // Next check-in after miss
       ];
 
       const stats = calculateHabitStats(checkIns, frequency, 2, "2026-08-04");

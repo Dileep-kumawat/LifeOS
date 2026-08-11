@@ -135,8 +135,6 @@ export async function sendPasswordResetEmail({
   }
 
   // Fallback if neither Resend nor Postmark key is configured or API calls failed
-  logger.info(
-    `[DEV/FALLBACK EMAIL SERVICE] Password reset token for ${toEmail}: ${resetToken}`
-  );
+  logger.info(`[DEV/FALLBACK EMAIL SERVICE] Password reset token for ${toEmail}: ${resetToken}`);
   logger.info(`[DEV/FALLBACK EMAIL SERVICE] Reset URL: ${resetUrl}`);
 }

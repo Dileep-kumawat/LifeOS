@@ -15,7 +15,11 @@ export function HabitListPage() {
 
   const todayDateStr = new Date().toISOString().split("T")[0];
 
-  const { data: habits = [], isLoading, isError } = useQuery<HabitCardItem[]>({
+  const {
+    data: habits = [],
+    isLoading,
+    isError
+  } = useQuery<HabitCardItem[]>({
     queryKey: ["habits"],
     queryFn: async () => {
       const response = await apiClient.get("/habits");
@@ -24,7 +28,9 @@ export function HabitListPage() {
   });
 
   // Fetch recent check-ins for active habits over past 7 days
-  const { data: recentCheckIns = [] } = useQuery<Array<{ habitId: string; date: string; completed: boolean }>>({
+  const { data: recentCheckIns = [] } = useQuery<
+    Array<{ habitId: string; date: string; completed: boolean }>
+  >({
     queryKey: ["habits-recent-checkins", todayDateStr],
     queryFn: async () => {
       // Fetch checkins for each habit or aggregate
@@ -48,7 +54,15 @@ export function HabitListPage() {
 
   // Check-in toggle mutation with Optimistic Update
   const checkInMutation = useMutation({
-    mutationFn: async ({ habitId, date, completed }: { habitId: string; date: string; completed: boolean }) => {
+    mutationFn: async ({
+      habitId,
+      date,
+      completed
+    }: {
+      habitId: string;
+      date: string;
+      completed: boolean;
+    }) => {
       const response = await apiClient.post(`/habits/${habitId}/check-in`, { date, completed });
       return response.data;
     },
@@ -57,7 +71,8 @@ export function HabitListPage() {
       await queryClient.cancelQueries({ queryKey: ["habits-recent-checkins"] });
 
       const prevHabits = queryClient.getQueryData<HabitCardItem[]>(["habits"]);
-      const prevCheckIns = queryClient.getQueryData<any[]>(["habits-recent-checkins", todayDateStr]) || [];
+      const prevCheckIns =
+        queryClient.getQueryData<any[]>(["habits-recent-checkins", todayDateStr]) || [];
 
       // Optimistically update recent check-in list
       const updatedCheckIns = prevCheckIns.filter(
@@ -178,7 +193,8 @@ export function HabitListPage() {
           <Activity className="size-12 text-[#a39e98] mb-3" />
           <h3 className="text-base font-semibold text-[#000000]">No habits tracked yet</h3>
           <p className="text-xs text-[#615d59] max-w-sm mt-1 mb-4">
-            Build routine habits with custom frequencies, daily check-ins, and automated streak tracking.
+            Build routine habits with custom frequencies, daily check-ins, and automated streak
+            tracking.
           </p>
           <button
             onClick={() => setIsFormOpen(true)}

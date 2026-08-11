@@ -25,7 +25,10 @@ const spec = swaggerJsdoc({
 // non-local environment they sit behind an IP allowlist (SWAGGER_ALLOWED_IPS,
 // comma-separated). With an empty allowlist, docs are disabled outright.
 function normalizeIp(ip: string): string {
-  return ip.replace(/^::ffff:/, "").replace(/^::1$/, "127.0.0.1").replace(/^\[?(.*?)\]?$/, "$1");
+  return ip
+    .replace(/^::ffff:/, "")
+    .replace(/^::1$/, "127.0.0.1")
+    .replace(/^\[?(.*?)\]?$/, "$1");
 }
 
 function gateSwaggerDocs(req: Request, res: Response, next: NextFunction) {

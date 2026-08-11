@@ -49,7 +49,9 @@ export function NoteCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
-          <h3 className="truncate text-sm font-semibold text-[#000000]">{note.title || "Untitled"}</h3>
+          <h3 className="truncate text-sm font-semibold text-[#000000]">
+            {note.title || "Untitled"}
+          </h3>
           <p className="line-clamp-3 text-xs leading-relaxed text-[#615d59]">{snippet}</p>
         </div>
         {onDelete && (
@@ -85,7 +87,9 @@ export function NoteCard({
           <div className="flex shrink-0 items-center gap-1">
             <Tag className="size-3 text-[#a39e98]" aria-hidden="true" />
             <span className="text-[11px] text-[#31302e]">{note.tags.slice(0, 2).join(", ")}</span>
-            {note.tags.length > 2 && <span className="text-[11px] text-[#a39e98]">+{note.tags.length - 2}</span>}
+            {note.tags.length > 2 && (
+              <span className="text-[11px] text-[#a39e98]">+{note.tags.length - 2}</span>
+            )}
           </div>
         )}
       </div>

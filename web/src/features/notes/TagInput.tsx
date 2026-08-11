@@ -29,7 +29,8 @@ export function TagInput({
       .filter((s) => (trimmedQuery ? s.toLowerCase().includes(trimmedQuery) : true));
   }, [suggestions, value, trimmedQuery]);
 
-  const canCreateNew = trimmedQuery.length > 0 && !value.some((v) => v.toLowerCase() === trimmedQuery);
+  const canCreateNew =
+    trimmedQuery.length > 0 && !value.some((v) => v.toLowerCase() === trimmedQuery);
 
   function addTag(raw: string) {
     const tag = raw.trim().replace(/,$/, "");
@@ -72,7 +73,9 @@ export function TagInput({
     }
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => (matches.length === 0 ? -1 : (i - 1 + matches.length) % matches.length));
+      setActiveIndex((i) =>
+        matches.length === 0 ? -1 : (i - 1 + matches.length) % matches.length
+      );
       return;
     }
     if (e.key === "Escape") {

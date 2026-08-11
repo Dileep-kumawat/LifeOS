@@ -65,7 +65,9 @@ export async function processRecurringEventReminders(now: Date = new Date()): Pr
 
     for (const occurrence of occurrences) {
       const occurrenceStart = new Date(occurrence.startTime);
-      const scheduledFor = new Date(occurrenceStart.getTime() - event.reminderLeadMinutes * 60 * 1000);
+      const scheduledFor = new Date(
+        occurrenceStart.getTime() - event.reminderLeadMinutes * 60 * 1000
+      );
 
       // Only schedule if reminder time is in the future
       if (scheduledFor.getTime() > now.getTime()) {

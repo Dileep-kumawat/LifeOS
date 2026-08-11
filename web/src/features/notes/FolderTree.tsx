@@ -132,7 +132,9 @@ function TreeRow({
         </div>
       </div>
 
-      {hasChildren && expanded && <ul className="flex flex-col">{children.map((child) => child)}</ul>}
+      {hasChildren && expanded && (
+        <ul className="flex flex-col">{children.map((child) => child)}</ul>
+      )}
     </li>
   );
 }
@@ -186,7 +188,9 @@ export function FolderTree({
       <div
         className={cn(
           "group flex items-center gap-1 rounded-md px-2 py-1 text-sm",
-          activeFolderId === null ? "bg-[#f6f5f4] text-[#000000]" : "text-[#31302e] hover:bg-[#f6f5f4]"
+          activeFolderId === null
+            ? "bg-[#f6f5f4] text-[#000000]"
+            : "text-[#31302e] hover:bg-[#f6f5f4]"
         )}
         onDragOver={onMoveNoteToFolder ? (e) => e.preventDefault() : undefined}
         onDrop={onMoveNoteToFolder ? handleRootDrop : undefined}
@@ -212,9 +216,7 @@ export function FolderTree({
         </div>
       </div>
 
-      <ul className="flex flex-col">
-        {childrenOf(null).map((folder) => renderNode(folder, 0))}
-      </ul>
+      <ul className="flex flex-col">{childrenOf(null).map((folder) => renderNode(folder, 0))}</ul>
     </div>
   );
 }

@@ -14,7 +14,11 @@ interface ForgotPasswordFormProps {
   isSuccessState?: boolean;
 }
 
-export function ForgotPasswordForm({ onSubmit, onNavigateLogin, isSuccessState = false }: ForgotPasswordFormProps) {
+export function ForgotPasswordForm({
+  onSubmit,
+  onNavigateLogin,
+  isSuccessState = false
+}: ForgotPasswordFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(isSuccessState);
 
@@ -56,7 +60,8 @@ export function ForgotPasswordForm({ onSubmit, onNavigateLogin, isSuccessState =
             <div className="flex flex-col gap-1">
               <AlertTitle>Check your email</AlertTitle>
               <AlertDescription>
-                If an account exists with that email address, we have sent instructions to reset your password.
+                If an account exists with that email address, we have sent instructions to reset
+                your password.
               </AlertDescription>
             </div>
           </Alert>
