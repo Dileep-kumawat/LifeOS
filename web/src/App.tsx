@@ -17,6 +17,7 @@ import { HabitListPage } from "./features/habits/HabitListPage";
 import { HabitDetailPage } from "./features/habits/HabitDetailPage";
 import { NotesListPage } from "./features/notes/NotesListPage";
 import { NoteDetailPage } from "./features/notes/NoteDetailPage";
+import { ChatPage } from "./features/ai/ChatPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
@@ -119,6 +120,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <NoteDetailPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "chat",
+        element: (
+          <ProtectedRoute>
+            <ChatPage />
           </ProtectedRoute>
         )
       },

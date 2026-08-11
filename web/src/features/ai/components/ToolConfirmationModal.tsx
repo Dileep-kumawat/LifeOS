@@ -1,0 +1,151 @@
+import React from "react";
+import { Calendar, CheckCircle2, FileText, Target, AlertTriangle, X } from "lucide-react";
+import type { ToolCallPayload } from "../types";
+
+export interface ToolConfirmationModalProps {
+  isOpen: boolean;
+  toolCall: ToolCallPayload | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isExecuting?: boolean;
+}
+
+export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
+  isOpen,
+  toolCall,
+  onConfirm,
+  onCancel,
+  isExecuting = false
+}) => {
+  if (!isOpen || !toolCall) return null;
+
+  const { toolName, args } = toolCall;
+
+  // Format human readable title & details based on tool name
+  const renderDetails = () => {
+    switch (toolName) {
+      case "create_calendar_event": {
+        const title = args.title || "Untitled Event";
+        const start = args.startTime ? new Date(args.startTime).toLocaleString() : "Unspecified start";
+        const end = args.endTime ? new Date(args.endTime).toLocaleString() : "Unspecified end";
+        const location = args.location ? `Location: ${args.location}` : null;
+        const timezone = args.timezone || "UTC";
+
+        return {
+          icon: <Calendar className="w-6 h-6 text-[#0075de]" />,
+          actionTitle: "Create Calendar Event",
+          description: `Schedule "${title}" on your calendar?`,
+          items: [
+            { label: "Title", value: title },
+            { label: "Start Time", value: start },
+            { label: "End Time", value: end },
+            { label: "Timezone", value: timezone },
+            ...(location ? [{ label: "Location", value: args.location }] : []),
+            ...(args.recurrenceRule ? [{ label: "Recurrence", value: args.recurrenceRule }] : [])
+          ]
+        };
+      }
+
+      case "create_habit": {
+        const title = args.title || "Untitled Habit";
+        const freq = args.frequency?.type || "daily";
+
+        return {
+          icon: <Target className="w-6 h-6 text-emerald-600" />,
+          actionTitle: "Create Habit Tracker",
+          description: `Create habit tracker "${title}" (${freq})?`,
+          items: [
+            { label: "Habit Name", value: title },
+            { label: "Frequency", value: freq },
+            ...(args.reminderTime ? [{ label: "Daily Reminder", value: args.reminderTime }] : [])
+          ]
+        };
+      }
+
+      case "create_note": {
+        const title = args.title || "Untitled Note";
+        const snippet = args.content ? (args.content.length > 100 ? args.content.slice(0, 100) + "..." : args.content) : "Empty content";
+
+        return {
+          icon: <FileText className="w-6 h-6 text-purple-600" />,
+          actionTitle: "Create Notebook Note",
+          description: `Create new note "${title}" in your notebook?`,
+          items: [
+            { label: "Title", value: title },
+            { label: "Content Preview", value: snippet },
+            ...(args.tags?.length ? [{ label: "Tags", value: args.tags.join(", ") }] : [])
+          ]
+        };
+      }
+
+      default:
+        return {
+          icon: <AlertTriangle className="w-6 h-6 text-amber-600" />,
+          actionTitle: `Execute Action: ${toolName}`,
+          description: `Confirm proposed tool action with parameters below?`,
+          items: Object.entries(args).map(([k, v]) => ({ label: k, value: String(v) }))
+        };
+    }
+  };
+
+  const details = renderDetails();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
+          <div className="flex items-center gap-3">
+            {details.icon}
+            <div>
+              <h3 className="text-base font-semibold text-[#000000]">{details.actionTitle}</h3>
+              <p className="text-xs text-[#615d59]">User action confirmation required (FR-2.4)</p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-[#615d59] hover:text-[#000000] p-1 rounded-md transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 flex flex-col gap-4">
+          <p className="text-sm font-medium text-[#31302e]">{details.description}</p>
+
+          {/* Formatted Parameters List */}
+          <div className="bg-[#f6f5f4] border border-[#e6e6e6] rounded-lg p-4 flex flex-col gap-2.5">
+            {details.items.map((item, idx) => (
+              <div key={idx} className="flex flex-col text-xs">
+                <span className="font-semibold text-[#615d59] uppercase tracking-wider">{item.label}</span>
+                <span className="font-medium text-[#000000] break-words">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e6e6e6] bg-slate-50">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isExecuting}
+            className="px-4 py-2 text-sm font-medium text-[#31302e] bg-white border border-[#e6e6e6] rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+          >
+            Cancel Action
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isExecuting}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0075de] rounded-lg hover:bg-[#005bab] transition-colors disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            {isExecuting ? "Executing..." : "Confirm & Execute"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

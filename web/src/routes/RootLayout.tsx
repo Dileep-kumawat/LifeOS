@@ -41,6 +41,12 @@ export function RootLayout() {
               Notes
             </Link>
             <Link
+              to="/chat"
+              className="text-sm font-semibold text-[#0075de] transition-colors hover:text-[#005bab]"
+            >
+              AI Chat
+            </Link>
+            <Link
               to="/settings"
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >

@@ -1,6 +1,8 @@
+import http from "http";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { Server } from "socket.io";
 
 import { env } from "./config/env.js";
 import { logger, httpLogger } from "./logger.js";
@@ -13,13 +15,22 @@ import { goalsRouter } from "./routes/goals.js";
 import { habitsRouter } from "./routes/habits.js";
 import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
+import { aiChatRouter } from "./routes/aiChat.js";
 import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
+import { setupChatSocket } from "./services/ai/chatSocket.js";
 
 async function main() {
   await connectDb();
 
   const app = express();
+  const server = http.createServer(app);
+
+  const io = new Server(server, {
+    cors: { origin: env.CORS_ORIGIN, credentials: true }
+  });
+
+  setupChatSocket(io);
 
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
@@ -37,13 +48,14 @@ async function main() {
   v1.use(habitsRouter);
   v1.use(notesRouter);
   v1.use(notificationsRouter);
+  v1.use(aiChatRouter);
   app.use("/api/v1", v1);
 
   // Start the single background job worker (queued deliveries, later OCR,
   // embeddings, daily summaries). No-op under tests.
   startJobsWorker();
 
-  app.listen(env.PORT, () => {
+  server.listen(env.PORT, () => {
     logger.info(`LifeOS API listening on :${env.PORT}`);
     logger.info(`Swagger UI: http://localhost:${env.PORT}/api/v1/docs`);
   });

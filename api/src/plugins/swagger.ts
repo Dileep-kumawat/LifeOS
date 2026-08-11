@@ -12,7 +12,37 @@ const spec = swaggerJsdoc({
     openapi: "3.0.3",
     info: {
       title: "LifeOS API",
-      description: "AI Personal Operating System — REST API",
+      description: `AI Personal Operating System — REST API
+
+## WebSocket Chat Protocol Documentation (FR-2.3, FR-2.4, FR-2.10, FR-2.14)
+Since the real-time AI conversation endpoint uses WebSockets (Socket.IO) for token-by-token streaming and interactive tool-confirmation dialogs, it is documented below rather than forced into OpenAPI path schemas.
+
+### Connection
+- **Endpoint**: \`ws://<host>:<port>/socket.io/\` (or via HTTP handshake with \`transports: ["websocket", "polling"]\`)
+- **Authentication**: Pass JWT Access Token via \`auth: { token: "<jwt_access_token>" }\` in Socket.IO handshake or via \`Authorization: Bearer <token>\` header.
+
+### Client-to-Server Events
+1. **\`send_message\`**: Send user prompt
+   - Payload: \`{ conversationId?: string, content: string }\`
+2. **\`confirm_tool_call\`**: Explicit user confirmation of proposed action (FR-2.4)
+   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
+3. **\`cancel_tool_call\`**: Explicit user cancellation of proposed action (FR-2.4)
+   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
+
+### Server-to-Client Events
+1. **\`chat_stream_chunk\`**: Token-by-token text streaming chunk
+   - Payload: \`{ conversationId: string, chunk: string }\`
+2. **\`chat_stream_end\`**: Stream completion signal
+   - Payload: \`{ conversationId: string, messageId: string }\`
+3. **\`retrying_with_backup_model\`**: Mid-request fallback indicator (SRS §10.5.1)
+   - Payload: \`{ provider: string, attempt: number, message: string }\`
+4. **\`tool_call_proposed\`**: Proposed action needing confirmation modal (FR-2.4)
+   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string, toolName: string, args: object }\`
+5. **\`tool_call_executed\`**: Successful execution after confirmation
+   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string, toolName: string, result: object }\`
+6. **\`tool_call_cancelled\`**: Action cancelled by user
+   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
+`,
       version: "1.0.0"
     },
     servers: [{ url: "/api/v1" }]
