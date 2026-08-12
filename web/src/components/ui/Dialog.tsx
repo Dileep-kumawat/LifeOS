@@ -25,6 +25,10 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   );
 }
 
+export function DialogContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-col gap-2", className)} {...props} />;
+}
+
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("flex flex-col gap-1.5 text-left mb-4", className)} {...props} />;
 }

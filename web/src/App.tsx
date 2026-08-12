@@ -18,6 +18,7 @@ import { HabitDetailPage } from "./features/habits/HabitDetailPage";
 import { NotesListPage } from "./features/notes/NotesListPage";
 import { NoteDetailPage } from "./features/notes/NoteDetailPage";
 import { ChatPage } from "./features/ai/ChatPage";
+import { FinancePage } from "./features/finance/FinancePage";
 import { DailySummaryCard } from "./features/ai/components/DailySummaryCard";
 import { useTodaySummary } from "./features/ai/hooks/useDailySummary";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -34,7 +35,7 @@ function DashboardHome() {
           Welcome back, {user?.name || "User"}!
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          LifeOS Core — Calendar, Goals, Habits, Notes & AI Daily Summary active.
+          LifeOS Core — Calendar, Goals, Habits, Notes, Finance & AI Daily Summary active.
         </p>
       </div>
 
@@ -48,6 +49,12 @@ function DashboardHome() {
       />
 
       <div className="flex flex-wrap gap-4">
+        <Link
+          to="/finance"
+          className="inline-flex items-center justify-center rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          Finance & Budget
+        </Link>
         <Link
           to="/goals"
           className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -87,6 +94,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <DashboardHome />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "finance",
+        element: (
+          <ProtectedRoute>
+            <FinancePage />
           </ProtectedRoute>
         )
       },

@@ -24,6 +24,7 @@ import {
 } from "../auth/tokenService.js";
 import { sendPasswordResetEmail } from "../services/emailService.js";
 import { scheduleAccountPurge } from "../services/accountPurgeQueue.js";
+import { seedDefaultCategories } from "../services/financeCategory.js";
 
 export const authRouter = Router();
 
@@ -106,6 +107,8 @@ authRouter.post("/auth/register", validate(registerSchema), async (req: Request,
       emailVerified: false,
       status: "active"
     });
+
+    await seedDefaultCategories(user._id);
 
     const accessToken = generateAccessToken(user);
     const deviceInfo = req.headers["user-agent"] || "Unknown Device";
