@@ -13,14 +13,24 @@ import { enqueueEmbeddingJob } from "./embeddingJob.js";
 
 export const createCalendarEventSchema = z.object({
   title: z.string().describe("Title of the calendar event"),
-  startTime: z.string().describe("Start time of the event in ISO 8601 string format (e.g. 2026-08-12T10:00:00.000Z)"),
-  endTime: z.string().describe("End time of the event in ISO 8601 string format (e.g. 2026-08-12T11:00:00.000Z)"),
+  startTime: z
+    .string()
+    .describe("Start time of the event in ISO 8601 string format (e.g. 2026-08-12T10:00:00.000Z)"),
+  endTime: z
+    .string()
+    .describe("End time of the event in ISO 8601 string format (e.g. 2026-08-12T11:00:00.000Z)"),
   timezone: z.string().optional().describe("IANA timezone identifier, e.g. UTC, America/New_York"),
   isAllDay: z.boolean().optional().describe("Whether this event is an all-day event"),
   description: z.string().optional().describe("Optional description or details for the event"),
   location: z.string().optional().describe("Location or link for the event"),
-  recurrenceRule: z.string().optional().describe("Optional RRULE string, e.g. FREQ=WEEKLY;BYDAY=MO,WE"),
-  reminderLeadMinutes: z.number().optional().describe("Optional reminder lead time in minutes before event start")
+  recurrenceRule: z
+    .string()
+    .optional()
+    .describe("Optional RRULE string, e.g. FREQ=WEEKLY;BYDAY=MO,WE"),
+  reminderLeadMinutes: z
+    .number()
+    .optional()
+    .describe("Optional reminder lead time in minutes before event start")
 });
 
 export const createHabitSchema = z.object({
@@ -33,7 +43,10 @@ export const createHabitSchema = z.object({
     })
     .optional()
     .describe("Frequency configuration for the habit"),
-  reminderTime: z.string().optional().describe("Optional daily reminder time in HH:mm format, e.g. 08:00"),
+  reminderTime: z
+    .string()
+    .optional()
+    .describe("Optional daily reminder time in HH:mm format, e.g. 08:00"),
   reminderEnabled: z.boolean().optional().describe("Whether daily reminders are enabled")
 });
 
@@ -50,32 +63,23 @@ export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 
 // ─── 2. Provider-Agnostic LangChain Tool Definitions ───────────────────────
 
-export const createCalendarEventTool = tool(
-  async (input) => JSON.stringify(input),
-  {
-    name: "create_calendar_event",
-    description: "Schedule a new event or meeting on the user's calendar.",
-    schema: createCalendarEventSchema
-  }
-);
+export const createCalendarEventTool = tool(async (input) => JSON.stringify(input), {
+  name: "create_calendar_event",
+  description: "Schedule a new event or meeting on the user's calendar.",
+  schema: createCalendarEventSchema
+});
 
-export const createHabitTool = tool(
-  async (input) => JSON.stringify(input),
-  {
-    name: "create_habit",
-    description: "Create a new habit tracker for the user.",
-    schema: createHabitSchema
-  }
-);
+export const createHabitTool = tool(async (input) => JSON.stringify(input), {
+  name: "create_habit",
+  description: "Create a new habit tracker for the user.",
+  schema: createHabitSchema
+});
 
-export const createNoteTool = tool(
-  async (input) => JSON.stringify(input),
-  {
-    name: "create_note",
-    description: "Create a new note or document in the user's notebook.",
-    schema: createNoteSchema
-  }
-);
+export const createNoteTool = tool(async (input) => JSON.stringify(input), {
+  name: "create_note",
+  description: "Create a new note or document in the user's notebook.",
+  schema: createNoteSchema
+});
 
 export const ALL_AI_TOOLS = [createCalendarEventTool, createHabitTool, createNoteTool];
 
@@ -143,7 +147,8 @@ export async function executeCreateHabit(userId: string, args: CreateHabitInput)
 
   const freqType = args.frequency?.type || "daily";
   const daysOfWeek = Array.isArray(args.frequency?.daysOfWeek) ? args.frequency.daysOfWeek : [];
-  const timesPerPeriod = typeof args.frequency?.timesPerPeriod === "number" ? args.frequency.timesPerPeriod : 1;
+  const timesPerPeriod =
+    typeof args.frequency?.timesPerPeriod === "number" ? args.frequency.timesPerPeriod : 1;
 
   const doc = await Habit.create({
     userId,

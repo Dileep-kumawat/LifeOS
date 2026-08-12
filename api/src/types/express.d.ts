@@ -5,7 +5,6 @@ import type { UserDoc } from "../models/User.js";
 // instead of `any`.
 declare global {
   namespace Express {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-pattern
     interface User extends UserDoc {}
   }
 }

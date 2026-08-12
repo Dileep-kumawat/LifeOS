@@ -30,7 +30,9 @@ function DashboardHome() {
   return (
     <div className="flex flex-col gap-6 p-8 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.name || "User"}!</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Welcome back, {user?.name || "User"}!
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           LifeOS Core — Calendar, Goals, Habits, Notes & AI Daily Summary active.
         </p>

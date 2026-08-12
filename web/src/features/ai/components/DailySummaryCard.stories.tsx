@@ -17,8 +17,18 @@ const sampleSummary = {
   userId: "user-123",
   date: "2026-08-12",
   yesterdayCompleted: [
-    { id: "h1", title: "Morning 30-min run", type: "habit", completedAt: "2026-08-11T07:30:00.000Z" },
-    { id: "h2", title: "Read 20 pages of book", type: "habit", completedAt: "2026-08-11T21:00:00.000Z" },
+    {
+      id: "h1",
+      title: "Morning 30-min run",
+      type: "habit",
+      completedAt: "2026-08-11T07:30:00.000Z"
+    },
+    {
+      id: "h2",
+      title: "Read 20 pages of book",
+      type: "habit",
+      completedAt: "2026-08-11T21:00:00.000Z"
+    },
     { id: "g1", title: "Complete Q3 Architecture Review", type: "goal" }
   ],
   todaySchedule: [

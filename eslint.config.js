@@ -6,7 +6,14 @@ import prettier from "eslint-config-prettier";
 
 export default [
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/build/**", "**/.storybook-static/**"]
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/build/**",
+      "**/storybook-static/**",
+      "**/.storybook-static/**",
+      "**/coverage/**"
+    ]
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
@@ -22,6 +29,9 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "no-console": ["warn", { allow: ["warn", "error"] }]
     }

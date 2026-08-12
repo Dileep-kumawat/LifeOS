@@ -182,7 +182,9 @@ async function handleAiRetry(job: Job<AiRetryJobData>): Promise<void> {
   );
 }
 
-async function handleGenerateDailySummary(job: Job<{ userId: string; date: string }>): Promise<void> {
+async function handleGenerateDailySummary(
+  job: Job<{ userId: string; date: string }>
+): Promise<void> {
   const { userId, date } = job.data;
   const { generateDailySummary } = await import("./ai/summaryGenerator.js");
   await generateDailySummary(userId, date);

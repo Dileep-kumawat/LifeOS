@@ -15,7 +15,9 @@ vi.mock("../embeddings.js", async (importOriginal) => {
   const actual: any = await importOriginal();
   return {
     ...actual,
-    generateEmbedding: vi.fn().mockImplementation((text: string) => actual.generateMockEmbedding(text))
+    generateEmbedding: vi
+      .fn()
+      .mockImplementation((text: string) => actual.generateMockEmbedding(text))
   };
 });
 
@@ -25,7 +27,12 @@ import { Note } from "../../../models/Note.js";
 import { Message } from "../../../models/Message.js";
 import { AiRequestLog } from "../../../models/AiRequestLog.js";
 import { Embedding } from "../../../models/Embedding.js";
-import { executeToolCall, executeCreateCalendarEvent, executeCreateHabit, executeCreateNote } from "../tools.js";
+import {
+  executeToolCall,
+  executeCreateCalendarEvent,
+  executeCreateHabit,
+  executeCreateNote
+} from "../tools.js";
 import { generateMockEmbedding } from "../embeddings.js";
 import { retrieveContext } from "../retriever.js";
 import { sanitizeExpiredAiLogs } from "../retention.js";
@@ -35,7 +42,9 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(Embedding, "aggregate").mockRejectedValue(new Error("Atlas vector search mock bypass"));
+    vi.spyOn(Embedding, "aggregate").mockRejectedValue(
+      new Error("Atlas vector search mock bypass")
+    );
   });
 
   // ─── 1. Tool Call Validation Parity & Execution Tests ────────────────────
@@ -66,11 +75,13 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
       expect(result.id).toBeDefined();
       expect(result.title).toBe("Study Session");
       expect(result.timezone).toBe("America/New_York");
-      expect(Event.create).toHaveBeenCalledWith(expect.objectContaining({
-        userId: mockUserId,
-        title: "Study Session",
-        timezone: "America/New_York"
-      }));
+      expect(Event.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: mockUserId,
+          title: "Study Session",
+          timezone: "America/New_York"
+        })
+      );
     });
 
     it("rejects create_calendar_event when endTime is before startTime", async () => {
@@ -103,10 +114,12 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
       const result = await executeCreateHabit(mockUserId, habitArgs);
       expect(result.id).toBeDefined();
       expect(result.title).toBe("Daily Running");
-      expect(Habit.create).toHaveBeenCalledWith(expect.objectContaining({
-        userId: mockUserId,
-        title: "Daily Running"
-      }));
+      expect(Habit.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: mockUserId,
+          title: "Daily Running"
+        })
+      );
     });
 
     it("executes create_note with ProseMirror content extraction", async () => {
@@ -156,10 +169,12 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
       const result = await executeToolCall(mockUserId, "create_habit", proposedArgs);
 
       expect(result.title).toBe("Confirmed Hydration Habit");
-      expect(Habit.create).toHaveBeenCalledWith(expect.objectContaining({
-        userId: mockUserId,
-        title: "Confirmed Hydration Habit"
-      }));
+      expect(Habit.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: mockUserId,
+          title: "Confirmed Hydration Habit"
+        })
+      );
     });
   });
 
@@ -174,13 +189,16 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
             sourceType: "habit",
             sourceId: new mongoose.Types.ObjectId(),
             title: "Morning Meditation",
-            embeddedText: "Habit: Morning Meditation. Current Streak: 12 days. Completion Rate: 85%",
+            embeddedText:
+              "Habit: Morning Meditation. Current Streak: 12 days. Completion Rate: 85%",
             vector: generateMockEmbedding("How productive was I this month?")
           }
         ])
       } as any);
 
-      const rag = await retrieveContext(mockUserId, "How productive was I this month?", { topK: 5 });
+      const rag = await retrieveContext(mockUserId, "How productive was I this month?", {
+        topK: 5
+      });
       expect(rag.query).toBe("How productive was I this month?");
       expect(rag.results.length).toBeGreaterThan(0);
     });

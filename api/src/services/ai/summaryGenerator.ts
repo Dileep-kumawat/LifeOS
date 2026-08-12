@@ -14,7 +14,9 @@ import {
 import { scheduleNotification } from "../notifications/scheduler.js";
 import { logger } from "../../logger.js";
 
-async function getOverridesMap(events: CalendarEventLike[]): Promise<Map<string, CalendarEventLike>> {
+async function getOverridesMap(
+  events: CalendarEventLike[]
+): Promise<Map<string, CalendarEventLike>> {
   const ids = new Set<string>();
   for (const event of events) {
     for (const exception of event.exceptions || []) {
@@ -33,16 +35,12 @@ export function getYesterdayDateKey(todayDateKey: string): string {
   return dateKeyInZone(date, "UTC");
 }
 
-export async function generateDailySummary(
-  userId: string,
-  dateStr: string
-): Promise<SummaryDoc> {
+export async function generateDailySummary(userId: string, dateStr: string): Promise<SummaryDoc> {
   const user = await User.findById(userId);
   if (!user) {
     throw new Error(`User not found: ${userId}`);
   }
 
-  const timezone = user.notificationPreferences?.dailySummary?.timezone || "UTC";
   const yesterdayKey = getYesterdayDateKey(dateStr);
 
   // 1. Yesterday's completed items
@@ -51,18 +49,24 @@ export async function generateDailySummary(
   const habits = await Habit.find({ _id: { $in: habitIds } }).lean();
   const habitMap = new Map(habits.map((h) => [h._id.toString(), h.title]));
 
-  const yesterdayCompleted: Array<{ id?: string; title: string; type: string; completedAt?: Date }> =
-    checkIns.map((c) => ({
-      id: c.habitId.toString(),
-      title: habitMap.get(c.habitId.toString()) || "Completed Habit",
-      type: "habit"
-    }));
+  const yesterdayCompleted: Array<{
+    id?: string;
+    title: string;
+    type: string;
+    completedAt?: Date;
+  }> = checkIns.map((c) => ({
+    id: c.habitId.toString(),
+    title: habitMap.get(c.habitId.toString()) || "Completed Habit",
+    type: "habit"
+  }));
 
   // Check recently completed goals
   const completedGoals = await Goal.find({
     userId,
     status: "completed"
-  }).limit(5).lean();
+  })
+    .limit(5)
+    .lean();
   for (const goal of completedGoals) {
     yesterdayCompleted.push({
       id: goal._id.toString(),
@@ -106,7 +110,10 @@ export async function generateDailySummary(
   }));
 
   // 3. Top 3 Priorities via callAI()
-  const activeGoals = await Goal.find({ userId, status: "active" }).select("title description targetDate").limit(10).lean();
+  const activeGoals = await Goal.find({ userId, status: "active" })
+    .select("title description targetDate")
+    .limit(10)
+    .lean();
 
   const systemMessage = {
     role: "system" as const,
@@ -136,7 +143,9 @@ Output strictly valid JSON with no extra commentary in this exact format:
   });
 
   if (!aiRes.success || !aiRes.content) {
-    throw new Error(`callAI failed during daily summary generation: ${aiRes.error || "No content served"}`);
+    throw new Error(
+      `callAI failed during daily summary generation: ${aiRes.error || "No content served"}`
+    );
   }
 
   let topPriorities: Array<{ title: string; category?: string; rationale?: string }> = [];
@@ -144,7 +153,10 @@ Output strictly valid JSON with no extra commentary in this exact format:
   try {
     const rawContent = aiRes.content.trim();
     const jsonStr = rawContent.startsWith("```")
-      ? rawContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
+      ? rawContent
+          .replace(/^```(?:json)?\n?/, "")
+          .replace(/\n?```$/, "")
+          .trim()
       : rawContent;
     const parsed = JSON.parse(jsonStr);
 
@@ -156,7 +168,10 @@ Output strictly valid JSON with no extra commentary in this exact format:
       }));
     }
   } catch (parseErr) {
-    logger.warn({ parseErr, content: aiRes.content }, "Failed to parse AI response for priorities, using fallback text parsing");
+    logger.warn(
+      { parseErr, content: aiRes.content },
+      "Failed to parse AI response for priorities, using fallback text parsing"
+    );
   }
 
   if (topPriorities.length === 0) {
@@ -219,6 +234,9 @@ Output strictly valid JSON with no extra commentary in this exact format:
     }
   }
 
-  logger.info({ userId, date: dateStr, summaryId: summaryDoc._id.toString() }, "Daily summary generated and enqueued for delivery");
+  logger.info(
+    { userId, date: dateStr, summaryId: summaryDoc._id.toString() },
+    "Daily summary generated and enqueued for delivery"
+  );
   return summaryDoc;
 }

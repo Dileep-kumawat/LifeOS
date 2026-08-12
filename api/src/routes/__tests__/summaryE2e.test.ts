@@ -32,9 +32,21 @@ vi.mock("../../services/ai/callAI.js", () => ({
     success: true,
     content: JSON.stringify({
       priorities: [
-        { title: "Complete Q3 Architecture Spec", category: "goal", rationale: "Target date approaching" },
-        { title: "Team Engineering Standup", category: "schedule", rationale: "Scheduled event at 09:00" },
-        { title: "Maintain 5-day habit streak", category: "habit", rationale: "Daily habit check-in" }
+        {
+          title: "Complete Q3 Architecture Spec",
+          category: "goal",
+          rationale: "Target date approaching"
+        },
+        {
+          title: "Team Engineering Standup",
+          category: "schedule",
+          rationale: "Scheduled event at 09:00"
+        },
+        {
+          title: "Maintain 5-day habit streak",
+          category: "habit",
+          rationale: "Daily habit check-in"
+        }
       ]
     }),
     providerServed: "mistral"
@@ -50,9 +62,9 @@ vi.mock("../../services/notifications/scheduler.js", () => ({
   })
 }));
 
-import { getYesterdayDateKey } from "../../services/ai/summaryGenerator.ts";
-import { getCurrentHHMM } from "../../services/ai/summaryDispatcher.ts";
-import { isPreferenceEnabled } from "../../services/notifications/preferences.ts";
+import { getYesterdayDateKey } from "../../services/ai/summaryGenerator.js";
+import { getCurrentHHMM } from "../../services/ai/summaryDispatcher.js";
+import { isPreferenceEnabled } from "../../services/notifications/preferences.js";
 
 describe("Daily Summary Feature (FR-10.1, FR-10.2, FR-10.4) Unit & Integration Tests", () => {
   beforeEach(() => {
@@ -154,7 +166,9 @@ describe("Daily Summary Feature (FR-10.1, FR-10.2, FR-10.4) Unit & Integration T
         const doc = mockSummariesStore.get(`${userId}:${dateKey}`);
         expect(doc).toBeDefined();
         expect(doc.date).toBe(dateKey);
-        expect(doc.yesterdayCompleted[0].title).toBe(`Habit checked on ${getYesterdayDateKey(dateKey)}`);
+        expect(doc.yesterdayCompleted[0].title).toBe(
+          `Habit checked on ${getYesterdayDateKey(dateKey)}`
+        );
         expect(doc.todaySchedule[0].title).toBe(`Sync Meeting on ${dateKey}`);
         expect(doc.topPriorities[0].title).toBe(`Priority 1 for ${dateKey}`);
       }

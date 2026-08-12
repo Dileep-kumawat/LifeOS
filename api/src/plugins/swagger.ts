@@ -12,36 +12,39 @@ const spec = swaggerJsdoc({
     openapi: "3.0.3",
     info: {
       title: "LifeOS API",
-      description: `AI Personal Operating System — REST API
+      description: `AI Personal Operating System — REST API & Real-time WebSocket Protocol
 
-## WebSocket Chat Protocol Documentation (FR-2.3, FR-2.4, FR-2.10, FR-2.14)
-Since the real-time AI conversation endpoint uses WebSockets (Socket.IO) for token-by-token streaming and interactive tool-confirmation dialogs, it is documented below rather than forced into OpenAPI path schemas.
+<div style="background-color: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 6px; margin: 16px 0 24px 0; color: #dbeafe;">
+  <strong style="color: #60a5fa;">Note on Testing:</strong> The real-time AI conversation protocol operates over WebSockets (Socket.IO) for token-by-token streaming, mid-request provider fallback notifications, and interactive write confirmation modals.<br/>
+  <span style="font-size: 13px; opacity: 0.9;"><strong>Swagger UI's "Try It Out" interface only supports standard REST HTTP endpoints and cannot execute WebSocket connections.</strong> To test real-time AI chat stream, connect using a Socket.IO v4 client or the LifeOS web app frontend.</span>
+</div>
 
-### Connection
-- **Endpoint**: \`ws://<host>:<port>/socket.io/\` (or via HTTP handshake with \`transports: ["websocket", "polling"]\`)
-- **Authentication**: Pass JWT Access Token via \`auth: { token: "<jwt_access_token>" }\` in Socket.IO handshake or via \`Authorization: Bearer <token>\` header.
+### WebSocket Chat Protocol Documentation (FR-2.3, FR-2.4, FR-2.6, FR-2.10, FR-2.14)
 
-### Client-to-Server Events
-1. **\`send_message\`**: Send user prompt
-   - Payload: \`{ conversationId?: string, content: string }\`
-2. **\`confirm_tool_call\`**: Explicit user confirmation of proposed action (FR-2.4)
-   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
-3. **\`cancel_tool_call\`**: Explicit user cancellation of proposed action (FR-2.4)
-   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
+#### 1. Connection & Authentication Handshake
+* **WS Endpoint**: <code>ws://&lt;host&gt;:&lt;port&gt;/socket.io/</code> (or via HTTP upgrade with <code>transports: ["websocket", "polling"]</code>)
+* **Auth Token**: Pass JWT Access Token via Socket.IO auth object (<code>auth: { token: "&lt;jwt_access_token&gt;" }</code>) or HTTP Header (<code>Authorization: Bearer &lt;token&gt;</code>).
 
-### Server-to-Client Events
-1. **\`chat_stream_chunk\`**: Token-by-token text streaming chunk
-   - Payload: \`{ conversationId: string, chunk: string }\`
-2. **\`chat_stream_end\`**: Stream completion signal
-   - Payload: \`{ conversationId: string, messageId: string }\`
-3. **\`retrying_with_backup_model\`**: Mid-request fallback indicator (SRS §10.5.1)
-   - Payload: \`{ provider: string, attempt: number, message: string }\`
-4. **\`tool_call_proposed\`**: Proposed action needing confirmation modal (FR-2.4)
-   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string, toolName: string, args: object }\`
-5. **\`tool_call_executed\`**: Successful execution after confirmation
-   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string, toolName: string, result: object }\`
-6. **\`tool_call_cancelled\`**: Action cancelled by user
-   - Payload: \`{ conversationId: string, messageId: string, toolCallId: string }\`
+#### 2. Client-to-Server Events (Upstream)
+| Event | Action & Description | Example Payload |
+| :--- | :--- | :--- |
+| <code>send_message</code> | Send user prompt to AI assistant | <code>{ "conversationId"?: "662c9f1e9f0b...", "content": "How productive was I this week?" }</code> |
+| <code>confirm_tool_call</code> | Explicit user confirmation of proposed action (FR-2.4) | <code>{ "conversationId": "662c9f1e9f0b...", "messageId": "msg-101", "toolCallId": "tc-101" }</code> |
+| <code>cancel_tool_call</code> | Explicit user cancellation of proposed action (FR-2.4) | <code>{ "conversationId": "662c9f1e9f0b...", "messageId": "msg-101", "toolCallId": "tc-101" }</code> |
+
+#### 3. Server-to-Client Events (Downstream)
+| Event | Purpose & Trigger | Example Payload |
+| :--- | :--- | :--- |
+| <code>conversation_created</code> | Emitted when new conversation is auto-initialized | <code>{ "conversationId": "662c9f1e9f0b...", "title": "How productive was I..." }</code> |
+| <code>user_message_ack</code> | Acknowledges receipt & DB persistence of user prompt | <code>{ "conversationId": "...", "messageId": "...", "content": "...", "createdAt": "ISO" }</code> |
+| <code>chat_stream_chunk</code> | Token-by-token text streaming chunk | <code>{ "conversationId": "...", "chunk": "Based on your habit logs..." }</code> |
+| <code>chat_stream_end</code> | Stream completion signal for AI response | <code>{ "conversationId": "...", "messageId": "msg-102" }</code> |
+| <code>retrying_with_backup_model</code> | Mid-request fallback indicator (SRS §10.5.1) | <code>{ "provider": "groq", "attempt": 2, "message": "Switching to backup model (groq)..." }</code> |
+| <code>tool_call_proposed</code> | Proposed write action needing confirmation modal (FR-2.4) | <code>{ "conversationId": "...", "messageId": "...", "toolCallId": "tc-101", "toolName": "create_calendar_event", "args": { "title": "Study Session", "startTime": "..." } }</code> |
+| <code>tool_call_executed</code> | Execution result after explicit confirmation | <code>{ "conversationId": "...", "messageId": "...", "toolCallId": "tc-101", "toolName": "create_calendar_event", "result": { "message": "Scheduled successfully" } }</code> |
+| <code>tool_call_cancelled</code> | Emitted when user cancels proposed action | <code>{ "conversationId": "...", "messageId": "...", "toolCallId": "tc-101" }</code> |
+| <code>uncertainty_signal</code> | Emitted when context is insufficient for personal query (FR-2.6) | <code>{ "conversationId": "...", "message": "I don't have enough data in your account to answer that." }</code> |
+| <code>chat_error</code> | Error signal when execution or fallback chain fails | <code>{ "conversationId": "...", "message": "All AI providers in fallback chain failed." }</code> |
 `,
       version: "1.0.0"
     },
@@ -92,7 +95,21 @@ function gateSwaggerDocs(req: Request, res: Response, next: NextFunction) {
 }
 
 export function registerSwagger(app: Express) {
-  app.use("/api/v1/docs", gateSwaggerDocs, swaggerUi.serve, swaggerUi.setup(spec));
+  const customCss = `
+    .swagger-ui .info .description { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .swagger-ui .description table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 16px 0; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; overflow: hidden; background: rgba(0, 0, 0, 0.2); }
+    .swagger-ui .description th { background: rgba(255, 255, 255, 0.06); padding: 10px 14px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+    .swagger-ui .description td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); vertical-align: top; }
+    .swagger-ui .description td:first-child { white-space: nowrap; }
+    .swagger-ui .description code { background: rgba(59, 130, 246, 0.18); color: #93c5fd; padding: 3px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; border: 1px solid rgba(59, 130, 246, 0.3); }
+  `;
+
+  app.use(
+    "/api/v1/docs",
+    gateSwaggerDocs,
+    swaggerUi.serve,
+    swaggerUi.setup(spec, { customCss, customSiteTitle: "LifeOS API Documentation" })
+  );
 
   if (env.NODE_ENV !== "development" && !env.SWAGGER_ALLOWED_IPS) {
     console.warn(

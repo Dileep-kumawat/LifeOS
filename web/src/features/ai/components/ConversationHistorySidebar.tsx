@@ -32,7 +32,9 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
 
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
-        <span className="text-[11px] font-bold text-[#615d59] uppercase tracking-wider px-2 py-1">Past Chats</span>
+        <span className="text-[11px] font-bold text-[#615d59] uppercase tracking-wider px-2 py-1">
+          Past Chats
+        </span>
 
         {isLoading && (
           <div className="p-4 text-xs text-[#a39e98] text-center">Loading history...</div>
@@ -55,7 +57,9 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <MessageSquare className={`w-4 h-4 shrink-0 ${isActive ? "text-[#0075de]" : "text-[#615d59]"}`} />
+                <MessageSquare
+                  className={`w-4 h-4 shrink-0 ${isActive ? "text-[#0075de]" : "text-[#615d59]"}`}
+                />
                 <span className="truncate">{c.title}</span>
               </div>
 

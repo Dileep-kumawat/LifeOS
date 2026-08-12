@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { Summary, type SummaryDoc } from "../models/Summary.js";
+import { Summary } from "../models/Summary.js";
 import { generateDailySummary } from "../services/ai/summaryGenerator.js";
 import { dateKeyInZone } from "../services/recurrence.js";
 import { getCurrentHHMM } from "../services/ai/summaryDispatcher.js";
@@ -10,18 +10,22 @@ export const aiSummaryRouter = Router();
 
 aiSummaryRouter.use(requireAuth);
 
-function formatSummary(doc: SummaryDoc) {
+function formatSummary(doc: any) {
   return {
     id: doc._id.toString(),
     userId: doc.userId.toString(),
     date: doc.date,
-    yesterdayCompleted: (doc.yesterdayCompleted || []).map((item) => ({
+    yesterdayCompleted: (doc.yesterdayCompleted || []).map((item: any) => ({
       id: item.id || undefined,
       title: item.title,
       type: item.type || "habit",
-      completedAt: item.completedAt ? item.completedAt.toISOString() : undefined
+      completedAt: item.completedAt
+        ? typeof item.completedAt === "string"
+          ? item.completedAt
+          : item.completedAt.toISOString()
+        : undefined
     })),
-    todaySchedule: (doc.todaySchedule || []).map((item) => ({
+    todaySchedule: (doc.todaySchedule || []).map((item: any) => ({
       occurrenceId: item.occurrenceId || undefined,
       title: item.title,
       startTime: item.startTime,
@@ -29,12 +33,16 @@ function formatSummary(doc: SummaryDoc) {
       location: item.location || "",
       isAllDay: Boolean(item.isAllDay)
     })),
-    topPriorities: (doc.topPriorities || []).map((item) => ({
+    topPriorities: (doc.topPriorities || []).map((item: any) => ({
       title: item.title,
       category: item.category || "general",
       rationale: item.rationale || ""
     })),
-    generatedAt: doc.generatedAt ? doc.generatedAt.toISOString() : new Date().toISOString()
+    generatedAt: doc.generatedAt
+      ? typeof doc.generatedAt === "string"
+        ? doc.generatedAt
+        : doc.generatedAt.toISOString()
+      : new Date().toISOString()
   };
 }
 
@@ -111,7 +119,7 @@ aiSummaryRouter.get("/ai/summary/today", async (req: Request, res: Response) => 
     const deliveryTime = dsPref?.deliveryTime || "07:00";
 
     const todayKey = dateKeyInZone(new Date(), timezone);
-    let summaryDoc = await Summary.findOne({ userId, date: todayKey });
+    let summaryDoc: any = await Summary.findOne({ userId, date: todayKey });
 
     if (summaryDoc) {
       return res.status(200).json({
@@ -143,7 +151,9 @@ aiSummaryRouter.get("/ai/summary/today", async (req: Request, res: Response) => 
     });
   } catch (err) {
     logger.error({ err }, "Failed to fetch today's summary");
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to fetch today's summary" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to fetch today's summary" });
   }
 });
 
@@ -179,6 +189,8 @@ aiSummaryRouter.get("/ai/summary/today", async (req: Request, res: Response) => 
  *         description: Summary not found for the specified date
  *       401:
  *         description: Authentication required
+ *       429:
+ *         description: AI daily rate limit exceeded for subscription tier
  */
 aiSummaryRouter.get("/ai/summary/:date", async (req: Request, res: Response) => {
   try {
@@ -207,7 +219,9 @@ aiSummaryRouter.get("/ai/summary/:date", async (req: Request, res: Response) => 
     });
   } catch (err) {
     logger.error({ err }, "Failed to fetch historical summary");
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to fetch summary" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to fetch summary" });
   }
 });
 

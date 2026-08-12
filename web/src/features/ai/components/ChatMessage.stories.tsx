@@ -26,7 +26,8 @@ export const AITextResponse: Story = {
     message: {
       id: "msg-2",
       role: "assistant",
-      content: "Based on your habit tracking and calendar check-ins, you completed 85% of your morning meditation habit and attended 14 team sync meetings this month!",
+      content:
+        "Based on your habit tracking and calendar check-ins, you completed 85% of your morning meditation habit and attended 14 team sync meetings this month!",
       createdAt: "2026-08-11T10:00:05.000Z"
     }
   }
@@ -81,7 +82,8 @@ export const UncertaintySignal: Story = {
     message: {
       id: "msg-5",
       role: "assistant",
-      content: "I don't have enough data in your account to answer that. Please add notes or log check-ins regarding your project status.",
+      content:
+        "I don't have enough data in your account to answer that. Please add notes or log check-ins regarding your project status.",
       createdAt: "2026-08-11T10:02:00.000Z"
     }
   }

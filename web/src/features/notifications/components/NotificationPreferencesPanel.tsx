@@ -128,12 +128,23 @@ export function NotificationPreferencesPanel() {
                 <span className="text-sm font-medium text-foreground">Delivery Channels</span>
                 <div className="flex flex-wrap gap-4">
                   {(["push", "in_app", "email"] as const).map((channel) => {
-                    const currentChannels = preferences.dailySummary?.channels || ["push", "in_app"];
+                    const currentChannels = preferences.dailySummary?.channels || [
+                      "push",
+                      "in_app"
+                    ];
                     const isChecked = currentChannels.includes(channel);
-                    const label = channel === "push" ? "Push Notification" : channel === "in_app" ? "In-App Notification" : "Email";
+                    const label =
+                      channel === "push"
+                        ? "Push Notification"
+                        : channel === "in_app"
+                          ? "In-App Notification"
+                          : "Email";
 
                     return (
-                      <label key={channel} className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer select-none">
+                      <label
+                        key={channel}
+                        className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer select-none"
+                      >
                         <input
                           type="checkbox"
                           className="size-4 rounded border-input text-primary focus:ring-primary"

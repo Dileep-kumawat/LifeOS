@@ -56,7 +56,9 @@ export const ChatPage: React.FC = () => {
             <Sparkles className="w-5 h-5 text-[#0075de]" />
             <h2 className="text-base font-bold text-[#000000]">LifeOS AI Assistant</h2>
           </div>
-          <span className="text-xs text-[#615d59] font-medium">RAG Context + Tool Calling Active</span>
+          <span className="text-xs text-[#615d59] font-medium">
+            RAG Context + Tool Calling Active
+          </span>
         </header>
 
         {/* Message Stream */}
@@ -68,7 +70,8 @@ export const ChatPage: React.FC = () => {
               </div>
               <h3 className="text-lg font-bold text-[#000000]">Ask LifeOS Anything</h3>
               <p className="text-xs text-[#615d59] mt-1">
-                Try asking: "How productive was I this month?", "Create tomorrow's study plan", or "Summarize my meeting".
+                Try asking: "How productive was I this month?", "Create tomorrow's study plan", or
+                "Summarize my meeting".
               </p>
             </div>
           )}

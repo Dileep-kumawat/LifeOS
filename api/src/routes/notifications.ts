@@ -28,9 +28,7 @@ export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
 
-function serializePreferences(
-  prefs: Partial<NotificationPreferences> | null | undefined
-): NotificationPreferences {
+function serializePreferences(prefs: any): NotificationPreferences {
   return applyPreferenceUpdates(
     DEFAULT_PREFERENCES,
     (prefs ?? {}) as Partial<NotificationPreferences>
@@ -273,10 +271,9 @@ notificationsRouter.patch(
  * @openapi
  * /notifications/preferences:
  *   get:
- *     tags: [Notifications]
+ *     tags: [Notifications, AI]
  *     summary: Get the caller's notification preferences
- *     description: Returns the full per-module, per-channel toggle map. Every
- *       module defaults to enabled; a response value of true means enabled.
+ *     description: Returns the full per-module, per-channel toggle map, including Daily AI Summary delivery preferences. Every module defaults to enabled.
  *     responses:
  *       200:
  *         description: Preferences
@@ -294,6 +291,7 @@ notificationsRouter.patch(
  *                     calendarReminders: { push: true, inApp: true }
  *                     habitReminders: { push: false, inApp: true }
  *                     system: { push: true, inApp: true }
+ *                     dailySummary: { deliveryTime: "07:00", channels: ["push", "in_app"], timezone: "America/New_York" }
  *       401:
  *         description: Authentication required
  */
@@ -306,11 +304,9 @@ notificationsRouter.get("/notifications/preferences", async (req: Request, res: 
  * @openapi
  * /notifications/preferences:
  *   patch:
- *     tags: [Notifications]
+ *     tags: [Notifications, AI]
  *     summary: Update notification preferences
- *     description: Partial update — any module/toggle not present is left
- *       unchanged. A disabled preference means the worker treats matching
- *       notifications as skipped (logged), never sends them anyway.
+ *     description: Partial update — any module, toggle, or daily summary delivery setting not present is left unchanged.
  *     requestBody:
  *       required: true
  *       content:
@@ -333,10 +329,18 @@ notificationsRouter.get("/notifications/preferences", async (req: Request, res: 
  *                 properties:
  *                   push: { type: boolean }
  *                   inApp: { type: boolean }
+ *               dailySummary:
+ *                 type: object
+ *                 properties:
+ *                   deliveryTime: { type: string, example: "07:00" }
+ *                   channels:
+ *                     type: array
+ *                     items: { type: string, enum: [push, in_app, email] }
+ *                   timezone: { type: string, example: "America/New_York" }
  *             examples:
  *               update:
  *                 value:
- *                   habitReminders: { push: false }
+ *                   dailySummary: { deliveryTime: "08:00", channels: ["push", "in_app"] }
  *     responses:
  *       200:
  *         description: Updated preferences
@@ -360,7 +364,7 @@ notificationsRouter.patch(
     const current = serializePreferences(user.notificationPreferences);
     const updated = applyPreferenceUpdates(current, req.body as Partial<NotificationPreferences>);
 
-    user.notificationPreferences = updated;
+    user.notificationPreferences = updated as any;
     await user.save();
 
     return res.json({ preferences: updated });
@@ -553,7 +557,7 @@ notificationsRouter.delete(
  *         createdAt: { type: string, format: date-time }
  *     NotificationPreferences:
  *       type: object
- *       description: Per-module, per-channel notification toggles. Everything defaults to enabled.
+ *       description: Per-module, per-channel notification toggles & AI Daily Summary delivery preferences.
  *       properties:
  *         calendarReminders:
  *           type: object
@@ -570,4 +574,13 @@ notificationsRouter.delete(
  *           properties:
  *             push: { type: boolean, default: true }
  *             inApp: { type: boolean, default: true }
+ *         dailySummary:
+ *           type: object
+ *           properties:
+ *             deliveryTime: { type: string, example: "07:00", default: "07:00" }
+ *             channels:
+ *               type: array
+ *               items: { type: string, enum: [push, in_app, email] }
+ *               default: ["push", "in_app"]
+ *             timezone: { type: string, example: "America/New_York" }
  */

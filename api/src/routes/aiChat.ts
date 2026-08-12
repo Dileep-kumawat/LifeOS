@@ -50,7 +50,9 @@ aiChatRouter.get("/ai/conversations", async (req: Request, res: Response) => {
 
     return res.status(200).json({ conversations: formatted });
   } catch (err) {
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to list conversations" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to list conversations" });
   }
 });
 
@@ -112,7 +114,9 @@ aiChatRouter.get("/ai/conversations/:id", async (req: Request, res: Response) =>
       return res.status(404).json({ error: "NotFound", message: "Conversation not found" });
     }
 
-    const messages = await Message.find({ conversationId: id, userId }).sort({ createdAt: 1 }).lean();
+    const messages = await Message.find({ conversationId: id, userId })
+      .sort({ createdAt: 1 })
+      .lean();
 
     const formattedMessages = messages.map((m) => ({
       id: m._id.toString(),
@@ -132,7 +136,9 @@ aiChatRouter.get("/ai/conversations/:id", async (req: Request, res: Response) =>
       messages: formattedMessages
     });
   } catch (err) {
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to fetch conversation history" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to fetch conversation history" });
   }
 });
 
@@ -152,8 +158,12 @@ aiChatRouter.get("/ai/conversations/:id", async (req: Request, res: Response) =>
  *     responses:
  *       200:
  *         description: Conversation deleted successfully
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Conversation not found
+ *       429:
+ *         description: AI daily rate limit exceeded for subscription tier
  */
 aiChatRouter.delete("/ai/conversations/:id", async (req: Request, res: Response) => {
   try {
@@ -173,6 +183,8 @@ aiChatRouter.delete("/ai/conversations/:id", async (req: Request, res: Response)
 
     return res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (err) {
-    return res.status(500).json({ error: "InternalServerError", message: "Failed to delete conversation" });
+    return res
+      .status(500)
+      .json({ error: "InternalServerError", message: "Failed to delete conversation" });
   }
 });

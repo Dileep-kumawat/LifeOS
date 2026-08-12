@@ -154,7 +154,10 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
               attempt: i + 1,
               message: `Switching to backup model (${provider})...`
             });
-            logger.info({ userId, provider, attempt: i + 1 }, "Emitted retrying_with_backup_model WS event");
+            logger.info(
+              { userId, provider, attempt: i + 1 },
+              "Emitted retrying_with_backup_model WS event"
+            );
           }
 
           try {
@@ -201,7 +204,9 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
               typeof response.content === "string"
                 ? response.content
                 : Array.isArray(response.content)
-                  ? response.content.map((c) => (typeof c === "string" ? c : JSON.stringify(c))).join("")
+                  ? response.content
+                      .map((c) => (typeof c === "string" ? c : JSON.stringify(c)))
+                      .join("")
                   : String(response.content || "");
 
             // Stream text chunk
@@ -225,7 +230,10 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
             served = true;
             break;
           } catch (providerErr) {
-            logger.warn({ providerErr, provider, attempt: i + 1 }, "Provider execution failed during WS chat");
+            logger.warn(
+              { providerErr, provider, attempt: i + 1 },
+              "Provider execution failed during WS chat"
+            );
           }
         }
 
@@ -242,99 +250,110 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
     });
 
     // Event 2: confirm_tool_call (FR-2.4 User Confirmation Modal execution)
-    socket.on("confirm_tool_call", async (payload: { conversationId: string; messageId: string; toolCallId: string }) => {
-      try {
-        const { conversationId, messageId, toolCallId } = payload;
-        const msg = await Message.findOne({ _id: messageId, conversationId, userId });
+    socket.on(
+      "confirm_tool_call",
+      async (payload: { conversationId: string; messageId: string; toolCallId: string }) => {
+        try {
+          const { conversationId, messageId, toolCallId } = payload;
+          const msg = await Message.findOne({ _id: messageId, conversationId, userId });
 
-        if (!msg || !msg.toolCallData) {
-          socket.emit("tool_call_error", { message: "Proposed tool call not found." });
-          return;
+          if (!msg || !msg.toolCallData) {
+            socket.emit("tool_call_error", { message: "Proposed tool call not found." });
+            return;
+          }
+
+          if (msg.toolCallData.status !== "pending_confirmation") {
+            socket.emit("tool_call_error", {
+              message: `Tool call already ${msg.toolCallData.status}.`
+            });
+            return;
+          }
+
+          const { toolName, args } = msg.toolCallData;
+
+          // Execute backend tool with identical validation & side effects
+          const result = await executeToolCall(userId, toolName, args);
+
+          msg.toolCallData.status = "executed";
+          msg.toolCallData.result = result;
+          await msg.save();
+
+          socket.emit("tool_call_executed", {
+            conversationId,
+            messageId,
+            toolCallId,
+            toolName,
+            result
+          });
+
+          // AI follow-up response acknowledging successful tool execution
+          const followUp = await callAI(
+            [
+              new SystemMessage(
+                "You are LifeOS AI. The user confirmed the proposed action, and it was executed successfully. Provide a friendly 1-sentence confirmation message."
+              ),
+              new HumanMessage(`Executed ${toolName} with result: ${JSON.stringify(result)}`)
+            ],
+            { userId, requestType: "tool_confirmation_acknowledgment" }
+          );
+
+          const textContent = followUp.content || `Action "${toolName}" executed successfully.`;
+          const followUpMsg = await Message.create({
+            conversationId,
+            userId,
+            role: "assistant",
+            content: textContent
+          });
+
+          socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
+          socket.emit("chat_stream_end", { conversationId, messageId: followUpMsg._id.toString() });
+        } catch (err: any) {
+          logger.error({ err }, "Error executing confirmed tool call");
+          socket.emit("tool_call_failed", {
+            conversationId: payload.conversationId,
+            messageId: payload.messageId,
+            error: err.message || "Failed to execute tool call."
+          });
         }
-
-        if (msg.toolCallData.status !== "pending_confirmation") {
-          socket.emit("tool_call_error", { message: `Tool call already ${msg.toolCallData.status}.` });
-          return;
-        }
-
-        const { toolName, args } = msg.toolCallData;
-
-        // Execute backend tool with identical validation & side effects
-        const result = await executeToolCall(userId, toolName, args);
-
-        msg.toolCallData.status = "executed";
-        msg.toolCallData.result = result;
-        await msg.save();
-
-        socket.emit("tool_call_executed", {
-          conversationId,
-          messageId,
-          toolCallId,
-          toolName,
-          result
-        });
-
-        // AI follow-up response acknowledging successful tool execution
-        const followUp = await callAI(
-          [
-            new SystemMessage("You are LifeOS AI. The user confirmed the proposed action, and it was executed successfully. Provide a friendly 1-sentence confirmation message."),
-            new HumanMessage(`Executed ${toolName} with result: ${JSON.stringify(result)}`)
-          ],
-          { userId, requestType: "tool_confirmation_acknowledgment" }
-        );
-
-        const textContent = followUp.content || `Action "${toolName}" executed successfully.`;
-        const followUpMsg = await Message.create({
-          conversationId,
-          userId,
-          role: "assistant",
-          content: textContent
-        });
-
-        socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
-        socket.emit("chat_stream_end", { conversationId, messageId: followUpMsg._id.toString() });
-      } catch (err: any) {
-        logger.error({ err }, "Error executing confirmed tool call");
-        socket.emit("tool_call_failed", {
-          conversationId: payload.conversationId,
-          messageId: payload.messageId,
-          error: err.message || "Failed to execute tool call."
-        });
       }
-    });
+    );
 
     // Event 3: cancel_tool_call (FR-2.4 User Declined Tool Call)
-    socket.on("cancel_tool_call", async (payload: { conversationId: string; messageId: string; toolCallId: string }) => {
-      try {
-        const { conversationId, messageId, toolCallId } = payload;
-        const msg = await Message.findOne({ _id: messageId, conversationId, userId });
+    socket.on(
+      "cancel_tool_call",
+      async (payload: { conversationId: string; messageId: string; toolCallId: string }) => {
+        try {
+          const { conversationId, messageId, toolCallId } = payload;
+          const msg = await Message.findOne({ _id: messageId, conversationId, userId });
 
-        if (msg && msg.toolCallData) {
-          msg.toolCallData.status = "cancelled";
-          await msg.save();
+          if (msg && msg.toolCallData) {
+            msg.toolCallData.status = "cancelled";
+            await msg.save();
+          }
+
+          socket.emit("tool_call_cancelled", {
+            conversationId,
+            messageId,
+            toolCallId
+          });
+
+          // AI follow-up acknowledging user cancellation
+          const textContent =
+            "Understood, I've cancelled that action. No changes were made to your account.";
+          const cancelMsg = await Message.create({
+            conversationId,
+            userId,
+            role: "assistant",
+            content: textContent
+          });
+
+          socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
+          socket.emit("chat_stream_end", { conversationId, messageId: cancelMsg._id.toString() });
+        } catch (err: any) {
+          logger.error({ err }, "Error handling cancel_tool_call WS event");
         }
-
-        socket.emit("tool_call_cancelled", {
-          conversationId,
-          messageId,
-          toolCallId
-        });
-
-        // AI follow-up acknowledging user cancellation
-        const textContent = "Understood, I've cancelled that action. No changes were made to your account.";
-        const cancelMsg = await Message.create({
-          conversationId,
-          userId,
-          role: "assistant",
-          content: textContent
-        });
-
-        socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
-        socket.emit("chat_stream_end", { conversationId, messageId: cancelMsg._id.toString() });
-      } catch (err: any) {
-        logger.error({ err }, "Error handling cancel_tool_call WS event");
       }
-    });
+    );
 
     socket.on("disconnect", () => {
       logger.info({ userId, socketId: socket.id }, "Client disconnected from AI Chat WebSocket");

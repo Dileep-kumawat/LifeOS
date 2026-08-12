@@ -59,11 +59,14 @@ async function main() {
   startJobsWorker();
 
   // Periodic dispatcher check for daily summaries (every 5 mins)
-  setInterval(() => {
-    dispatchDailySummaries().catch((err) => {
-      logger.error({ err }, "Periodic daily summary dispatcher error");
-    });
-  }, 5 * 60 * 1000);
+  setInterval(
+    () => {
+      dispatchDailySummaries().catch((err) => {
+        logger.error({ err }, "Periodic daily summary dispatcher error");
+      });
+    },
+    5 * 60 * 1000
+  );
 
   server.listen(env.PORT, () => {
     logger.info(`LifeOS API listening on :${env.PORT}`);

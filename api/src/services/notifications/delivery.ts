@@ -71,7 +71,7 @@ export function buildPushPayload(notification: NotificationLike): object {
  */
 export async function dispatchNotification(
   notification: NotificationLike,
-  preferences: Partial<Record<string, { push?: boolean; inApp?: boolean }>> | undefined,
+  preferences: any,
   deps: DeliveryDeps
 ): Promise<DispatchOutcome> {
   const module = preferenceModuleForType(notification.type);

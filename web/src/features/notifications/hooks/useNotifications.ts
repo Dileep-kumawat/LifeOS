@@ -175,8 +175,10 @@ export function useUpdateNotificationPreferences() {
         }
         if (patch.dailySummary) {
           next.dailySummary = {
-            deliveryTime: patch.dailySummary.deliveryTime ?? next.dailySummary?.deliveryTime ?? "07:00",
-            channels: patch.dailySummary.channels ?? next.dailySummary?.channels ?? ["push", "in_app"],
+            deliveryTime:
+              patch.dailySummary.deliveryTime ?? next.dailySummary?.deliveryTime ?? "07:00",
+            channels: patch.dailySummary.channels ??
+              next.dailySummary?.channels ?? ["push", "in_app"],
             timezone: patch.dailySummary.timezone ?? next.dailySummary?.timezone
           };
         }

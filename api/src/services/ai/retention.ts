@@ -21,7 +21,10 @@ export async function sanitizeExpiredAiLogs(retentionDays = RAW_CONTENT_RETENTIO
   try {
     // 1. Sanitize AiRequestLog records older than cutoffDate that have failureReason or raw details
     const logResult = await AiRequestLog.updateMany(
-      { timestamp: { $lt: cutoffDate }, failureReason: { $nin: ["<anonymized_after_retention_period>", null] } },
+      {
+        timestamp: { $lt: cutoffDate },
+        failureReason: { $nin: ["<anonymized_after_retention_period>", null] }
+      },
       { $set: { failureReason: "<anonymized_after_retention_period>" } }
     );
     sanitizedLogsCount = logResult.modifiedCount;

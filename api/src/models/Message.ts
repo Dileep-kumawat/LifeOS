@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type MessageRole = "user" | "assistant" | "tool" | "system";
-export type ToolCallStatus = "pending_confirmation" | "confirmed" | "cancelled" | "executed" | "failed";
+export type ToolCallStatus =
+  "pending_confirmation" | "confirmed" | "cancelled" | "executed" | "failed";
 
 export interface ToolCallData {
   id: string;
@@ -25,7 +26,12 @@ export interface MessageDoc extends Document {
 
 const messageSchema = new Schema<MessageDoc>(
   {
-    conversationId: { type: Schema.Types.ObjectId, ref: "Conversation", required: true, index: true },
+    conversationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true
+    },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     role: {
       type: String,

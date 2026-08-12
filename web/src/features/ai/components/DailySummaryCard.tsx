@@ -1,4 +1,12 @@
-import { Sparkles, Calendar, CheckCircle2, Clock, RefreshCw, AlertCircle, Target } from "lucide-react";
+import {
+  Sparkles,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  RefreshCw,
+  AlertCircle,
+  Target
+} from "lucide-react";
 import type { DailySummary } from "@lifeos/shared";
 import { Skeleton } from "../../../components/ui/Skeleton";
 
@@ -48,7 +56,9 @@ export function DailySummaryCard({
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Could not load daily summary</h3>
-              <p className="text-sm text-muted-foreground">An error occurred while generating or fetching today's summary.</p>
+              <p className="text-sm text-muted-foreground">
+                An error occurred while generating or fetching today's summary.
+              </p>
             </div>
           </div>
           {onRetry && (
@@ -81,7 +91,8 @@ export function DailySummaryCard({
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Your AI Daily Summary will be generated at <span className="font-semibold text-foreground">{deliveryTime}</span>.
+                Your AI Daily Summary will be generated at{" "}
+                <span className="font-semibold text-foreground">{deliveryTime}</span>.
               </p>
             </div>
           </div>
@@ -129,7 +140,9 @@ export function DailySummaryCard({
             Top 3 Priorities
           </div>
           {topPriorities.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-2">No specific priorities set for today.</p>
+            <p className="text-xs text-muted-foreground italic py-2">
+              No specific priorities set for today.
+            </p>
           ) : (
             <ul className="flex flex-col gap-2.5">
               {topPriorities.map((priority, index) => (
@@ -142,7 +155,9 @@ export function DailySummaryCard({
                       {priority.title}
                     </p>
                     {priority.rationale && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">{priority.rationale}</p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                        {priority.rationale}
+                      </p>
                     )}
                   </div>
                 </li>
@@ -159,7 +174,9 @@ export function DailySummaryCard({
           </div>
           {yesterdayCompleted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-4 text-center">
-              <p className="text-xs text-muted-foreground italic">No completed habits recorded yesterday.</p>
+              <p className="text-xs text-muted-foreground italic">
+                No completed habits recorded yesterday.
+              </p>
             </div>
           ) : (
             <ul className="flex flex-col gap-2 overflow-y-auto max-h-44 pr-1">
@@ -185,7 +202,9 @@ export function DailySummaryCard({
             </span>
           </div>
           {todaySchedule.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-2">No calendar events scheduled for today.</p>
+            <p className="text-xs text-muted-foreground italic py-2">
+              No calendar events scheduled for today.
+            </p>
           ) : (
             <ul className="flex flex-col gap-2 overflow-y-auto max-h-44 pr-1">
               {todaySchedule.slice(0, 4).map((evt, idx) => {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Calendar, CheckCircle2, FileText, Target, AlertTriangle, X } from "lucide-react";
 import type { ToolCallPayload } from "../types";
 
@@ -17,6 +17,47 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
   onCancel,
   isExecuting = false
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Keyboard accessibility: Escape key to close modal & Focus Management
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Focus confirm button when modal opens
+    confirmButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isExecuting) {
+        onCancel();
+      }
+
+      // Focus trap
+      if (e.key === "Tab" && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement?.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement?.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isExecuting, onCancel]);
+
   if (!isOpen || !toolCall) return null;
 
   const { toolName, args } = toolCall;
@@ -26,7 +67,9 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
     switch (toolName) {
       case "create_calendar_event": {
         const title = args.title || "Untitled Event";
-        const start = args.startTime ? new Date(args.startTime).toLocaleString() : "Unspecified start";
+        const start = args.startTime
+          ? new Date(args.startTime).toLocaleString()
+          : "Unspecified start";
         const end = args.endTime ? new Date(args.endTime).toLocaleString() : "Unspecified end";
         const location = args.location ? `Location: ${args.location}` : null;
         const timezone = args.timezone || "UTC";
@@ -64,7 +107,11 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
 
       case "create_note": {
         const title = args.title || "Untitled Note";
-        const snippet = args.content ? (args.content.length > 100 ? args.content.slice(0, 100) + "..." : args.content) : "Empty content";
+        const snippet = args.content
+          ? args.content.length > 100
+            ? args.content.slice(0, 100) + "..."
+            : args.content
+          : "Empty content";
 
         return {
           icon: <FileText className="w-6 h-6 text-purple-600" />,
@@ -92,18 +139,29 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tool-confirm-modal-title"
+        aria-describedby="tool-confirm-modal-desc"
+        className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
           <div className="flex items-center gap-3">
             {details.icon}
             <div>
-              <h3 className="text-base font-semibold text-[#000000]">{details.actionTitle}</h3>
+              <h3 id="tool-confirm-modal-title" className="text-base font-semibold text-[#000000]">
+                {details.actionTitle}
+              </h3>
               <p className="text-xs text-[#615d59]">User action confirmation required (FR-2.4)</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onCancel}
+            aria-label="Close dialog"
             className="text-[#615d59] hover:text-[#000000] p-1 rounded-md transition-colors"
           >
             <X className="w-5 h-5" />
@@ -112,13 +170,17 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
 
         {/* Content */}
         <div className="p-6 flex flex-col gap-4">
-          <p className="text-sm font-medium text-[#31302e]">{details.description}</p>
+          <p id="tool-confirm-modal-desc" className="text-sm font-medium text-[#31302e]">
+            {details.description}
+          </p>
 
           {/* Formatted Parameters List */}
           <div className="bg-[#f6f5f4] border border-[#e6e6e6] rounded-lg p-4 flex flex-col gap-2.5">
             {details.items.map((item, idx) => (
               <div key={idx} className="flex flex-col text-xs">
-                <span className="font-semibold text-[#615d59] uppercase tracking-wider">{item.label}</span>
+                <span className="font-semibold text-[#615d59] uppercase tracking-wider">
+                  {item.label}
+                </span>
                 <span className="font-medium text-[#000000] break-words">{item.value}</span>
               </div>
             ))}
@@ -136,6 +198,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
             Cancel Action
           </button>
           <button
+            ref={confirmButtonRef}
             type="button"
             onClick={onConfirm}
             disabled={isExecuting}

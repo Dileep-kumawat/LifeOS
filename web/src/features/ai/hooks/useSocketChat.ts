@@ -76,10 +76,7 @@ export function useSocketChat() {
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last && last.role === "assistant" && last.isStreaming) {
-          return [
-            ...prev.slice(0, -1),
-            { ...last, content: last.content + data.chunk }
-          ];
+          return [...prev.slice(0, -1), { ...last, content: last.content + data.chunk }];
         } else {
           return [
             ...prev,
@@ -104,26 +101,35 @@ export function useSocketChat() {
       fetchConversations();
     });
 
-    socketInstance.on("tool_call_proposed", (data: { conversationId: string; messageId: string; toolCallId: string; toolName: string; args: any }) => {
-      setIsStreaming(false);
-      setBackupModelStatus(null);
+    socketInstance.on(
+      "tool_call_proposed",
+      (data: {
+        conversationId: string;
+        messageId: string;
+        toolCallId: string;
+        toolName: string;
+        args: any;
+      }) => {
+        setIsStreaming(false);
+        setBackupModelStatus(null);
 
-      const toolMsg: ChatMessage = {
-        id: data.messageId,
-        role: "assistant",
-        content: `I'd like to perform an action for you: ${data.toolName}`,
-        toolCallData: {
-          id: data.toolCallId,
-          toolName: data.toolName,
-          args: data.args,
-          status: "pending_confirmation"
-        },
-        createdAt: new Date().toISOString()
-      };
+        const toolMsg: ChatMessage = {
+          id: data.messageId,
+          role: "assistant",
+          content: `I'd like to perform an action for you: ${data.toolName}`,
+          toolCallData: {
+            id: data.toolCallId,
+            toolName: data.toolName,
+            args: data.args,
+            status: "pending_confirmation"
+          },
+          createdAt: new Date().toISOString()
+        };
 
-      setMessages((prev) => [...prev, toolMsg]);
-      setPendingToolCallMessage(toolMsg);
-    });
+        setMessages((prev) => [...prev, toolMsg]);
+        setPendingToolCallMessage(toolMsg);
+      }
+    );
 
     socketInstance.on("tool_call_executed", (data: { messageId: string; result: any }) => {
       setIsExecutingTool(false);

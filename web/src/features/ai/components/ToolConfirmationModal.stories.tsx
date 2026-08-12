@@ -84,3 +84,20 @@ export const ExecutingState: Story = {
     onCancel: () => {}
   }
 };
+
+export const CancelledState: Story = {
+  args: {
+    isOpen: false,
+    toolCall: {
+      id: "tc-104",
+      toolName: "create_note",
+      args: {
+        title: "Declined Note Entry",
+        content: "User chose not to proceed with note creation."
+      },
+      status: "cancelled"
+    },
+    onConfirm: () => {},
+    onCancel: () => {}
+  }
+};
