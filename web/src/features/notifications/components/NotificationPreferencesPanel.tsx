@@ -90,27 +90,97 @@ export function NotificationPreferencesPanel() {
       )}
 
       {!isLoading && !isError && preferences && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Reminder channels</CardTitle>
-            <CardDescription>
-              Turn reminders on or off per module and delivery channel.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y divide-[#e6e6e6]">
-            {MODULES.map((module) => (
-              <NotificationPreferenceToggle
-                key={module.key}
-                title={module.title}
-                description={module.description}
-                push={preferences[module.key].push}
-                inApp={preferences[module.key].inApp}
-                onPushChange={(checked) => handleToggle(module.key, "push", checked)}
-                onInAppChange={(checked) => handleToggle(module.key, "inApp", checked)}
-              />
-            ))}
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Daily AI Summary</CardTitle>
+              <CardDescription>
+                Configure when and where your personalized daily morning summary is delivered.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+                <div>
+                  <label htmlFor="delivery-time" className="text-sm font-medium text-foreground">
+                    Delivery Time
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Your summary will be generated and delivered at this local time each morning.
+                  </p>
+                </div>
+                <input
+                  id="delivery-time"
+                  type="time"
+                  className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={preferences.dailySummary?.deliveryTime || "07:00"}
+                  onChange={(e) => {
+                    update.mutate({
+                      dailySummary: {
+                        ...preferences.dailySummary,
+                        deliveryTime: e.target.value
+                      }
+                    });
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-medium text-foreground">Delivery Channels</span>
+                <div className="flex flex-wrap gap-4">
+                  {(["push", "in_app", "email"] as const).map((channel) => {
+                    const currentChannels = preferences.dailySummary?.channels || ["push", "in_app"];
+                    const isChecked = currentChannels.includes(channel);
+                    const label = channel === "push" ? "Push Notification" : channel === "in_app" ? "In-App Notification" : "Email";
+
+                    return (
+                      <label key={channel} className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded border-input text-primary focus:ring-primary"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const nextChannels = e.target.checked
+                              ? [...currentChannels, channel]
+                              : currentChannels.filter((c) => c !== channel);
+                            update.mutate({
+                              dailySummary: {
+                                ...preferences.dailySummary,
+                                channels: nextChannels
+                              }
+                            });
+                          }}
+                        />
+                        {label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Reminder channels</CardTitle>
+              <CardDescription>
+                Turn reminders on or off per module and delivery channel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col divide-y divide-[#e6e6e6]">
+              {MODULES.map((module) => (
+                <NotificationPreferenceToggle
+                  key={module.key}
+                  title={module.title}
+                  description={module.description}
+                  push={preferences[module.key].push}
+                  inApp={preferences[module.key].inApp}
+                  onPushChange={(checked) => handleToggle(module.key, "push", checked)}
+                  onInAppChange={(checked) => handleToggle(module.key, "inApp", checked)}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

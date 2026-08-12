@@ -8,6 +8,15 @@ const modulePreferenceSchema = new Schema(
   { _id: false }
 );
 
+const dailySummaryPreferenceSchema = new Schema(
+  {
+    deliveryTime: { type: String, default: "07:00" },
+    channels: { type: [String], default: ["push", "in_app"] },
+    timezone: { type: String, default: "UTC" }
+  },
+  { _id: false }
+);
+
 const userSchema = new Schema(
   {
     email: {
@@ -63,7 +72,11 @@ const userSchema = new Schema(
         type: modulePreferenceSchema,
         default: () => ({ push: true, inApp: true })
       },
-      system: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) }
+      system: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
+      dailySummary: {
+        type: dailySummaryPreferenceSchema,
+        default: () => ({ deliveryTime: "07:00", channels: ["push", "in_app"], timezone: "UTC" })
+      }
     }
   },
   { timestamps: true }

@@ -18,36 +18,57 @@ import { HabitDetailPage } from "./features/habits/HabitDetailPage";
 import { NotesListPage } from "./features/notes/NotesListPage";
 import { NoteDetailPage } from "./features/notes/NoteDetailPage";
 import { ChatPage } from "./features/ai/ChatPage";
+import { DailySummaryCard } from "./features/ai/components/DailySummaryCard";
+import { useTodaySummary } from "./features/ai/hooks/useDailySummary";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
 function DashboardHome() {
   const user = useAuthStore((state) => state.user);
+  const { data, isLoading, isError, refetch } = useTodaySummary();
 
   return (
-    <div className="flex flex-col gap-4 p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-[#000000]">Welcome back, {user?.name || "User"}!</h1>
-      <p className="text-sm text-[#615d59]">
-        LifeOS Phase 1 MVP Core — Authentication, Calendar, Goals & Habits modules active.
-      </p>
-      <div className="flex gap-4">
+    <div className="flex flex-col gap-6 p-8 max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.name || "User"}!</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          LifeOS Core — Calendar, Goals, Habits, Notes & AI Daily Summary active.
+        </p>
+      </div>
+
+      <DailySummaryCard
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={() => refetch()}
+        generated={data?.generated}
+        deliveryTime={data?.deliveryTime}
+        summary={data?.summary}
+      />
+
+      <div className="flex flex-wrap gap-4">
         <Link
           to="/goals"
-          className="inline-flex items-center justify-center rounded-lg bg-[#0075de] text-white px-4 py-2 text-sm font-medium hover:bg-[#005bab]"
+          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           View Goals
         </Link>
         <Link
           to="/habits"
-          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700"
+          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 transition-colors"
         >
           View Habits
         </Link>
         <Link
           to="/notes"
-          className="inline-flex items-center justify-center rounded-lg bg-[#000000] text-white px-4 py-2 text-sm font-medium hover:bg-[#31302e]"
+          className="inline-flex items-center justify-center rounded-lg bg-secondary text-secondary-foreground px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors"
         >
           View Notes
+        </Link>
+        <Link
+          to="/chat"
+          className="inline-flex items-center justify-center rounded-lg border border-border bg-card text-foreground px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+        >
+          AI Chat
         </Link>
       </div>
     </div>

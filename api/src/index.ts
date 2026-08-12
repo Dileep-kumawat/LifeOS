@@ -16,9 +16,11 @@ import { habitsRouter } from "./routes/habits.js";
 import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { aiChatRouter } from "./routes/aiChat.js";
+import { aiSummaryRouter } from "./routes/aiSummary.js";
 import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
 import { setupChatSocket } from "./services/ai/chatSocket.js";
+import { dispatchDailySummaries } from "./services/ai/summaryDispatcher.js";
 
 async function main() {
   await connectDb();
@@ -49,11 +51,19 @@ async function main() {
   v1.use(notesRouter);
   v1.use(notificationsRouter);
   v1.use(aiChatRouter);
+  v1.use(aiSummaryRouter);
   app.use("/api/v1", v1);
 
   // Start the single background job worker (queued deliveries, later OCR,
   // embeddings, daily summaries). No-op under tests.
   startJobsWorker();
+
+  // Periodic dispatcher check for daily summaries (every 5 mins)
+  setInterval(() => {
+    dispatchDailySummaries().catch((err) => {
+      logger.error({ err }, "Periodic daily summary dispatcher error");
+    });
+  }, 5 * 60 * 1000);
 
   server.listen(env.PORT, () => {
     logger.info(`LifeOS API listening on :${env.PORT}`);

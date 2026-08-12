@@ -164,14 +164,22 @@ export function useUpdateNotificationPreferences() {
 
       if (previous) {
         const next: NotificationPreferences = { ...previous };
-        (["calendarReminders", "habitReminders", "system"] as const).forEach((module) => {
-          const entry = patch[module];
-          if (!entry) return;
-          next[module] = {
-            push: entry.push ?? next[module].push,
-            inApp: entry.inApp ?? next[module].inApp
+        if (patch.calendarReminders) {
+          next.calendarReminders = { ...next.calendarReminders, ...patch.calendarReminders };
+        }
+        if (patch.habitReminders) {
+          next.habitReminders = { ...next.habitReminders, ...patch.habitReminders };
+        }
+        if (patch.system) {
+          next.system = { ...next.system, ...patch.system };
+        }
+        if (patch.dailySummary) {
+          next.dailySummary = {
+            deliveryTime: patch.dailySummary.deliveryTime ?? next.dailySummary?.deliveryTime ?? "07:00",
+            channels: patch.dailySummary.channels ?? next.dailySummary?.channels ?? ["push", "in_app"],
+            timezone: patch.dailySummary.timezone ?? next.dailySummary?.timezone
           };
-        });
+        }
         queryClient.setQueryData(notificationKeys.preferences(), next);
       }
 

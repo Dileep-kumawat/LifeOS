@@ -88,10 +88,24 @@ export const modulePreferenceSchema = z.object({
 });
 export type ModulePreference = z.infer<typeof modulePreferenceSchema>;
 
+export const dailySummaryPreferenceSchema = z.object({
+  deliveryTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "deliveryTime must be HH:mm format")
+    .default("07:00"),
+  channels: z.array(z.enum(["push", "in_app", "email"])).default(["push", "in_app"]),
+  timezone: z.string().optional()
+});
+export type DailySummaryPreference = z.infer<typeof dailySummaryPreferenceSchema>;
+
 export const notificationPreferencesSchema = z.object({
   calendarReminders: modulePreferenceSchema.default({ push: true, inApp: true }),
   habitReminders: modulePreferenceSchema.default({ push: true, inApp: true }),
-  system: modulePreferenceSchema.default({ push: true, inApp: true })
+  system: modulePreferenceSchema.default({ push: true, inApp: true }),
+  dailySummary: dailySummaryPreferenceSchema.default({
+    deliveryTime: "07:00",
+    channels: ["push", "in_app"]
+  })
 });
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 
@@ -99,11 +113,45 @@ export type NotificationPreferences = z.infer<typeof notificationPreferencesSche
 export const updateNotificationPreferencesSchema = z.object({
   calendarReminders: modulePreferenceSchema.partial().optional(),
   habitReminders: modulePreferenceSchema.partial().optional(),
-  system: modulePreferenceSchema.partial().optional()
+  system: modulePreferenceSchema.partial().optional(),
+  dailySummary: dailySummaryPreferenceSchema.partial().optional()
 });
 export type UpdateNotificationPreferencesInput = z.infer<
   typeof updateNotificationPreferencesSchema
 >;
+
+export const summaryCompletedItemSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  type: z.string().default("habit"),
+  completedAt: z.string().optional()
+});
+
+export const summaryScheduleItemSchema = z.object({
+  occurrenceId: z.string().optional(),
+  title: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  location: z.string().optional(),
+  isAllDay: z.boolean().optional()
+});
+
+export const summaryTopPrioritySchema = z.object({
+  title: z.string(),
+  category: z.string().optional(),
+  rationale: z.string().optional()
+});
+
+export const dailySummarySchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  date: z.string(),
+  yesterdayCompleted: z.array(summaryCompletedItemSchema),
+  todaySchedule: z.array(summaryScheduleItemSchema),
+  topPriorities: z.array(summaryTopPrioritySchema),
+  generatedAt: z.string()
+});
+export type DailySummary = z.infer<typeof dailySummarySchema>;
 
 /** POST /notifications/push-subscription body (from the browser Push API). */
 export const createPushSubscriptionSchema = z.object({

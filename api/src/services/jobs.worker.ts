@@ -182,6 +182,13 @@ async function handleAiRetry(job: Job<AiRetryJobData>): Promise<void> {
   );
 }
 
+async function handleGenerateDailySummary(job: Job<{ userId: string; date: string }>): Promise<void> {
+  const { userId, date } = job.data;
+  const { generateDailySummary } = await import("./ai/summaryGenerator.js");
+  await generateDailySummary(userId, date);
+  logger.info({ userId, date, jobId: job.id }, "generate_daily_summary completed successfully");
+}
+
 import { processEmbeddingJob } from "./ai/embeddingJob.js";
 
 /** Dispatch table: job name -> handler. */
@@ -189,7 +196,8 @@ const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
   [DELIVER_NOTIFICATION_TYPE]: handleDeliverNotification,
   calendar_reminder: handleCalendarReminder,
   ai_retry_job: handleAiRetry,
-  embedding: processEmbeddingJob
+  embedding: processEmbeddingJob,
+  generate_daily_summary: handleGenerateDailySummary
 };
 
 async function processJob(job: Job): Promise<void> {
