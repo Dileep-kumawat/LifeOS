@@ -69,6 +69,7 @@ function formatCategory(doc: CategoryDoc) {
  *       Creates an income or expense transaction. The `amount` must be a positive number.
  *       Category handling: Category names are normalized (whitespace trimmed and matched case-insensitively against user categories).
  *       If an existing category matches case-insensitively, its canonical casing is preserved; otherwise a new custom category is created inline.
+ *       Budget notification: If adding an expense causes the category's monthly spend to exceed its budget limit for the first time in the current period, a one-time overspend alert notification is triggered.
  *     requestBody:
  *       required: true
  *       content:
@@ -86,8 +87,39 @@ function formatCategory(doc: CategoryDoc) {
  *     responses:
  *       201:
  *         description: Transaction created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                 userId: { type: string, example: "662c9f1e9f0b2a001c3d4e00" }
+ *                 amount: { type: number, example: 45.50 }
+ *                 type: { type: string, enum: [income, expense], example: "expense" }
+ *                 category: { type: string, example: "Groceries" }
+ *                 date: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *                 note: { type: string, example: "Weekly grocery run" }
+ *                 receiptAttachment: { type: string, nullable: true, example: null }
+ *                 createdAt: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *                 updatedAt: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
  *       400:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "ValidationError" }
+ *                 message: { type: string, example: "Amount must be a positive number" }
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "Unauthorized" }
+ *                 message: { type: string, example: "Authentication required" }
  */
 financeRouter.post(
   "/finance/transactions",
@@ -134,28 +166,60 @@ financeRouter.post(
  *     parameters:
  *       - in: query
  *         name: category
- *         schema: { type: string }
+ *         schema: { type: string, example: "Groceries" }
  *       - in: query
  *         name: type
- *         schema: { type: string, enum: [income, expense] }
+ *         schema: { type: string, enum: [income, expense], example: "expense" }
  *       - in: query
  *         name: startDate
- *         schema: { type: string, format: date }
+ *         schema: { type: string, format: date, example: "2026-08-01" }
  *       - in: query
  *         name: endDate
- *         schema: { type: string, format: date }
+ *         schema: { type: string, format: date, example: "2026-08-31" }
  *       - in: query
  *         name: search
- *         schema: { type: string }
+ *         schema: { type: string, example: "groceries" }
  *       - in: query
  *         name: page
- *         schema: { type: integer, default: 1 }
+ *         schema: { type: integer, default: 1, example: 1 }
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 20 }
+ *         schema: { type: integer, default: 20, example: 20 }
  *     responses:
  *       200:
  *         description: List of transactions with pagination and summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                       amount: { type: number, example: 45.50 }
+ *                       type: { type: string, example: "expense" }
+ *                       category: { type: string, example: "Groceries" }
+ *                       date: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *                       note: { type: string, example: "Weekly grocery run" }
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total: { type: integer, example: 15 }
+ *                     page: { type: integer, example: 1 }
+ *                     limit: { type: integer, example: 20 }
+ *                     totalPages: { type: integer, example: 1 }
+ *                     hasMore: { type: boolean, example: false }
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalIncome: { type: number, example: 4500.00 }
+ *                     totalExpense: { type: number, example: 1250.75 }
+ *                     netBalance: { type: number, example: 3249.25 }
+ *       401:
+ *         description: Authentication required
  */
 financeRouter.get(
   "/finance/transactions",
@@ -256,12 +320,36 @@ financeRouter.get(
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
  *     responses:
  *       200:
  *         description: Transaction detail
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                 userId: { type: string, example: "662c9f1e9f0b2a001c3d4e00" }
+ *                 amount: { type: number, example: 45.50 }
+ *                 type: { type: string, example: "expense" }
+ *                 category: { type: string, example: "Groceries" }
+ *                 date: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *                 note: { type: string, example: "Weekly grocery run" }
+ *                 receiptAttachment: { type: string, nullable: true, example: null }
+ *                 createdAt: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *                 updatedAt: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Transaction not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "NotFound" }
+ *                 message: { type: string, example: "Transaction not found" }
  */
 financeRouter.get(
   "/finance/transactions/:id",
@@ -292,27 +380,43 @@ financeRouter.get(
  *   patch:
  *     tags: [Finance]
  *     summary: Update transaction
- *     description: Updates fields of a transaction. Normalizes category if updated.
+ *     description: |
+ *       Updates fields of a transaction. Normalizes category if updated.
+ *       Triggers budget recalculation for both old and new category/amount states and dispatches overspend alerts if threshold crossed.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               amount: { type: number }
- *               type: { type: string, enum: [income, expense] }
- *               category: { type: string }
- *               date: { type: string, format: date-time }
- *               note: { type: string }
- *               receiptAttachment: { type: string, nullable: true }
+ *               amount: { type: number, example: 55.00 }
+ *               type: { type: string, enum: [income, expense], example: "expense" }
+ *               category: { type: string, example: "Groceries" }
+ *               date: { type: string, format: date-time, example: "2026-08-12T10:00:00Z" }
+ *               note: { type: string, example: "Updated grocery total" }
+ *               receiptAttachment: { type: string, nullable: true, example: null }
  *     responses:
  *       200:
  *         description: Updated transaction
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                 amount: { type: number, example: 55.00 }
+ *                 type: { type: string, example: "expense" }
+ *                 category: { type: string, example: "Groceries" }
+ *                 note: { type: string, example: "Updated grocery total" }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Transaction not found
  */
@@ -375,10 +479,18 @@ financeRouter.patch(
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
  *     responses:
  *       200:
  *         description: Transaction deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Transaction deleted successfully" }
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Transaction not found
  */
@@ -417,6 +529,22 @@ financeRouter.delete(
  *     responses:
  *       200:
  *         description: Category list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string, example: "662c9f1e9f0b2a001c3d4e10" }
+ *                       name: { type: string, example: "Groceries" }
+ *                       type: { type: string, enum: [income, expense], example: "expense" }
+ *                       createdAt: { type: string, format: date-time, example: "2026-08-01T00:00:00.000Z" }
+ *       401:
+ *         description: Authentication required
  */
 financeRouter.get("/finance/categories", async (req: Request, res: Response) => {
   try {
@@ -443,7 +571,9 @@ financeRouter.get("/finance/categories", async (req: Request, res: Response) => 
  *   post:
  *     tags: [Finance]
  *     summary: Add custom category
- *     description: Adds a new custom category. Performs case-insensitive normalization against existing categories.
+ *     description: |
+ *       Adds a new custom category. Performs case-insensitive normalization against existing user categories.
+ *       If a category with matching case-insensitive name already exists, the canonical category is returned.
  *     requestBody:
  *       required: true
  *       content:
@@ -452,11 +582,24 @@ financeRouter.get("/finance/categories", async (req: Request, res: Response) => 
  *             type: object
  *             required: [name, type]
  *             properties:
- *               name: { type: string, example: Healthcare }
- *               type: { type: string, enum: [income, expense], example: expense }
+ *               name: { type: string, example: "Healthcare" }
+ *               type: { type: string, enum: [income, expense], example: "expense" }
  *     responses:
  *       201:
  *         description: Category added or retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e12" }
+ *                 name: { type: string, example: "Healthcare" }
+ *                 type: { type: string, enum: [income, expense], example: "expense" }
+ *                 createdAt: { type: string, format: date-time, example: "2026-08-12T10:00:00.000Z" }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
  */
 financeRouter.post(
   "/finance/categories",
@@ -486,11 +629,12 @@ financeRouter.post(
  *   patch:
  *     tags: [Finance]
  *     summary: Rename custom category
+ *     description: Renames a custom category and updates all existing transactions referencing the old category name.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e12" }
  *     requestBody:
  *       required: true
  *       content:
@@ -499,10 +643,24 @@ financeRouter.post(
  *             type: object
  *             required: [name]
  *             properties:
- *               name: { type: string }
+ *               name: { type: string, example: "Health & Medical" }
  *     responses:
  *       200:
  *         description: Category updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e12" }
+ *                 name: { type: string, example: "Health & Medical" }
+ *                 type: { type: string, example: "expense" }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Category not found
  */
 financeRouter.patch(
   "/finance/categories/:id",
@@ -552,10 +710,22 @@ financeRouter.patch(
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e12" }
  *     responses:
  *       200:
  *         description: Category deleted and transactions reassigned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Category deleted successfully. 3 transaction(s) reassigned to 'Other'." }
+ *       400:
+ *         description: Invalid category ID
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Category not found
  */
 financeRouter.delete("/finance/categories/:id", async (req: Request, res: Response) => {
   try {
@@ -601,10 +771,42 @@ financeRouter.delete("/finance/categories/:id", async (req: Request, res: Respon
  *         schema: { type: string, example: "2026-08" }
  *       - in: query
  *         name: months
- *         schema: { type: integer, default: 6 }
+ *         schema: { type: integer, default: 6, example: 6 }
  *     responses:
  *       200:
  *         description: Summary breakdown and historical trend
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 month: { type: string, example: "2026-08" }
+ *                 monthlyTotals:
+ *                   type: object
+ *                   properties:
+ *                     income: { type: number, example: 4500.00 }
+ *                     expense: { type: number, example: 1280.50 }
+ *                     net: { type: number, example: 3219.50 }
+ *                 categoryBreakdown:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       category: { type: string, example: "Groceries" }
+ *                       type: { type: string, example: "expense" }
+ *                       totalAmount: { type: number, example: 450.00 }
+ *                       count: { type: integer, example: 8 }
+ *                 trend:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       month: { type: string, example: "2026-08" }
+ *                       income: { type: number, example: 4500.00 }
+ *                       expense: { type: number, example: 1280.50 }
+ *                       net: { type: number, example: 3219.50 }
+ *       401:
+ *         description: Authentication required
  */
 financeRouter.get(
   "/finance/summary",
@@ -770,16 +972,46 @@ function formatBudget(doc: BudgetDoc) {
  *             type: object
  *             required: [category, limit]
  *             properties:
- *               category: { type: string, example: Food }
- *               limit: { type: number, example: 500.00 }
- *               period: { type: string, enum: [monthly], default: monthly }
+ *               category: { type: string, example: "Dining Out" }
+ *               limit: { type: number, example: 250.00 }
+ *               period: { type: string, enum: [monthly], default: "monthly", example: "monthly" }
  *     responses:
  *       201:
  *         description: Budget created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
+ *                 userId: { type: string, example: "662c9f1e9f0b2a001c3d4e00" }
+ *                 category: { type: string, example: "Dining Out" }
+ *                 limit: { type: number, example: 250.00 }
+ *                 period: { type: string, example: "monthly" }
+ *                 currentSpend: { type: number, example: 120.00 }
+ *                 percentUsed: { type: number, example: 48 }
+ *                 isOverBudget: { type: boolean, example: false }
+ *                 notifiedOverspend: { type: boolean, example: false }
  *       400:
  *         description: Invalid category or input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "BadRequest" }
+ *                 message: { type: string, example: "Budgets can only be set for expense categories" }
+ *       401:
+ *         description: Authentication required
  *       409:
  *         description: Duplicate budget for category and period
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "Conflict" }
+ *                 message: { type: string, example: "A monthly budget for category \"Dining Out\" already exists" }
  */
 financeRouter.post(
   "/finance/budgets",
@@ -862,6 +1094,25 @@ financeRouter.post(
  *     responses:
  *       200:
  *         description: List of budgets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 budgets:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
+ *                       category: { type: string, example: "Dining Out" }
+ *                       limit: { type: number, example: 250.00 }
+ *                       currentSpend: { type: number, example: 280.00 }
+ *                       percentUsed: { type: number, example: 112 }
+ *                       isOverBudget: { type: boolean, example: true }
+ *                       notifiedOverspend: { type: boolean, example: true }
+ *       401:
+ *         description: Authentication required
  */
 financeRouter.get("/finance/budgets", async (req: Request, res: Response) => {
   try {
@@ -896,10 +1147,31 @@ financeRouter.get("/finance/budgets", async (req: Request, res: Response) => {
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
  *     responses:
  *       200:
  *         description: Budget details with recent contributing transactions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
+ *                 category: { type: string, example: "Dining Out" }
+ *                 limit: { type: number, example: 250.00 }
+ *                 currentSpend: { type: number, example: 280.00 }
+ *                 percentUsed: { type: number, example: 112 }
+ *                 isOverBudget: { type: boolean, example: true }
+ *                 recentTransactions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                       amount: { type: number, example: 75.00 }
+ *                       category: { type: string, example: "Dining Out" }
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Budget not found
  */
@@ -953,7 +1225,7 @@ financeRouter.get(
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
  *     requestBody:
  *       required: true
  *       content:
@@ -966,6 +1238,20 @@ financeRouter.get(
  *     responses:
  *       200:
  *         description: Budget limit updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
+ *                 limit: { type: number, example: 600.00 }
+ *                 currentSpend: { type: number, example: 280.00 }
+ *                 percentUsed: { type: number, example: 46.67 }
+ *                 isOverBudget: { type: boolean, example: false }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Budget not found
  */
@@ -1006,15 +1292,23 @@ financeRouter.patch(
  *   delete:
  *     tags: [Finance]
  *     summary: Delete budget
- *     description: Deletes a budget.
+ *     description: Deletes a budget and removes its RAG embedding index.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: string, example: "662c9f1e9f0b2a001c3d4e30" }
  *     responses:
  *       200:
  *         description: Budget deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Budget deleted successfully" }
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Budget not found
  */
@@ -1050,9 +1344,9 @@ financeRouter.delete(
  *     tags: [Finance]
  *     summary: Generate AI-powered financial recommendations
  *     description: |
- *       Gathers structured financial context (category breakdown, budget statuses, historical spending trends)
+ *       Gathers structured financial context (category breakdown for current month, budget statuses, historical spending trends)
  *       and calls the Phase 3 AI service (`callAI()`) with a system prompt asking for actionable, specific recommendations
- *       grounded in the user's actual logged data.
+ *       grounded in the user's actual logged data and referencing real category names and amounts.
  *     requestBody:
  *       content:
  *         application/json:
@@ -1063,10 +1357,37 @@ financeRouter.delete(
  *     responses:
  *       200:
  *         description: Actionable financial insights generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 insights:
+ *                   type: string
+ *                   example: "1. **Dining Out Alert**: You spent $280 on Dining Out this month, which exceeds your $250 limit by 12%.\n2. **Groceries Efficiency**: Groceries total $450 against your $500 limit (90% used)."
+ *                 providerServed: { type: string, example: "mistral" }
+ *                 fallbackOccurred: { type: boolean, example: false }
+ *                 contextSummary:
+ *                   type: object
+ *                   properties:
+ *                     month: { type: string, example: "2026-08" }
+ *                     monthlyTotals:
+ *                       type: object
+ *                       properties:
+ *                         income: { type: number, example: 4500.00 }
+ *                         expense: { type: number, example: 1280.50 }
+ *                         net: { type: number, example: 3219.50 }
  *       401:
  *         description: Authentication required
  *       429:
  *         description: AI daily rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "RateLimitExceeded" }
+ *                 message: { type: string, example: "Daily AI request limit reached" }
  *       500:
  *         description: AI service error
  */

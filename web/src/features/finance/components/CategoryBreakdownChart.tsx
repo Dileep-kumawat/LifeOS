@@ -41,7 +41,29 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
   return (
     <div className="p-6 bg-white border border-[#e6e6e6] rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-[#000000] mb-4">{title}</h3>
-      <div className="w-full h-64">
+
+      {/* Visually hidden accessible data table fallback for screen readers */}
+      <div className="sr-only">
+        <h4>{title} Data Summary</h4>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Category</th>
+              <th scope="col">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chartData.map((item) => (
+              <tr key={item.name}>
+                <td>{item.name}</td>
+                <td>${item.value.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="w-full h-64" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

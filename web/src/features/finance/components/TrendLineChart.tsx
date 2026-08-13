@@ -33,7 +33,32 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
         )}
       </div>
 
-      <div className="w-full h-64">
+      {/* Visually hidden accessible data table fallback for screen readers */}
+      <div className="sr-only">
+        <h4>{title} Data Summary</h4>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Month</th>
+              <th scope="col">Income</th>
+              <th scope="col">Expense</th>
+              <th scope="col">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.month}>
+                <td>{item.month}</td>
+                <td>${item.income.toFixed(2)}</td>
+                <td>${item.expense.toFixed(2)}</td>
+                <td>${item.net.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="w-full h-64" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e6e6e6" />
