@@ -1,10 +1,14 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
+  Budget,
+  BudgetDetail,
   Category,
+  CreateBudgetInput,
   FinanceSummaryResponse,
   Transaction,
   TransactionListResponse,
-  TransactionType
+  TransactionType,
+  UpdateBudgetInput
 } from "./types";
 
 export interface ListTransactionsParams {
@@ -82,6 +86,31 @@ export const financeApi = {
 
   async getSummary(params?: { month?: string; months?: number }): Promise<FinanceSummaryResponse> {
     const response = await apiClient.get<FinanceSummaryResponse>("/finance/summary", { params });
+    return response.data;
+  },
+
+  async listBudgets(): Promise<Budget[]> {
+    const response = await apiClient.get<{ budgets: Budget[] }>("/finance/budgets");
+    return response.data.budgets;
+  },
+
+  async getBudget(id: string): Promise<BudgetDetail> {
+    const response = await apiClient.get<BudgetDetail>(`/finance/budgets/${id}`);
+    return response.data;
+  },
+
+  async createBudget(input: CreateBudgetInput): Promise<Budget> {
+    const response = await apiClient.post<Budget>("/finance/budgets", input);
+    return response.data;
+  },
+
+  async updateBudget(id: string, input: UpdateBudgetInput): Promise<Budget> {
+    const response = await apiClient.patch<Budget>(`/finance/budgets/${id}`, input);
+    return response.data;
+  },
+
+  async deleteBudget(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(`/finance/budgets/${id}`);
     return response.data;
   }
 };

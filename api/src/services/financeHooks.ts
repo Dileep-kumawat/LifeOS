@@ -1,16 +1,75 @@
 import type { TransactionDoc } from "../models/Transaction.js";
+import { recalculateBudgetSpend } from "./budgetService.js";
+import { logger } from "../logger.js";
 
-type TransactionEventListener = (transaction: TransactionDoc) => void | Promise<void>;
+export interface TransactionPreviousState {
+  category?: string;
+  amount?: number;
+  type?: string;
+  date?: Date;
+}
 
-const deletionListeners: TransactionEventListener[] = [];
-const creationListeners: TransactionEventListener[] = [];
-const updateListeners: TransactionEventListener[] = [];
+type TransactionCreatedListener = (transaction: TransactionDoc) => void | Promise<void>;
+type TransactionDeletedListener = (transaction: TransactionDoc) => void | Promise<void>;
+type TransactionUpdatedListener = (
+  transaction: TransactionDoc,
+  previous?: TransactionPreviousState
+) => void | Promise<void>;
+
+const deletionListeners: TransactionDeletedListener[] = [];
+const creationListeners: TransactionCreatedListener[] = [];
+const updateListeners: TransactionUpdatedListener[] = [];
 
 /**
- * Register a listener to be called when a transaction is deleted.
- * Prompt 2 (Budget recalculation) & Prompt 3 (Embedding removal) will hook into this.
+ * Default internal listener: budget spend recalculation on transaction creation.
  */
-export function registerOnTransactionDeleted(listener: TransactionEventListener): () => void {
+creationListeners.push(async (transaction: TransactionDoc) => {
+  if (transaction.type === "expense") {
+    try {
+      await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
+    } catch (err) {
+      logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction creation");
+    }
+  }
+});
+
+/**
+ * Default internal listener: budget spend recalculation on transaction deletion.
+ */
+deletionListeners.push(async (transaction: TransactionDoc) => {
+  if (transaction.type === "expense") {
+    try {
+      await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
+    } catch (err) {
+      logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction deletion");
+    }
+  }
+});
+
+/**
+ * Default internal listener: budget spend recalculation on transaction update.
+ */
+updateListeners.push(async (transaction: TransactionDoc, previous?: TransactionPreviousState) => {
+  try {
+    // Recalculate for current category
+    if (transaction.type === "expense" || previous?.type === "expense") {
+      await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
+    }
+
+    // If category changed or type changed, recalculate for previous category as well
+    if (previous?.category && previous.category !== transaction.category) {
+      await recalculateBudgetSpend(
+        transaction.userId,
+        previous.category,
+        previous.date || transaction.date
+      );
+    }
+  } catch (err) {
+    logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction update");
+  }
+});
+
+export function registerOnTransactionDeleted(listener: TransactionDeletedListener): () => void {
   deletionListeners.push(listener);
   return () => {
     const idx = deletionListeners.indexOf(listener);
@@ -18,7 +77,7 @@ export function registerOnTransactionDeleted(listener: TransactionEventListener)
   };
 }
 
-export function registerOnTransactionCreated(listener: TransactionEventListener): () => void {
+export function registerOnTransactionCreated(listener: TransactionCreatedListener): () => void {
   creationListeners.push(listener);
   return () => {
     const idx = creationListeners.indexOf(listener);
@@ -26,7 +85,7 @@ export function registerOnTransactionCreated(listener: TransactionEventListener)
   };
 }
 
-export function registerOnTransactionUpdated(listener: TransactionEventListener): () => void {
+export function registerOnTransactionUpdated(listener: TransactionUpdatedListener): () => void {
   updateListeners.push(listener);
   return () => {
     const idx = updateListeners.indexOf(listener);
@@ -34,9 +93,6 @@ export function registerOnTransactionUpdated(listener: TransactionEventListener)
   };
 }
 
-/**
- * Dispatch event when a transaction is deleted.
- */
 export async function onTransactionDeleted(transaction: TransactionDoc): Promise<void> {
   for (const listener of deletionListeners) {
     try {
@@ -57,10 +113,13 @@ export async function onTransactionCreated(transaction: TransactionDoc): Promise
   }
 }
 
-export async function onTransactionUpdated(transaction: TransactionDoc): Promise<void> {
+export async function onTransactionUpdated(
+  transaction: TransactionDoc,
+  previous?: TransactionPreviousState
+): Promise<void> {
   for (const listener of updateListeners) {
     try {
-      await listener(transaction);
+      await listener(transaction, previous);
     } catch (err) {
       console.error("Error in onTransactionUpdated listener:", err);
     }

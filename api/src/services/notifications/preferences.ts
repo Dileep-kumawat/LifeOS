@@ -5,12 +5,18 @@ import type { NotificationChannel, NotificationPreferences } from "@lifeos/share
  * from notification `type` -> preference module lives. Adding a new module
  * later = add a key here and to the User model; nothing else changes.
  */
-export type PreferenceModule = "calendarReminders" | "habitReminders" | "system" | "dailySummary";
+export type PreferenceModule =
+  | "calendarReminders"
+  | "habitReminders"
+  | "system"
+  | "financeBudgetAlerts"
+  | "dailySummary";
 
 export const NOTIFICATION_PREFERENCE_MODULES: PreferenceModule[] = [
   "calendarReminders",
   "habitReminders",
   "system",
+  "financeBudgetAlerts",
   "dailySummary"
 ];
 
@@ -19,6 +25,7 @@ export const DEFAULT_PREFERENCES: NotificationPreferences = {
   calendarReminders: { push: true, inApp: true },
   habitReminders: { push: true, inApp: true },
   system: { push: true, inApp: true },
+  financeBudgetAlerts: { push: true, inApp: true },
   dailySummary: { deliveryTime: "07:00", channels: ["push", "in_app"] }
 };
 
@@ -32,6 +39,8 @@ export function preferenceModuleForType(type: string): PreferenceModule {
       return "calendarReminders";
     case "habit_reminder":
       return "habitReminders";
+    case "budget_alert":
+      return "financeBudgetAlerts";
     case "daily_summary":
       return "dailySummary";
     default:
@@ -82,6 +91,7 @@ export function applyPreferenceUpdates(
     calendarReminders: { ...current.calendarReminders },
     habitReminders: { ...current.habitReminders },
     system: { ...current.system },
+    financeBudgetAlerts: { ...current.financeBudgetAlerts },
     dailySummary: { ...current.dailySummary }
   };
 

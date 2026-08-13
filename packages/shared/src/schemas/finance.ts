@@ -91,3 +91,29 @@ export const financeSummaryQuerySchema = z.object({
 });
 
 export type FinanceSummaryQuery = z.infer<typeof financeSummaryQuerySchema>;
+
+// ─── Budget Schemas ────────────────────────────────────────────────────────
+
+export const budgetPeriodEnum = z.enum(["monthly"]);
+export type BudgetPeriod = z.infer<typeof budgetPeriodEnum>;
+
+export const createBudgetSchema = z.object({
+  category: z.string().trim().min(1, "Category is required").max(100),
+  limit: z.coerce.number().positive("Limit must be a positive number (> 0)"),
+  period: budgetPeriodEnum.default("monthly")
+});
+
+export type CreateBudgetInput = z.infer<typeof createBudgetSchema>;
+
+export const updateBudgetSchema = z.object({
+  limit: z.coerce.number().positive("Limit must be a positive number (> 0)")
+});
+
+export type UpdateBudgetInput = z.infer<typeof updateBudgetSchema>;
+
+export const budgetParamsSchema = z.object({
+  id: objectIdString
+});
+
+export type BudgetParams = z.infer<typeof budgetParamsSchema>;
+

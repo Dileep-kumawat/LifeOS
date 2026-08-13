@@ -8,6 +8,7 @@ const defaultPrefs: NotificationPreferences = {
   calendarReminders: { push: true, inApp: true },
   habitReminders: { push: true, inApp: true },
   system: { push: true, inApp: true },
+  financeBudgetAlerts: { push: true, inApp: true },
   dailySummary: {
     deliveryTime: "07:00",
     channels: ["push", "in_app"],

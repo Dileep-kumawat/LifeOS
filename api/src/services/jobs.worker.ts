@@ -191,6 +191,13 @@ async function handleGenerateDailySummary(
   logger.info({ userId, date, jobId: job.id }, "generate_daily_summary completed successfully");
 }
 
+async function handleBudgetRollover(job: Job<{ refDate?: string }>): Promise<void> {
+  const { processBudgetRollover } = await import("./budgetService.js");
+  const refDate = job.data?.refDate ? new Date(job.data.refDate) : new Date();
+  const res = await processBudgetRollover(refDate);
+  logger.info({ jobId: job.id, processed: res.processed }, "budget_rollover completed successfully");
+}
+
 import { processEmbeddingJob } from "./ai/embeddingJob.js";
 
 /** Dispatch table: job name -> handler. */
@@ -199,7 +206,8 @@ const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
   calendar_reminder: handleCalendarReminder,
   ai_retry_job: handleAiRetry,
   embedding: processEmbeddingJob,
-  generate_daily_summary: handleGenerateDailySummary
+  generate_daily_summary: handleGenerateDailySummary,
+  budget_rollover: handleBudgetRollover
 };
 
 async function processJob(job: Job): Promise<void> {

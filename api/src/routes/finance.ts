@@ -2,9 +2,13 @@ import { Router, type Request, type Response } from "express";
 import { isValidObjectId, Types } from "mongoose";
 import { Transaction, type TransactionDoc } from "../models/Transaction.js";
 import { Category, type CategoryDoc } from "../models/Category.js";
+import { Budget, type BudgetDoc } from "../models/Budget.js";
 import {
   createCategorySchema,
   createTransactionSchema,
+  createBudgetSchema,
+  updateBudgetSchema,
+  budgetParamsSchema,
   financeSummaryQuerySchema,
   listTransactionsQuerySchema,
   transactionParamsSchema,
@@ -23,6 +27,7 @@ import {
   onTransactionDeleted,
   onTransactionUpdated
 } from "../services/financeHooks.js";
+import { getMonthBounds, recalculateBudgetSpend } from "../services/budgetService.js";
 
 export const financeRouter = Router();
 
@@ -323,6 +328,13 @@ financeRouter.patch(
         return res.status(404).json({ error: "NotFound", message: "Transaction not found" });
       }
 
+      const previousState = {
+        category: transaction.category,
+        amount: transaction.amount,
+        type: transaction.type,
+        date: transaction.date
+      };
+
       const { amount, type, category, date, note, receiptAttachment } = req.body;
 
       if (amount !== undefined) transaction.amount = amount;
@@ -338,7 +350,7 @@ financeRouter.patch(
       }
 
       await transaction.save();
-      await onTransactionUpdated(transaction);
+      await onTransactionUpdated(transaction, previousState);
 
       return res.status(200).json(formatTransaction(transaction));
     } catch (err: any) {
@@ -710,6 +722,314 @@ financeRouter.get(
       return res.status(500).json({
         error: "InternalServerError",
         message: err.message || "Failed to generate monthly summary"
+      });
+    }
+  }
+);
+
+// ─── Budget Endpoints ──────────────────────────────────────────────────────
+
+function formatBudget(doc: BudgetDoc) {
+  const limit = doc.limit;
+  const currentSpend = doc.currentSpend;
+  const percentUsed = limit > 0 ? Math.round((currentSpend / limit) * 100 * 100) / 100 : 0;
+  const isOverBudget = currentSpend > limit;
+
+  return {
+    id: doc._id.toString(),
+    userId: doc.userId.toString(),
+    category: doc.category,
+    limit,
+    period: doc.period,
+    currentSpend,
+    percentUsed,
+    isOverBudget,
+    notifiedOverspend: doc.notifiedOverspend,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString()
+  };
+}
+
+/**
+ * @openapi
+ * /finance/budgets:
+ *   post:
+ *     tags: [Finance]
+ *     summary: Create a new budget
+ *     description: |
+ *       Creates a category-scoped budget for a specified period (defaults to monthly).
+ *       Validates that the expense category exists for the authenticated user and rejects duplicates with HTTP 409 Conflict.
+ *       Calculates initial currentSpend from existing transactions in the current period.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [category, limit]
+ *             properties:
+ *               category: { type: string, example: Food }
+ *               limit: { type: number, example: 500.00 }
+ *               period: { type: string, enum: [monthly], default: monthly }
+ *     responses:
+ *       201:
+ *         description: Budget created successfully
+ *       400:
+ *         description: Invalid category or input
+ *       409:
+ *         description: Duplicate budget for category and period
+ */
+financeRouter.post(
+  "/finance/budgets",
+  validate(createBudgetSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+      const { category, limit, period = "monthly" } = req.body;
+
+      // Seed & validate category exists for user
+      await seedDefaultCategories(userId);
+      const categoryDoc = await Category.findOne({
+        userId,
+        name: { $regex: new RegExp(`^${category.trim()}$`, "i") }
+      });
+
+      if (!categoryDoc) {
+        return res.status(400).json({
+          error: "BadRequest",
+          message: `Category "${category}" does not exist`
+        });
+      }
+
+      if (categoryDoc.type !== "expense") {
+        return res.status(400).json({
+          error: "BadRequest",
+          message: `Budgets can only be set for expense categories`
+        });
+      }
+
+      const canonicalCategory = categoryDoc.name;
+
+      // Check for duplicate active budget
+      const existing = await Budget.findOne({ userId, category: canonicalCategory, period });
+      if (existing) {
+        return res.status(409).json({
+          error: "Conflict",
+          message: `A ${period} budget for category "${canonicalCategory}" already exists`
+        });
+      }
+
+      const budget = await Budget.create({
+        userId,
+        category: canonicalCategory,
+        limit,
+        period,
+        currentSpend: 0,
+        notifiedOverspend: false
+      });
+
+      // Recalculate spend for current month
+      const updated = await recalculateBudgetSpend(userId, canonicalCategory);
+      return res.status(201).json(formatBudget(updated || budget));
+    } catch (err: any) {
+      if (err.code === 11000) {
+        return res.status(409).json({
+          error: "Conflict",
+          message: "A budget for this category and period already exists"
+        });
+      }
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: err.message || "Failed to create budget"
+      });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /finance/budgets:
+ *   get:
+ *     tags: [Finance]
+ *     summary: List user budgets
+ *     description: |
+ *       Returns all active budgets for the user with calculated current status (currentSpend, percentUsed, isOverBudget).
+ *       Budgets are sorted with over-budget items surfaced first.
+ *     responses:
+ *       200:
+ *         description: List of budgets
+ */
+financeRouter.get("/finance/budgets", async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const budgets = await Budget.find({ userId });
+
+    const formatted = budgets.map(formatBudget);
+    formatted.sort((a, b) => {
+      if (a.isOverBudget !== b.isOverBudget) {
+        return a.isOverBudget ? -1 : 1;
+      }
+      return b.percentUsed - a.percentUsed;
+    });
+
+    return res.status(200).json({ budgets: formatted });
+  } catch (err: any) {
+    return res.status(500).json({
+      error: "InternalServerError",
+      message: err.message || "Failed to list budgets"
+    });
+  }
+});
+
+/**
+ * @openapi
+ * /finance/budgets/{id}:
+ *   get:
+ *     tags: [Finance]
+ *     summary: Get budget details
+ *     description: Returns budget status and recent contributing transactions for the current period.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Budget details with recent contributing transactions
+ *       404:
+ *         description: Budget not found
+ */
+financeRouter.get(
+  "/finance/budgets/:id",
+  validate(budgetParamsSchema, "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+
+      const budget = await Budget.findOne({ _id: id, userId });
+      if (!budget) {
+        return res.status(404).json({ error: "NotFound", message: "Budget not found" });
+      }
+
+      const { startOfMonth, endOfMonth } = getMonthBounds();
+      const recentTransactions = await Transaction.find({
+        userId,
+        type: "expense",
+        category: budget.category,
+        date: { $gte: startOfMonth, $lte: endOfMonth }
+      })
+        .sort({ date: -1, _id: -1 })
+        .limit(20);
+
+      return res.status(200).json({
+        ...formatBudget(budget),
+        recentTransactions: recentTransactions.map(formatTransaction)
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: err.message || "Failed to fetch budget"
+      });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /finance/budgets/{id}:
+ *   patch:
+ *     tags: [Finance]
+ *     summary: Update budget limit
+ *     description: |
+ *       Updates the spending limit of an existing budget.
+ *       Recalculates overspend status against the new limit. If spend now exceeds the limit,
+ *       a one-time overspend alert is dispatched unless an alert was already triggered for the current period.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [limit]
+ *             properties:
+ *               limit: { type: number, example: 600.00 }
+ *     responses:
+ *       200:
+ *         description: Budget limit updated
+ *       404:
+ *         description: Budget not found
+ */
+financeRouter.patch(
+  "/finance/budgets/:id",
+  validate(budgetParamsSchema, "params"),
+  validate(updateBudgetSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+      const { limit } = req.body;
+
+      const budget = await Budget.findOne({ _id: id, userId });
+      if (!budget) {
+        return res.status(404).json({ error: "NotFound", message: "Budget not found" });
+      }
+
+      budget.limit = limit;
+      await budget.save();
+
+      const updated = await recalculateBudgetSpend(userId, budget.category);
+      return res.status(200).json(formatBudget(updated || budget));
+    } catch (err: any) {
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: err.message || "Failed to update budget"
+      });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /finance/budgets/{id}:
+ *   delete:
+ *     tags: [Finance]
+ *     summary: Delete budget
+ *     description: Deletes a budget.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Budget deleted
+ *       404:
+ *         description: Budget not found
+ */
+financeRouter.delete(
+  "/finance/budgets/:id",
+  validate(budgetParamsSchema, "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+
+      const budget = await Budget.findOneAndDelete({ _id: id, userId });
+      if (!budget) {
+        return res.status(404).json({ error: "NotFound", message: "Budget not found" });
+      }
+
+      return res.status(200).json({ message: "Budget deleted successfully" });
+    } catch (err: any) {
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: err.message || "Failed to delete budget"
       });
     }
   }

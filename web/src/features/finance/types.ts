@@ -64,3 +64,34 @@ export interface FinanceSummaryResponse {
   categoryBreakdown: CategoryBreakdownItem[];
   trend: MonthlyTrendItem[];
 }
+
+export type BudgetPeriod = "monthly";
+
+export interface Budget {
+  id: string;
+  userId: string;
+  category: string;
+  limit: number;
+  period: BudgetPeriod;
+  currentSpend: number;
+  percentUsed: number;
+  isOverBudget: boolean;
+  notifiedOverspend: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BudgetDetail extends Budget {
+  recentTransactions: Transaction[];
+}
+
+export interface CreateBudgetInput {
+  category: string;
+  limit: number;
+  period?: BudgetPeriod;
+}
+
+export interface UpdateBudgetInput {
+  limit: number;
+}
+

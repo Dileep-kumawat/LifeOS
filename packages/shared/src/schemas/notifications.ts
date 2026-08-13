@@ -102,6 +102,7 @@ export const notificationPreferencesSchema = z.object({
   calendarReminders: modulePreferenceSchema.default({ push: true, inApp: true }),
   habitReminders: modulePreferenceSchema.default({ push: true, inApp: true }),
   system: modulePreferenceSchema.default({ push: true, inApp: true }),
+  financeBudgetAlerts: modulePreferenceSchema.default({ push: true, inApp: true }),
   dailySummary: dailySummaryPreferenceSchema.default({
     deliveryTime: "07:00",
     channels: ["push", "in_app"]
@@ -114,6 +115,7 @@ export const updateNotificationPreferencesSchema = z.object({
   calendarReminders: modulePreferenceSchema.partial().optional(),
   habitReminders: modulePreferenceSchema.partial().optional(),
   system: modulePreferenceSchema.partial().optional(),
+  financeBudgetAlerts: modulePreferenceSchema.partial().optional(),
   dailySummary: dailySummaryPreferenceSchema.partial().optional()
 });
 export type UpdateNotificationPreferencesInput = z.infer<

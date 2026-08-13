@@ -8,13 +8,11 @@
     }
     switch (notification.type) {
       case "calendar_reminder":
-        return typeof data.eventId === "string" && data.eventId
-          ? `/calendar?eventId=${encodeURIComponent(data.eventId)}`
-          : "/calendar";
+        return typeof data.eventId === "string" && data.eventId ? `/calendar?eventId=${encodeURIComponent(data.eventId)}` : "/calendar";
       case "habit_reminder":
-        return typeof data.habitId === "string" && data.habitId
-          ? `/habits?habitId=${encodeURIComponent(data.habitId)}`
-          : "/habits";
+        return typeof data.habitId === "string" && data.habitId ? `/habits?habitId=${encodeURIComponent(data.habitId)}` : "/habits";
+      case "budget_alert":
+        return typeof data.budgetId === "string" && data.budgetId ? `/finance?tab=budgets&budgetId=${encodeURIComponent(data.budgetId)}` : "/finance?tab=budgets";
       default:
         return "/";
     }

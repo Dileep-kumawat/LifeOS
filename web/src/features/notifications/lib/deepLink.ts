@@ -32,6 +32,10 @@ export function getDeepLinkUrl(notification: DeepLinkSource): string {
       return typeof data.habitId === "string" && data.habitId
         ? `/habits?habitId=${encodeURIComponent(data.habitId)}`
         : "/habits";
+    case "budget_alert":
+      return typeof data.budgetId === "string" && data.budgetId
+        ? `/finance?tab=budgets&budgetId=${encodeURIComponent(data.budgetId)}`
+        : "/finance?tab=budgets";
     default:
       return "/";
   }

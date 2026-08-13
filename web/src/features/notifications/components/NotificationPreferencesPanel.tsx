@@ -28,6 +28,11 @@ const MODULES = [
     description: "Nudges when it's time to check in on a habit."
   },
   {
+    key: "financeBudgetAlerts",
+    title: "Finance & budget alerts",
+    description: "Alerts when an expense pushes a category budget over its limit."
+  },
+  {
     key: "system",
     title: "System updates",
     description: "Account and product announcements."

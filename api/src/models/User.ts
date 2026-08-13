@@ -73,6 +73,10 @@ const userSchema = new Schema(
         default: () => ({ push: true, inApp: true })
       },
       system: { type: modulePreferenceSchema, default: () => ({ push: true, inApp: true }) },
+      financeBudgetAlerts: {
+        type: modulePreferenceSchema,
+        default: () => ({ push: true, inApp: true })
+      },
       dailySummary: {
         type: dailySummaryPreferenceSchema,
         default: () => ({ deliveryTime: "07:00", channels: ["push", "in_app"], timezone: "UTC" })
