@@ -46,7 +46,7 @@ export function RootLayout() {
           {isAuthenticated ? <NotificationBell /> : <Button variant="secondary">Sign in</Button>}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <Outlet />
       </main>
     </div>

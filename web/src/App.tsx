@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider, Link } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
 import axios from "axios";
 import { queryClient } from "./lib/queryClient";
@@ -19,70 +19,9 @@ import { NotesListPage } from "./features/notes/NotesListPage";
 import { NoteDetailPage } from "./features/notes/NoteDetailPage";
 import { ChatPage } from "./features/ai/ChatPage";
 import { FinancePage } from "./features/finance/FinancePage";
-import { DailySummaryCard } from "./features/ai/components/DailySummaryCard";
-import { useTodaySummary } from "./features/ai/hooks/useDailySummary";
+import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
-
-function DashboardHome() {
-  const user = useAuthStore((state) => state.user);
-  const { data, isLoading, isError, refetch } = useTodaySummary();
-
-  return (
-    <div className="flex flex-col gap-6 p-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Welcome back, {user?.name || "User"}!
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          LifeOS Core — Calendar, Goals, Habits, Notes, Finance & AI Daily Summary active.
-        </p>
-      </div>
-
-      <DailySummaryCard
-        isLoading={isLoading}
-        isError={isError}
-        onRetry={() => refetch()}
-        generated={data?.generated}
-        deliveryTime={data?.deliveryTime}
-        summary={data?.summary}
-      />
-
-      <div className="flex flex-wrap gap-4">
-        <Link
-          to="/finance"
-          className="inline-flex items-center justify-center rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          Finance & Budget
-        </Link>
-        <Link
-          to="/goals"
-          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          View Goals
-        </Link>
-        <Link
-          to="/habits"
-          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700 transition-colors"
-        >
-          View Habits
-        </Link>
-        <Link
-          to="/notes"
-          className="inline-flex items-center justify-center rounded-lg bg-secondary text-secondary-foreground px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors"
-        >
-          View Notes
-        </Link>
-        <Link
-          to="/chat"
-          className="inline-flex items-center justify-center rounded-lg border border-border bg-card text-foreground px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-        >
-          AI Chat
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 const router = createBrowserRouter([
   {
@@ -93,7 +32,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <ProtectedRoute>
-            <DashboardHome />
+            <DashboardPage />
           </ProtectedRoute>
         )
       },
