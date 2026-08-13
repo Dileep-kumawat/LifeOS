@@ -94,6 +94,7 @@ export function setupChatSocket(io: Server) {
         socket.emit("user_message_ack", {
           conversationId,
           messageId: userMsg._id.toString(),
+          role: userMsg.role,
           content: userMsg.content,
           createdAt: userMsg.createdAt.toISOString()
         });

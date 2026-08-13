@@ -1,6 +1,7 @@
 import React from "react";
 import { User, Bot, AlertCircle, Wrench, CheckCircle2, XCircle } from "lucide-react";
 import type { ChatMessage as ChatMessageType } from "../types";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 export interface ChatMessageProps {
   message: ChatMessageType;
@@ -46,7 +47,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onOpenConfirm
             className={`text-sm leading-relaxed ${isUncertainty ? "text-amber-900 bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2" : "text-[#31302e]"}`}
           >
             {isUncertainty && <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}
-            <div className="whitespace-pre-wrap break-words">{content}</div>
+            {isUser ? (
+              <div className="whitespace-pre-wrap break-words">{content}</div>
+            ) : (
+              <MarkdownRenderer content={content} />
+            )}
           </div>
         )}
 

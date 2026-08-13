@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
-import axios from "axios";
+import { apiClient } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../store/authStore";
 import type { ChatMessage, ConversationSummary } from "../types";
 
@@ -23,7 +23,7 @@ export function useSocketChat() {
   // 1. Fetch conversations list
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await axios.get("/api/v1/ai/conversations", { withCredentials: true });
+      const res = await apiClient.get("/ai/conversations");
       setConversations(res.data.conversations || []);
     } catch (_err) {
       /* non-blocking */
@@ -33,7 +33,7 @@ export function useSocketChat() {
   // 2. Fetch messages for active conversation
   const fetchMessages = useCallback(async (convId: string) => {
     try {
-      const res = await axios.get(`/api/v1/ai/conversations/${convId}`, { withCredentials: true });
+      const res = await apiClient.get(`/ai/conversations/${convId}`);
       setMessages(res.data.messages || []);
     } catch (_err) {
       setMessages([]);
@@ -63,7 +63,7 @@ export function useSocketChat() {
     });
 
     socketInstance.on("user_message_ack", (data: ChatMessage) => {
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => [...prev, { ...data, role: data.role || "user" }]);
       setIsStreaming(true);
       setBackupModelStatus(null);
     });
@@ -195,7 +195,7 @@ export function useSocketChat() {
   // Handler: Delete conversation
   const deleteConversation = async (id: string) => {
     try {
-      await axios.delete(`/api/v1/ai/conversations/${id}`, { withCredentials: true });
+      await apiClient.delete(`/ai/conversations/${id}`);
       if (activeConversationId === id) {
         selectConversation(null);
       }
