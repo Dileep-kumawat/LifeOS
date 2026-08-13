@@ -32,9 +32,11 @@ export function serviceWorkerSupported(): boolean {
 export function getApplicationServerKey(): Uint8Array<ArrayBuffer> | null {
   if (typeof import.meta === "undefined" || !import.meta.env) return null;
   const b64 = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-  if (!b64) return null;
+  if (!b64 || !b64.trim()) return null;
   try {
-    const raw = atob(b64.replace(/-/g, "+").replace(/_/g, "/"));
+    const padding = "=".repeat((4 - (b64.length % 4)) % 4);
+    const base64 = (b64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
     const bytes = new Uint8Array(new ArrayBuffer(raw.length));
     for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
     return bytes;
