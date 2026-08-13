@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, MessageSquare } from "lucide-react";
+import {
+  Sparkles,
+  Plus,
+  ArrowUp,
+  ChevronDown,
+  PanelLeft,
+  Calendar,
+  DollarSign,
+  FileText,
+  Clock
+} from "lucide-react";
 import { useSocketChat } from "./hooks/useSocketChat";
 import { ConversationHistorySidebar } from "./components/ConversationHistorySidebar";
 import { ChatMessage } from "./components/ChatMessage";
@@ -24,6 +34,7 @@ export const ChatPage: React.FC = () => {
   } = useSocketChat();
 
   const [input, setInput] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on new messages
@@ -31,83 +42,202 @@ export const ChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim() || isStreaming) return;
     sendMessage(input);
     setInput("");
   };
 
+  const handlePromptCardClick = (promptText: string) => {
+    if (isStreaming) return;
+    sendMessage(promptText);
+  };
+
+  const suggestionCards = [
+    {
+      icon: <Clock className="w-4 h-4 text-[#0075de]" />,
+      title: "How productive was I this month?",
+      prompt: "How productive was I this month? Summarize my activity statistics."
+    },
+    {
+      icon: <Calendar className="w-4 h-4 text-emerald-600" />,
+      title: "Create tomorrow's study plan",
+      prompt: "Create tomorrow's study plan and schedule calendar events for study blocks."
+    },
+    {
+      icon: <FileText className="w-4 h-4 text-amber-600" />,
+      title: "Summarize recent notes & meetings",
+      prompt: "Summarize my recent notes and key takeaways."
+    },
+    {
+      icon: <DollarSign className="w-4 h-4 text-purple-600" />,
+      title: "Show monthly budget & spending overview",
+      prompt: "Show my monthly finance summary, income vs expenses, and budget status."
+    }
+  ];
+
   return (
-    <div className="flex h-[calc(100vh-5rem)] bg-white border border-[#e6e6e6] rounded-xl overflow-hidden shadow-sm">
-      {/* 1. History Sidebar */}
+    <div className="flex h-[calc(100vh-5rem)] bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden shadow-xs select-none">
+      {/* 1. ChatGPT Collapsible Sidebar */}
       <ConversationHistorySidebar
         conversations={conversations}
         activeConversationId={activeConversationId}
         onSelectConversation={selectConversation}
         onDeleteConversation={deleteConversation}
+        isOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(false)}
       />
 
-      {/* 2. Chat Main Container */}
-      <div className="flex-1 flex flex-col h-full bg-[#ffffff]">
-        {/* Chat Header */}
-        <header className="px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="w-5 h-5 text-[#0075de]" />
-            <h2 className="text-base font-bold text-[#000000]">LifeOS AI Assistant</h2>
+      {/* 2. Main Chat View */}
+      <div className="flex-1 flex flex-col h-full bg-white relative">
+        {/* Top Header */}
+        <header className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-white z-10">
+          <div className="flex items-center gap-2">
+            {!sidebarOpen && (
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors"
+                title="Open sidebar"
+              >
+                <PanelLeft className="w-4 h-4" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#f4f4f4] transition-colors text-base font-bold text-[#0d0d0d]"
+            >
+              <span>LifeOS AI</span>
+              <ChevronDown className="w-4 h-4 text-[#8e8e8e]" />
+            </button>
           </div>
-          <span className="text-xs text-[#615d59] font-medium">
-            RAG Context + Tool Calling Active
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-[#676767] bg-[#f4f4f4] px-2.5 py-1 rounded-full border border-[#e5e5e5]">
+              RAG Context + Tool Calling Active
+            </span>
+          </div>
         </header>
 
-        {/* Message Stream */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-white">
-          {messages.length === 0 && (
-            <div className="my-auto flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto">
-              <div className="w-12 h-12 bg-[#0075de]/10 text-[#0075de] rounded-full flex items-center justify-center mb-3">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-[#000000]">Ask LifeOS Anything</h3>
-              <p className="text-xs text-[#615d59] mt-1">
-                Try asking: "How productive was I this month?", "Create tomorrow's study plan", or
-                "Summarize my meeting".
-              </p>
+        {/* Empty State: ChatGPT Style "Where should we begin?" */}
+        {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full text-center">
+            <div className="w-12 h-12 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center mb-6 shadow-sm">
+              <Sparkles className="w-6 h-6" />
             </div>
-          )}
 
-          {messages.map((m) => (
-            <ChatMessage
-              key={m.id}
-              message={m}
-              onOpenConfirmation={(msg) => setPendingToolCallMessage(msg)}
-            />
-          ))}
+            <h1 className="text-3xl font-semibold text-[#0d0d0d] tracking-tight mb-8">
+              Where should we begin?
+            </h1>
 
-          <StreamingIndicator isStreaming={isStreaming} backupModelStatus={backupModelStatus} />
-          <div ref={messagesEndRef} />
-        </div>
+            {/* Centered Large ChatGPT Search/Prompt Bar */}
+            <form onSubmit={handleSubmit} className="w-full mb-8">
+              <div className="w-full bg-white border border-[#e5e5e5] rounded-3xl shadow-sm focus-within:shadow-md focus-within:border-[#b4b4b4] p-3 flex flex-col gap-3 transition-all">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask anything..."
+                  className="w-full text-base text-[#0d0d0d] bg-transparent outline-none px-2 py-1 placeholder-[#8e8e8e] font-normal"
+                />
 
-        {/* Chat Input Bar */}
-        <div className="p-4 border-t border-[#e6e6e6] bg-[#f6f5f4]">
-          <form onSubmit={handleSubmit} className="flex items-center gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask AI or request an action (e.g., 'Schedule dentist appointment for tomorrow at 2pm')..."
-              className="flex-1 bg-white text-[#000000] text-sm px-4 py-3 rounded-lg border border-[#e6e6e6] focus:outline-none focus:ring-2 focus:ring-[#0075de] placeholder-[#a39e98]"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isStreaming}
-              className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-[#0075de] rounded-lg hover:bg-[#005bab] transition-colors disabled:opacity-50 shadow-sm"
-            >
-              <Send className="w-4 h-4" />
-              <span>Send</span>
-            </button>
-          </form>
-        </div>
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-full transition-colors"
+                      title="Add attachment"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isStreaming}
+                    className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] disabled:opacity-30 transition-all shadow-xs"
+                  >
+                    <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Quick Suggestion Prompt Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl text-left">
+              {suggestionCards.map((card, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handlePromptCardClick(card.prompt)}
+                  className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#e5e5e5] hover:border-[#b4b4b4] hover:bg-[#f9f9f9] transition-all text-xs text-[#2b2b2b] font-normal group"
+                >
+                  <div className="p-2 bg-[#f4f4f4] rounded-xl shrink-0 group-hover:bg-white transition-colors">
+                    {card.icon}
+                  </div>
+                  <span className="mt-1 leading-snug">{card.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Active Chat Stream View */
+          <div className="flex-1 overflow-y-auto flex flex-col">
+            <div className="flex-1 py-6 flex flex-col gap-2">
+              {messages.map((m) => (
+                <ChatMessage
+                  key={m.id}
+                  message={m}
+                  onOpenConfirmation={(msg) => setPendingToolCallMessage(msg)}
+                />
+              ))}
+              <StreamingIndicator
+                isStreaming={isStreaming}
+                backupModelStatus={backupModelStatus}
+              />
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Bottom Fixed Floating Input Bar (ChatGPT Style) */}
+            <div className="p-4 bg-white border-t border-transparent">
+              <div className="max-w-3xl mx-auto w-full flex flex-col items-center gap-2">
+                <form onSubmit={handleSubmit} className="w-full">
+                  <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#b4b4b4] p-2.5 flex items-center gap-2 transition-all">
+                    <button
+                      type="button"
+                      className="p-1.5 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-full transition-colors"
+                      title="Add attachment"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Message LifeOS AI..."
+                      className="flex-1 text-sm text-[#0d0d0d] bg-transparent outline-none px-2 placeholder-[#8e8e8e]"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isStreaming}
+                      className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] disabled:opacity-30 transition-all shrink-0"
+                    >
+                      <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </div>
+                </form>
+
+                <p className="text-[11px] text-[#8e8e8e] text-center">
+                  LifeOS AI can make mistakes. Check important account info.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. Tool Confirmation Modal (FR-2.4) */}

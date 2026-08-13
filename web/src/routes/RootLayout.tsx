@@ -1,12 +1,15 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, NavLink } from "react-router-dom";
 import { Button } from "../components/Button";
 import { useAuthStore } from "../store/authStore";
 import { NotificationBell } from "../features/notifications";
 
-// Minimal shell for Phase 0. Real navigation (Calendar/Goals/Habits/Notes/
-// Chat) gets added as those modules land from Phase 1 onward.
 export function RootLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `text-sm font-medium transition-colors ${
+      isActive ? "text-[#0075de] font-semibold" : "text-slate-600 hover:text-slate-900"
+    }`;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -16,42 +19,27 @@ export function RootLayout() {
             LifeOS
           </Link>
           <nav className="flex items-center gap-4">
-            <Link
-              to="/calendar"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-            >
+            <NavLink to="/calendar" className={getNavLinkClass}>
               Calendar
-            </Link>
-            <Link
-              to="/goals"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-            >
+            </NavLink>
+            <NavLink to="/goals" className={getNavLinkClass}>
               Goals
-            </Link>
-            <Link
-              to="/habits"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-            >
+            </NavLink>
+            <NavLink to="/habits" className={getNavLinkClass}>
               Habits
-            </Link>
-            <Link
-              to="/notes"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-            >
+            </NavLink>
+            <NavLink to="/notes" className={getNavLinkClass}>
               Notes
-            </Link>
-            <Link
-              to="/chat"
-              className="text-sm font-semibold text-[#0075de] transition-colors hover:text-[#005bab]"
-            >
+            </NavLink>
+            <NavLink to="/finance" className={getNavLinkClass}>
+              Finance & Budget
+            </NavLink>
+            <NavLink to="/chat" className={getNavLinkClass}>
               AI Chat
-            </Link>
-            <Link
-              to="/settings"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-            >
+            </NavLink>
+            <NavLink to="/settings" className={getNavLinkClass}>
               Settings
-            </Link>
+            </NavLink>
           </nav>
         </div>
         <div className="flex items-center gap-2">
