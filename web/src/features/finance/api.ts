@@ -4,6 +4,7 @@ import type {
   BudgetDetail,
   Category,
   CreateBudgetInput,
+  FinanceInsightsResponse,
   FinanceSummaryResponse,
   Transaction,
   TransactionListResponse,
@@ -111,6 +112,11 @@ export const financeApi = {
 
   async deleteBudget(id: string): Promise<{ message: string }> {
     const response = await apiClient.delete<{ message: string }>(`/finance/budgets/${id}`);
+    return response.data;
+  },
+
+  async getInsights(focusArea?: string): Promise<FinanceInsightsResponse> {
+    const response = await apiClient.post<FinanceInsightsResponse>("/finance/insights", { focusArea });
     return response.data;
   }
 };

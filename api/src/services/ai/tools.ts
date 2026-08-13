@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
+import { Types } from "mongoose";
 import { Event } from "../../models/Event.js";
 import { Habit } from "../../models/Habit.js";
 import { Note } from "../../models/Note.js";
 import { NoteFolder } from "../../models/NoteFolder.js";
+import { Transaction } from "../../models/Transaction.js";
+import { Budget } from "../../models/Budget.js";
 import { isValidTimezone, validateRecurrenceRule } from "../recurrence.js";
 import { extractContentText } from "../prosemirror.js";
 import { scheduleEventReminder } from "../notifications/calendarReminders.js";
@@ -57,9 +60,16 @@ export const createNoteSchema = z.object({
   tags: z.array(z.string()).optional().describe("Optional tags for categorization")
 });
 
+export const querySpendingSchema = z.object({
+  month: z.string().optional().describe("Target month in YYYY-MM format (e.g. 2026-08)"),
+  category: z.string().optional().describe("Optional category to filter spending"),
+  monthsTrend: z.number().optional().describe("Number of months for historical trend analysis (default: 6)")
+});
+
 export type CreateCalendarEventInput = z.infer<typeof createCalendarEventSchema>;
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+export type QuerySpendingInput = z.infer<typeof querySpendingSchema>;
 
 // ─── 2. Provider-Agnostic LangChain Tool Definitions ───────────────────────
 
@@ -81,7 +91,18 @@ export const createNoteTool = tool(async (input) => JSON.stringify(input), {
   schema: createNoteSchema
 });
 
-export const ALL_AI_TOOLS = [createCalendarEventTool, createHabitTool, createNoteTool];
+export const querySpendingTool = tool(async (input) => JSON.stringify(input), {
+  name: "query_spending",
+  description: "Query structured spending summary, category breakdowns, monthly totals, and budget statuses for the user.",
+  schema: querySpendingSchema
+});
+
+export const ALL_AI_TOOLS = [
+  createCalendarEventTool,
+  createHabitTool,
+  createNoteTool,
+  querySpendingTool
+];
 
 // ─── 3. Shared Backend Execution Services (FR-2.14 Validation Parity) ───────
 
@@ -213,6 +234,89 @@ export async function executeCreateNote(userId: string, args: CreateNoteInput) {
   };
 }
 
+export async function executeQuerySpending(userId: string, args: QuerySpendingInput) {
+  const userObjId = new Types.ObjectId(userId);
+  const now = new Date();
+  let targetYear: number;
+  let targetMonth: number;
+
+  if (args.month) {
+    const [y, m] = args.month.split("-").map(Number);
+    targetYear = y;
+    targetMonth = m - 1;
+  } else {
+    targetYear = now.getUTCFullYear();
+    targetMonth = now.getUTCMonth();
+  }
+
+  const startOfMonth = new Date(Date.UTC(targetYear, targetMonth, 1, 0, 0, 0, 0));
+  const endOfMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0, 23, 59, 59, 999));
+  const monthKey = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`;
+
+  const matchFilter: any = {
+    userId: userObjId,
+    date: { $gte: startOfMonth, $lte: endOfMonth }
+  };
+  if (args.category) {
+    matchFilter.category = args.category;
+  }
+
+  // 1. Category breakdown for month
+  const categoryAgg = await Transaction.aggregate([
+    { $match: matchFilter },
+    {
+      $group: {
+        _id: { category: "$category", type: "$type" },
+        totalAmount: { $sum: "$amount" },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { totalAmount: -1 } }
+  ]);
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+  const categoryBreakdown = categoryAgg.map((item) => {
+    if (item._id.type === "income") totalIncome += item.totalAmount;
+    if (item._id.type === "expense") totalExpense += item.totalAmount;
+    return {
+      category: item._id.category,
+      type: item._id.type,
+      totalAmount: item.totalAmount,
+      count: item.count
+    };
+  });
+
+  // 2. Budget statuses
+  const rawBudgets = await Budget.find({ userId }).lean();
+  const budgets = Array.isArray(rawBudgets) ? rawBudgets : [];
+  const budgetStatuses = budgets.map((b: any) => {
+    const limit = b.limit;
+    const currentSpend = b.currentSpend;
+    const percentUsed = limit > 0 ? Math.round((currentSpend / limit) * 100) : 0;
+    const isOverBudget = currentSpend > limit;
+    const isApproaching = percentUsed >= 80 && !isOverBudget;
+    return {
+      category: b.category,
+      limit,
+      currentSpend,
+      percentUsed,
+      status: isOverBudget ? "over_budget" : isApproaching ? "approaching_limit" : "under_budget"
+    };
+  });
+
+  return {
+    month: monthKey,
+    monthlyTotals: {
+      income: totalIncome,
+      expense: totalExpense,
+      net: totalIncome - totalExpense
+    },
+    categoryBreakdown,
+    budgetStatuses
+  };
+}
+
 export async function executeToolCall(userId: string, toolName: string, args: any) {
   switch (toolName) {
     case "create_calendar_event":
@@ -221,7 +325,11 @@ export async function executeToolCall(userId: string, toolName: string, args: an
       return await executeCreateHabit(userId, args);
     case "create_note":
       return await executeCreateNote(userId, args);
+    case "query_spending":
+    case "financial_analysis":
+      return await executeQuerySpending(userId, args);
     default:
       throw new Error(`Unknown tool name: ${toolName}`);
   }
 }
+

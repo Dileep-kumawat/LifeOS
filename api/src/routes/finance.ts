@@ -28,6 +28,8 @@ import {
   onTransactionUpdated
 } from "../services/financeHooks.js";
 import { getMonthBounds, recalculateBudgetSpend } from "../services/budgetService.js";
+import { callAI } from "../services/ai/callAI.js";
+import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
 
 export const financeRouter = Router();
 
@@ -830,7 +832,9 @@ financeRouter.post(
 
       // Recalculate spend for current month
       const updated = await recalculateBudgetSpend(userId, canonicalCategory);
-      return res.status(201).json(formatBudget(updated || budget));
+      const finalBudget = updated || budget;
+      await enqueueEmbeddingJob("budget", finalBudget._id, userId);
+      return res.status(201).json(formatBudget(finalBudget));
     } catch (err: any) {
       if (err.code === 11000) {
         return res.status(409).json({
@@ -984,7 +988,9 @@ financeRouter.patch(
       await budget.save();
 
       const updated = await recalculateBudgetSpend(userId, budget.category);
-      return res.status(200).json(formatBudget(updated || budget));
+      const finalBudget = updated || budget;
+      await enqueueEmbeddingJob("budget", finalBudget._id, userId);
+      return res.status(200).json(formatBudget(finalBudget));
     } catch (err: any) {
       return res.status(500).json({
         error: "InternalServerError",
@@ -1025,6 +1031,8 @@ financeRouter.delete(
         return res.status(404).json({ error: "NotFound", message: "Budget not found" });
       }
 
+      await deleteEmbedding("budget", id);
+
       return res.status(200).json({ message: "Budget deleted successfully" });
     } catch (err: any) {
       return res.status(500).json({
@@ -1034,3 +1042,131 @@ financeRouter.delete(
     }
   }
 );
+
+/**
+ * @openapi
+ * /finance/insights:
+ *   post:
+ *     tags: [Finance]
+ *     summary: Generate AI-powered financial recommendations
+ *     description: |
+ *       Gathers structured financial context (category breakdown, budget statuses, historical spending trends)
+ *       and calls the Phase 3 AI service (`callAI()`) with a system prompt asking for actionable, specific recommendations
+ *       grounded in the user's actual logged data.
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               focusArea: { type: string, example: "saving more on dining out" }
+ *     responses:
+ *       200:
+ *         description: Actionable financial insights generated successfully
+ *       401:
+ *         description: Authentication required
+ *       429:
+ *         description: AI daily rate limit exceeded
+ *       500:
+ *         description: AI service error
+ */
+financeRouter.post("/finance/insights", async (req: Request, res: Response) => {
+  try {
+    const userIdStr = req.user!.id;
+    const userObjId = new Types.ObjectId(userIdStr);
+    const { focusArea } = req.body || {};
+
+    const now = new Date();
+    const targetYear = now.getUTCFullYear();
+    const targetMonth = now.getUTCMonth();
+    const startOfMonth = new Date(Date.UTC(targetYear, targetMonth, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0, 23, 59, 59, 999));
+    const monthKeyStr = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`;
+
+    // 1. Gather category breakdown for current month
+    const categoryAggregation = await Transaction.aggregate([
+      { $match: { userId: userObjId, date: { $gte: startOfMonth, $lte: endOfMonth } } },
+      { $group: { _id: { category: "$category", type: "$type" }, totalAmount: { $sum: "$amount" }, count: { $sum: 1 } } },
+      { $sort: { totalAmount: -1 } }
+    ]);
+
+    const categoryBreakdown = categoryAggregation.map((item) => ({
+      category: item._id.category,
+      type: item._id.type,
+      totalAmount: item.totalAmount,
+      count: item.count
+    }));
+
+    let monthlyIncome = 0;
+    let monthlyExpense = 0;
+    for (const item of categoryBreakdown) {
+      if (item.type === "income") monthlyIncome += item.totalAmount;
+      if (item.type === "expense") monthlyExpense += item.totalAmount;
+    }
+
+    // 2. Gather budget statuses
+    const budgets = await Budget.find({ userId: userIdStr }).lean();
+    const budgetStatuses = budgets.map((b) => {
+      const limit = b.limit;
+      const currentSpend = b.currentSpend;
+      const percentUsed = limit > 0 ? Math.round((currentSpend / limit) * 100) : 0;
+      const isOverBudget = currentSpend > limit;
+      const status = isOverBudget ? "over_budget" : percentUsed >= 80 ? "approaching_limit" : "under_budget";
+      return { category: b.category, limit, currentSpend, percentUsed, status };
+    });
+
+    // 3. Multi-month trend (3 months)
+    const startOfTrend = new Date(Date.UTC(targetYear, targetMonth - 2, 1, 0, 0, 0, 0));
+    const trendAggregation = await Transaction.aggregate([
+      { $match: { userId: userObjId, date: { $gte: startOfTrend, $lte: endOfMonth } } },
+      { $group: { _id: { monthKey: { $dateToString: { format: "%Y-%m", date: "$date" } }, type: "$type" }, totalAmount: { $sum: "$amount" } } }
+    ]);
+
+    const contextSummary = {
+      month: monthKeyStr,
+      monthlyTotals: { income: monthlyIncome, expense: monthlyExpense, net: monthlyIncome - monthlyExpense },
+      categoryBreakdown,
+      budgetStatuses,
+      trendAggregation
+    };
+
+    // Construct grounded system prompt
+    const systemPrompt = `You are LifeOS Financial Intelligence. Analyze the user's actual logged financial context below and provide 3-4 specific, actionable financial recommendations.
+
+CRITICAL INSTRUCTIONS:
+- You MUST reference real category names, dollar amounts, and budget statuses from the provided context.
+- Highlight any categories that are over budget or approaching budget limits.
+- Avoid generic budgeting platitudes; ground every piece of advice in the exact numbers provided below.
+${focusArea ? `- The user requested a specific focus area: "${focusArea}". Pay special attention to this area.` : ""}
+
+User Financial Context:
+${JSON.stringify(contextSummary, null, 2)}`;
+
+    const aiResult = await callAI(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: focusArea ? `Give me financial insights focused on: ${focusArea}` : "Analyze my finances and give me actionable insights based on my data." }
+      ],
+      { userId: userIdStr, requestType: "finance_insights" }
+    );
+
+    if (!aiResult.success || !aiResult.content) {
+      if (aiResult.isRateLimited) {
+        return res.status(429).json({ error: "RateLimitExceeded", message: aiResult.error });
+      }
+      return res.status(500).json({ error: "InternalServerError", message: aiResult.error || "Failed to generate financial insights" });
+    }
+
+    return res.status(200).json({
+      insights: aiResult.content,
+      providerServed: aiResult.providerServed,
+      fallbackOccurred: Boolean(aiResult.fallbackOccurred),
+      contextSummary
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      error: "InternalServerError",
+      message: err.message || "Failed to generate financial insights"
+    });
+  }
+});

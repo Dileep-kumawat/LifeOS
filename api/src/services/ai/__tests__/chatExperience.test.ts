@@ -168,7 +168,7 @@ describe("AI Chat Experience & Tool Calling Tests (Prompt 3)", () => {
       // User Confirms -> Execute tool call
       const result = await executeToolCall(mockUserId, "create_habit", proposedArgs);
 
-      expect(result.title).toBe("Confirmed Hydration Habit");
+      expect((result as any).title).toBe("Confirmed Hydration Habit");
       expect(Habit.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUserId,

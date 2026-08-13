@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { Types } from "mongoose";
+
+vi.mock("../../models/Budget.js", () => ({
+  Budget: { findOne: vi.fn().mockResolvedValue(null) }
+}));
+
+vi.mock("../../models/Embedding.js", () => ({
+  Embedding: { deleteOne: vi.fn().mockResolvedValue({}) }
+}));
+
 import {
   onTransactionDeleted,
   registerOnTransactionDeleted

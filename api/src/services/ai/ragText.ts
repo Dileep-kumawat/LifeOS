@@ -2,6 +2,8 @@ import type { NoteDoc } from "../../models/Note.js";
 import type { GoalDoc } from "../../models/Goal.js";
 import type { HabitDoc } from "../../models/Habit.js";
 import type { EventDoc } from "../../models/Event.js";
+import type { TransactionDoc } from "../../models/Transaction.js";
+import type { BudgetDoc } from "../../models/Budget.js";
 import type { SourceType } from "../../models/Embedding.js";
 
 export interface FormattedSourceContent {
@@ -56,6 +58,25 @@ export function formatEventForEmbedding(event: EventDoc): FormattedSourceContent
   return { title, embeddedText };
 }
 
+export function formatTransactionForEmbedding(tx: TransactionDoc): FormattedSourceContent {
+  const typeLabel = tx.type === "expense" ? "Expense" : "Income";
+  const cat = tx.category || "Uncategorized";
+  const dateStr = tx.date ? new Date(tx.date).toISOString().split("T")[0] : "";
+  const noteStr = tx.note?.trim() ? `, note: ${tx.note.trim()}` : "";
+  const title = `${typeLabel}: $${tx.amount} on ${cat}`;
+  const embeddedText = `${typeLabel}: $${tx.amount} on ${cat}, Date: ${dateStr}${noteStr}`.trim();
+  return { title, embeddedText };
+}
+
+export function formatBudgetForEmbedding(budget: BudgetDoc): FormattedSourceContent {
+  const cat = budget.category || "General";
+  const title = `Budget: $${budget.limit} for ${cat}`;
+  const percent = budget.limit > 0 ? Math.round((budget.currentSpend / budget.limit) * 100) : 0;
+  const statusStr = budget.currentSpend > budget.limit ? " (OVER BUDGET)" : ` (${percent}% used)`;
+  const embeddedText = `Budget: $${budget.limit} for ${cat}, Period: ${budget.period || "monthly"}, Current Spend: $${budget.currentSpend}${statusStr}`.trim();
+  return { title, embeddedText };
+}
+
 export function formatSourceRecordForEmbedding(
   sourceType: SourceType,
   doc: any
@@ -69,6 +90,10 @@ export function formatSourceRecordForEmbedding(
       return formatHabitForEmbedding(doc);
     case "event":
       return formatEventForEmbedding(doc);
+    case "transaction":
+      return formatTransactionForEmbedding(doc);
+    case "budget":
+      return formatBudgetForEmbedding(doc);
     default:
       throw new Error(`Unsupported sourceType: ${sourceType}`);
   }

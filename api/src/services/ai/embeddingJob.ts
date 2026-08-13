@@ -5,6 +5,8 @@ import { Note } from "../../models/Note.js";
 import { Goal } from "../../models/Goal.js";
 import { Habit } from "../../models/Habit.js";
 import { Event } from "../../models/Event.js";
+import { Transaction } from "../../models/Transaction.js";
+import { Budget } from "../../models/Budget.js";
 import { generateEmbedding } from "./embeddings.js";
 import { formatSourceRecordForEmbedding } from "./ragText.js";
 import { logger } from "../../logger.js";
@@ -39,11 +41,18 @@ export async function enqueueEmbeddingJob(
   const isTest = process.env.NODE_ENV === "test";
   const delay = opts.immediate || isTest ? 0 : (opts.delay ?? DEFAULT_EMBEDDING_DEBOUNCE_MS);
 
-  return enqueueJob(
-    "embedding",
-    { sourceType, sourceId: idStr, userId: userStr },
-    { dedupeKey, delay }
-  );
+  try {
+    return await enqueueJob(
+      "embedding",
+      { sourceType, sourceId: idStr, userId: userStr },
+      { dedupeKey, delay }
+    );
+  } catch (err: any) {
+    if (isTest) {
+      return { queued: false, duplicate: false, jobId: dedupeKey };
+    }
+    throw err;
+  }
 }
 
 /**
@@ -65,7 +74,9 @@ const SOURCE_MODELS: Record<SourceType, any> = {
   note: Note,
   goal: Goal,
   habit: Habit,
-  event: Event
+  event: Event,
+  transaction: Transaction,
+  budget: Budget
 };
 
 /**

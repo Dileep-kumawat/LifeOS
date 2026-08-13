@@ -1,5 +1,6 @@
 import type { TransactionDoc } from "../models/Transaction.js";
 import { recalculateBudgetSpend } from "./budgetService.js";
+import { enqueueEmbeddingJob, deleteEmbedding } from "./ai/embeddingJob.js";
 import { logger } from "../logger.js";
 
 export interface TransactionPreviousState {
@@ -21,9 +22,15 @@ const creationListeners: TransactionCreatedListener[] = [];
 const updateListeners: TransactionUpdatedListener[] = [];
 
 /**
- * Default internal listener: budget spend recalculation on transaction creation.
+ * Default internal listener: budget spend recalculation and embedding job on transaction creation.
  */
 creationListeners.push(async (transaction: TransactionDoc) => {
+  try {
+    await enqueueEmbeddingJob("transaction", transaction._id, transaction.userId);
+  } catch (err) {
+    logger.error({ err, transactionId: transaction._id }, "Error enqueuing transaction embedding");
+  }
+
   if (transaction.type === "expense") {
     try {
       await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
@@ -34,9 +41,15 @@ creationListeners.push(async (transaction: TransactionDoc) => {
 });
 
 /**
- * Default internal listener: budget spend recalculation on transaction deletion.
+ * Default internal listener: budget spend recalculation and embedding deletion on transaction deletion.
  */
 deletionListeners.push(async (transaction: TransactionDoc) => {
+  try {
+    await deleteEmbedding("transaction", transaction._id);
+  } catch (err) {
+    logger.error({ err, transactionId: transaction._id }, "Error deleting transaction embedding");
+  }
+
   if (transaction.type === "expense") {
     try {
       await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
@@ -47,9 +60,15 @@ deletionListeners.push(async (transaction: TransactionDoc) => {
 });
 
 /**
- * Default internal listener: budget spend recalculation on transaction update.
+ * Default internal listener: budget spend recalculation and embedding update on transaction update.
  */
 updateListeners.push(async (transaction: TransactionDoc, previous?: TransactionPreviousState) => {
+  try {
+    await enqueueEmbeddingJob("transaction", transaction._id, transaction.userId);
+  } catch (err) {
+    logger.error({ err, transactionId: transaction._id }, "Error enqueuing transaction embedding on update");
+  }
+
   try {
     // Recalculate for current category
     if (transaction.type === "expense" || previous?.type === "expense") {

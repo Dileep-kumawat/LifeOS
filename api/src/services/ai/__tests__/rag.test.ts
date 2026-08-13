@@ -12,6 +12,8 @@ import {
   formatGoalForEmbedding,
   formatHabitForEmbedding,
   formatEventForEmbedding,
+  formatTransactionForEmbedding,
+  formatBudgetForEmbedding,
   formatSourceRecordForEmbedding
 } from "../ragText.js";
 import { generateEmbedding, generateMockEmbedding } from "../embeddings.js";
@@ -95,10 +97,49 @@ describe("RAG Pipeline Unit & Integration Tests", () => {
       expect(result.embeddedText).toContain("America/New_York");
     });
 
+    it("extracts text from Transaction for embedding", () => {
+      const mockTx: any = {
+        amount: 45,
+        type: "expense",
+        category: "Groceries",
+        date: new Date("2026-03-03T10:00:00.000Z"),
+        note: "weekly shop"
+      };
+
+      const result = formatTransactionForEmbedding(mockTx);
+      expect(result.title).toBe("Expense: $45 on Groceries");
+      expect(result.embeddedText).toContain("Expense: $45 on Groceries");
+      expect(result.embeddedText).toContain("Date: 2026-03-03");
+      expect(result.embeddedText).toContain("note: weekly shop");
+    });
+
+    it("extracts text from Budget for embedding", () => {
+      const mockBudget: any = {
+        category: "Groceries",
+        limit: 500,
+        period: "monthly",
+        currentSpend: 450
+      };
+
+      const result = formatBudgetForEmbedding(mockBudget);
+      expect(result.title).toBe("Budget: $500 for Groceries");
+      expect(result.embeddedText).toContain("Budget: $500 for Groceries");
+      expect(result.embeddedText).toContain("Current Spend: $450");
+      expect(result.embeddedText).toContain("90% used");
+    });
+
     it("dispatches dynamically via formatSourceRecordForEmbedding", () => {
       const mockNote: any = { title: "Doc", contentText: "Content" };
       const res = formatSourceRecordForEmbedding("note", mockNote);
       expect(res.title).toBe("Doc");
+
+      const mockTx: any = { amount: 100, type: "income", category: "Salary", date: new Date() };
+      const resTx = formatSourceRecordForEmbedding("transaction", mockTx);
+      expect(resTx.title).toContain("Income: $100 on Salary");
+
+      const mockB: any = { category: "Food", limit: 300, currentSpend: 150 };
+      const resB = formatSourceRecordForEmbedding("budget", mockB);
+      expect(resB.title).toBe("Budget: $300 for Food");
     });
   });
 

@@ -1,13 +1,13 @@
 import { Schema, model, type Document, type InferSchemaType } from "mongoose";
 
-export type SourceType = "note" | "goal" | "habit" | "event";
+export type SourceType = "note" | "goal" | "habit" | "event" | "transaction" | "budget";
 
 const embeddingSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     sourceType: {
       type: String,
-      enum: ["note", "goal", "habit", "event"],
+      enum: ["note", "goal", "habit", "event", "transaction", "budget"],
       required: true,
       index: true
     },

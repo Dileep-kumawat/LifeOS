@@ -12,6 +12,9 @@ import { FinanceSummaryWidget } from "./components/FinanceSummaryWidget";
 import { BudgetList } from "./components/BudgetList";
 import { BudgetForm } from "./components/BudgetForm";
 import { BudgetDetailDialog } from "./components/BudgetDetailDialog";
+import { CategoryBreakdownChart } from "./components/CategoryBreakdownChart";
+import { TrendLineChart } from "./components/TrendLineChart";
+import { InsightsCard } from "./components/InsightsCard";
 import { Button } from "../../components/Button";
 
 export function FinancePage() {
@@ -290,6 +293,14 @@ export function FinancePage() {
       {activeTab === "transactions" && (
         <div className="flex flex-col gap-6">
           <FinanceSummaryWidget summary={summaryData || null} isLoading={isSummaryLoading} />
+          
+          <InsightsCard />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CategoryBreakdownChart data={summaryData?.categoryBreakdown || []} />
+            <TrendLineChart data={summaryData?.trend || []} />
+          </div>
+
           <TransactionList
             transactions={listResponse?.data || []}
             categories={categories}

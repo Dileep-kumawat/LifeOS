@@ -95,3 +95,10 @@ export interface UpdateBudgetInput {
   limit: number;
 }
 
+export interface FinanceInsightsResponse {
+  insights: string;
+  providerServed?: string;
+  fallbackOccurred?: boolean;
+  contextSummary?: any;
+}
+
