@@ -165,10 +165,33 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
             const model = createProviderModel(provider, { temperature: 0.7 });
             const modelWithTools = model.bindTools(ALL_AI_TOOLS);
 
-            const response = await modelWithTools.invoke(langChainMessages);
+            const stream = await modelWithTools.stream(langChainMessages);
+            let aggregatedResponse: any = null;
+            let streamedTextContent = "";
+
+            for await (const chunk of stream) {
+              aggregatedResponse = aggregatedResponse ? aggregatedResponse.concat(chunk) : chunk;
+
+              const contentChunk =
+                typeof chunk.content === "string"
+                  ? chunk.content
+                  : Array.isArray(chunk.content)
+                    ? chunk.content
+                        .map((c: any) => (typeof c === "string" ? c : c.text || ""))
+                        .join("")
+                    : "";
+
+              if (contentChunk) {
+                streamedTextContent += contentChunk;
+                socket.emit("chat_stream_chunk", {
+                  conversationId,
+                  chunk: contentChunk
+                });
+              }
+            }
 
             // Check if model returned tool calls
-            const toolCalls = (response as any).tool_calls;
+            const toolCalls = aggregatedResponse?.tool_calls;
             if (Array.isArray(toolCalls) && toolCalls.length > 0) {
               const tc = toolCalls[0];
               const toolCallId = tc.id || `tc_${Date.now()}`;
@@ -179,7 +202,7 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
                 conversationId,
                 userId,
                 role: "assistant",
-                content: typeof response.content === "string" ? response.content : "",
+                content: streamedTextContent,
                 toolCallData: {
                   id: toolCallId,
                   toolName,
@@ -200,21 +223,16 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
               break;
             }
 
-            // Regular text response
+            // Regular text response stream completed
             const textContent =
-              typeof response.content === "string"
-                ? response.content
-                : Array.isArray(response.content)
-                  ? response.content
-                      .map((c) => (typeof c === "string" ? c : JSON.stringify(c)))
+              streamedTextContent ||
+              (typeof aggregatedResponse?.content === "string"
+                ? aggregatedResponse.content
+                : Array.isArray(aggregatedResponse?.content)
+                  ? aggregatedResponse.content
+                      .map((c: any) => (typeof c === "string" ? c : JSON.stringify(c)))
                       .join("")
-                  : String(response.content || "");
-
-            // Stream text chunk
-            socket.emit("chat_stream_chunk", {
-              conversationId,
-              chunk: textContent
-            });
+                  : String(aggregatedResponse?.content || ""));
 
             const assistantMsg = await Message.create({
               conversationId,

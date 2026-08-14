@@ -53,7 +53,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onOpenConfirm
         </div>
 
         {/* Content */}
-        {content && (
+        {(content || message.isStreaming) && (
           <div
             className={`text-sm leading-relaxed ${
               isUncertainty
@@ -62,7 +62,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onOpenConfirm
             }`}
           >
             {isUncertainty && <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}
-            <MarkdownRenderer content={content} />
+            <div className="relative">
+              {content ? <MarkdownRenderer content={content} /> : null}
+              {message.isStreaming && (
+                <span className="inline-block w-2 h-4 ml-1 bg-[#0075de] animate-pulse rounded-xs align-middle" />
+              )}
+            </div>
           </div>
         )}
 

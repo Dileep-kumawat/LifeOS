@@ -126,7 +126,7 @@ export function useSocketChat() {
           createdAt: new Date().toISOString()
         };
 
-        setMessages((prev) => [...prev, toolMsg]);
+        setMessages((prev) => [...prev.filter((m) => !m.isStreaming), toolMsg]);
         setPendingToolCallMessage(toolMsg);
       }
     );
