@@ -49,9 +49,9 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
             {data.map((item) => (
               <tr key={item.month}>
                 <td>{item.month}</td>
-                <td>${item.income.toFixed(2)}</td>
-                <td>${item.expense.toFixed(2)}</td>
-                <td>${item.net.toFixed(2)}</td>
+                <td>₹{item.income.toFixed(2)}</td>
+                <td>₹{item.expense.toFixed(2)}</td>
+                <td>₹{item.net.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -63,9 +63,9 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
           <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e6e6e6" />
             <XAxis dataKey="month" stroke="#615d59" fontSize={12} />
-            <YAxis stroke="#615d59" fontSize={12} tickFormatter={(val: any) => `$${val}`} />
+            <YAxis stroke="#615d59" fontSize={12} tickFormatter={(val: any) => `₹${val}`} />
             <Tooltip
-              formatter={(val: any) => [`$${Number(val).toFixed(2)}`, ""]}
+              formatter={(val: any) => [`₹${Number(val).toFixed(2)}`, ""]}
               contentStyle={{ backgroundColor: "#ffffff", borderRadius: "8px", borderColor: "#e6e6e6" }}
             />
             <Legend verticalAlign="top" height={36} />

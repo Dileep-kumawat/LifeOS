@@ -56,7 +56,7 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
             {chartData.map((item) => (
               <tr key={item.name}>
                 <td>{item.name}</td>
-                <td>${item.value.toFixed(2)}</td>
+                <td>₹{item.value.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -80,7 +80,7 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Amount"]}
+              formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, "Amount"]}
               contentStyle={{ backgroundColor: "#ffffff", borderRadius: "8px", borderColor: "#e6e6e6" }}
             />
             <Legend

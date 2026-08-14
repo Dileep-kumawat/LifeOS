@@ -73,7 +73,7 @@ export const BudgetAlert: Story = {
     notification: item({
       type: "budget_alert",
       readStatus: "unread",
-      payload: { title: "Groceries over budget", body: "Spent $46 more than planned" }
+      payload: { title: "Groceries over budget", body: "Spent ₹46 more than planned" }
     })
   }
 };

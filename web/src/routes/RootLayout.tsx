@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -13,9 +13,12 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { NotificationBell } from "../features/notifications";
+import { cn } from "../lib/utils";
 
 export function RootLayout() {
   const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+  const isChat = location.pathname.startsWith("/chat");
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
@@ -29,11 +32,14 @@ export function RootLayout() {
       {/* ─── SideNavBar (Desktop Docked Sidebar) ────────────────────────── */}
       <nav className="hidden lg:flex flex-col h-screen fixed left-0 top-0 pt-6 pb-6 bg-[#faf9f8] border-r border-[#c1c6d5] w-64 z-40">
         {/* App Title Anchor */}
-        <div className="px-6 mb-8">
-          <h1 className="text-xl font-bold text-[#005db2] tracking-tight">LifeOS Executive</h1>
-          <p className="text-xs text-[#414753] mt-1">
-            Good morning, {user?.name || "Explorer"}
-          </p>
+        <div className="px-6 mb-8 flex items-center justify-between">
+          <div className="min-w-0 pr-2">
+            <h1 className="text-xl font-bold text-[#005db2] tracking-tight">LifeOS Executive</h1>
+            <p className="text-xs text-[#414753] mt-1">
+              Good morning, {user?.name || "Explorer"}
+            </p>
+          </div>
+          <NotificationBell align="start" />
         </div>
 
         {/* Navigation Links */}
@@ -149,28 +155,16 @@ export function RootLayout() {
       </nav>
 
       {/* ─── Main Canvas ────────────────────────────────────────────────── */}
-      <div className="flex-1 lg:ml-64 pb-24 lg:pb-12 min-h-screen flex flex-col">
-        {/* TopAppBar (Shared Top Bar) */}
-        <header className="bg-[#4958aa] flex justify-between items-center w-full px-6 lg:px-10 py-3.5 sticky top-0 z-30 shadow-xs">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-white lg:hidden">LifeOS</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <NotificationBell />
-            <NavLink
-              to="/settings"
-              className="text-white/80 hover:bg-white/10 transition-colors p-2 rounded-full"
-            >
-              <Settings className="size-5" />
-            </NavLink>
-            <div className="size-9 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {user?.name ? user.name.slice(0, 2).toUpperCase() : "EX"}
-            </div>
-          </div>
-        </header>
-
+      <div
+        className={cn(
+          "flex-1 lg:ml-64 flex flex-col min-w-0",
+          isChat
+            ? "h-screen pb-16 lg:pb-0 overflow-hidden"
+            : "min-h-screen pb-24 lg:pb-12"
+        )}
+      >
         {/* Content Outlet */}
-        <main className="w-full flex-1">
+        <main className={cn("w-full flex-1 flex flex-col min-w-0", isChat && "h-full min-h-0 overflow-hidden")}>
           <Outlet />
         </main>
       </div>

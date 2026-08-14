@@ -78,7 +78,7 @@ export const ChatPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden shadow-xs select-none">
+    <div className="flex h-full w-full bg-white select-none overflow-hidden">
       {/* 1. ChatGPT Collapsible Sidebar */}
       <ConversationHistorySidebar
         conversations={conversations}
@@ -90,15 +90,15 @@ export const ChatPage: React.FC = () => {
       />
 
       {/* 2. Main Chat View */}
-      <div className="flex-1 flex flex-col h-full bg-white relative">
+      <div className="flex-1 flex flex-col h-full min-h-0 bg-white relative overflow-hidden">
         {/* Top Header */}
-        <header className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-white z-10">
+        <header className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-white z-10 shrink-0">
           <div className="flex items-center gap-2">
             {!sidebarOpen && (
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors"
+                className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors cursor-pointer"
                 title="Open sidebar"
               >
                 <PanelLeft className="w-4 h-4" />
@@ -123,8 +123,8 @@ export const ChatPage: React.FC = () => {
 
         {/* Empty State: ChatGPT Style "Where should we begin?" */}
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full text-center">
-            <div className="w-12 h-12 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center mb-6 shadow-sm">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full text-center">
+            <div className="w-12 h-12 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center mb-6 shadow-sm shrink-0">
               <Sparkles className="w-6 h-6" />
             </div>
 
@@ -184,24 +184,26 @@ export const ChatPage: React.FC = () => {
           </div>
         ) : (
           /* Active Chat Stream View */
-          <div className="flex-1 overflow-y-auto flex flex-col">
-            <div className="flex-1 py-6 flex flex-col gap-2">
-              {messages.map((m) => (
-                <ChatMessage
-                  key={m.id}
-                  message={m}
-                  onOpenConfirmation={(msg) => setPendingToolCallMessage(msg)}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6 flex flex-col gap-2">
+              <div className="max-w-3xl mx-auto w-full flex flex-col gap-2">
+                {messages.map((m) => (
+                  <ChatMessage
+                    key={m.id}
+                    message={m}
+                    onOpenConfirmation={(msg) => setPendingToolCallMessage(msg)}
+                  />
+                ))}
+                <StreamingIndicator
+                  isStreaming={isStreaming}
+                  backupModelStatus={backupModelStatus}
                 />
-              ))}
-              <StreamingIndicator
-                isStreaming={isStreaming}
-                backupModelStatus={backupModelStatus}
-              />
-              <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
             {/* Bottom Fixed Floating Input Bar (ChatGPT Style) */}
-            <div className="p-4 bg-white border-t border-transparent">
+            <div className="p-4 bg-white border-t border-[#f0f0f0] shrink-0">
               <div className="max-w-3xl mx-auto w-full flex flex-col items-center gap-2">
                 <form onSubmit={handleSubmit} className="w-full">
                   <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#b4b4b4] p-2.5 flex items-center gap-2 transition-all">

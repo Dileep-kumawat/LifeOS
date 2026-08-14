@@ -18,7 +18,7 @@ export function FinanceSummaryWidget({ summary, isLoading }: FinanceSummaryWidge
   }
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
 
   const { monthlyTotals, categoryBreakdown, trend } = summary;
   const totalCategoryExpense = categoryBreakdown

@@ -178,11 +178,11 @@ export function TransactionForm({
           {/* Amount Input */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="amount" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Amount ($)
+              Amount (₹)
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground text-sm font-semibold">
-                $
+                ₹
               </span>
               <Input
                 id="amount"

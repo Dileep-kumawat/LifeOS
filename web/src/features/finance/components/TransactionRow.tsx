@@ -75,9 +75,9 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
     }
   })();
 
-  const formattedAmount = new Intl.NumberFormat("en-US", {
+  const formattedAmount = new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD"
+    currency: "INR"
   }).format(transaction.amount);
 
   return (

@@ -79,7 +79,7 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-red-600">
-                    -${tx.amount.toFixed(2)}
+                    -₹{tx.amount.toFixed(2)}
                   </span>
                 </div>
               ))}

@@ -65,7 +65,7 @@ export function DashboardPage() {
 
   const activeGoalsCount = goals.filter((g: any) => g.status === "active").length;
   const netBalance = financeSummaryData?.monthlyTotals?.net ?? 0;
-  const netBalanceFormatted = `$${netBalance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const netBalanceFormatted = `₹${netBalance.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   const quickPrompts = [
     "Summarize my week's progress",

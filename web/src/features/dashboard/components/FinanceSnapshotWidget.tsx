@@ -45,7 +45,7 @@ export function FinanceSnapshotWidget() {
       <div className="mb-6">
         <p className="text-xs text-[#717784] mb-1">{currentMonthName} Net Cashflow</p>
         <p className="text-3xl font-bold tracking-tight text-[#1a1c1c]">
-          ${netBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          ₹{netBalance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export function FinanceSnapshotWidget() {
                 <span className="size-2 rounded-full bg-emerald-500" /> Income
               </span>
               <span className="font-bold text-[#1a1c1c]">
-                ${income.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                ₹{income.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
             <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
@@ -76,7 +76,7 @@ export function FinanceSnapshotWidget() {
                 <span className="size-2 rounded-full bg-rose-500" /> Expenses
               </span>
               <span className="font-bold text-[#1a1c1c]">
-                ${expense.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                ₹{expense.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
             <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
@@ -143,7 +143,7 @@ export function FinanceSnapshotWidget() {
                     isIncome ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
-                  {isIncome ? "+" : "-"}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {isIncome ? "+" : "-"}₹{Math.abs(tx.amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </li>
             );

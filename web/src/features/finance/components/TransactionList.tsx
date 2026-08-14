@@ -57,7 +57,7 @@ export function TransactionList({
   const hasActiveFilters = Boolean(selectedCategory || selectedType || startDate || endDate || search);
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);
 
   return (
     <div className="flex flex-col gap-4 w-full">

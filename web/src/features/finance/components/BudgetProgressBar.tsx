@@ -32,7 +32,7 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
   if (isOver) {
     barColor = "bg-red-600 animate-pulse";
     badgeStyle = "bg-red-50 text-red-700 border-red-200 font-semibold";
-    statusText = `Over by $${overAmount.toFixed(2)}`;
+    statusText = `Over by ₹${overAmount.toFixed(2)}`;
   } else if (isAtLimit) {
     barColor = "bg-orange-500";
     badgeStyle = "bg-orange-50 text-orange-700 border-orange-200 font-semibold";
@@ -57,9 +57,9 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm">
               <span className={isOver ? "font-bold text-red-600" : "text-neutral-900"}>
-                ${currentSpend.toFixed(2)}
+                ₹{currentSpend.toFixed(2)}
               </span>{" "}
-              <span className="text-neutral-400">/ ${limit.toFixed(2)}</span>
+              <span className="text-neutral-400">/ ₹{limit.toFixed(2)}</span>
             </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full border ${badgeStyle}`}
