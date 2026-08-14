@@ -17,17 +17,17 @@ export function GoalsOverviewWidget() {
   const activeGoals = goals.filter((g) => g.status === "active");
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
+    <div className="flex flex-col rounded-xl border border-border bg-card p-5 shadow-2xs transition-all hover:shadow-md">
+      <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
             <Target className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground text-sm">Active Goals</h3>
+              <h3 className="font-bold text-foreground text-sm">Active Goals</h3>
               {activeGoals.length > 0 && (
-                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
                   {activeGoals.length} Active
                 </span>
               )}
@@ -38,11 +38,12 @@ export function GoalsOverviewWidget() {
 
         <Link
           to="/goals"
-          className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors"
         >
           View All <ArrowRight className="size-3" />
         </Link>
       </div>
+
 
       {isLoading ? (
         <div className="flex flex-col gap-3 py-1">

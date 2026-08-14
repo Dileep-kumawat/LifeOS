@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "../../../lib/utils";
 
@@ -70,7 +69,6 @@ export function StatCard({
   icon: Icon,
   colorVariant = "blue",
   href,
-  badgeText,
   trend,
   trendDirection = "up"
 }: StatCardProps) {
@@ -79,91 +77,61 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card/90 backdrop-blur-xs p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-2 focus-within:ring-primary/20",
-        styles.borderHover,
+        "group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border/80 bg-card p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/20",
         styles.glow
       )}
     >
-      {/* Top Accent Gradient Line */}
+      {/* Side Accent Color Bar */}
       <div
         className={cn(
-          "absolute top-0 inset-x-0 h-1 bg-gradient-to-r opacity-80 transition-opacity duration-300 group-hover:opacity-100",
-          styles.topBar
+          "w-2.5 h-12 rounded-full shrink-0 transition-transform duration-200 group-hover:scale-105",
+          colorVariant === "blue" && "bg-blue-500",
+          colorVariant === "emerald" && "bg-emerald-500",
+          colorVariant === "amber" && "bg-amber-500",
+          colorVariant === "purple" && "bg-purple-500",
+          colorVariant === "rose" && "bg-rose-500"
         )}
       />
 
-      {/* Ambient background subtle radial glow on hover */}
-      <div
-        className={cn(
-          "pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-gradient-to-br opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-15",
-          styles.glowGradient
-        )}
-      />
-
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className={cn("size-2 rounded-full shrink-0", styles.dot)} />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-col min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {Icon && <Icon className="size-3.5 text-muted-foreground shrink-0" />}
+            <span className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
               {title}
             </span>
           </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold tracking-tight text-foreground">
-              {value}
-            </span>
-            {trend && (
-              <span
-                className={cn(
-                  "inline-flex items-center text-xs font-semibold",
-                  trendDirection === "up" && "text-emerald-600 dark:text-emerald-400",
-                  trendDirection === "down" && "text-rose-600 dark:text-rose-400",
-                  trendDirection === "neutral" && "text-muted-foreground"
-                )}
-              >
-                {trend}
-              </span>
-            )}
-          </div>
         </div>
 
-        {/* Icon Container with Micro-Interaction */}
-        <div
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3",
-            styles.iconBg
-          )}
-        >
-          <Icon className="size-5" />
-        </div>
-      </div>
-
-      {/* Footer Details */}
-      {(subtitle || badgeText) && (
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-3">
-          <span className="text-xs font-medium text-muted-foreground truncate">
-            {subtitle}
+        <div className="flex items-baseline gap-2 mt-0.5">
+          <span className="text-2xl font-extrabold tracking-tight text-foreground">
+            {value}
           </span>
-          {badgeText && (
+          {subtitle && (
+            <span className="text-xs font-normal text-muted-foreground truncate">
+              {subtitle}
+            </span>
+          )}
+          {trend && (
             <span
               className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all duration-200",
-                styles.badge
+                "inline-flex items-center text-xs font-semibold shrink-0 ml-auto",
+                trendDirection === "up" && "text-emerald-600 dark:text-emerald-400",
+                trendDirection === "down" && "text-rose-600 dark:text-rose-400",
+                trendDirection === "neutral" && "text-muted-foreground"
               )}
             >
-              {badgeText}
-              <ArrowUpRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              {trend}
             </span>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 
   if (href) {
     return (
-      <Link to={href} className="block outline-hidden focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
+      <Link to={href} className="block outline-hidden focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
         {content}
       </Link>
     );
@@ -171,4 +139,5 @@ export function StatCard({
 
   return content;
 }
+
 

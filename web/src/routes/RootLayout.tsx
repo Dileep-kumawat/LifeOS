@@ -1,54 +1,181 @@
-import { Outlet, Link, NavLink } from "react-router-dom";
-import { Button } from "../components/Button";
+import { Outlet, NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Flag,
+  Wallet,
+  FileText,
+  Calendar as CalendarIcon,
+  Bot,
+  HelpCircle,
+  Archive,
+  Settings
+} from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { NotificationBell } from "../features/notifications";
 
 export function RootLayout() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `text-sm font-medium transition-colors ${
-      isActive ? "text-[#0075de] font-semibold" : "text-slate-600 hover:text-slate-900"
+    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+      isActive
+        ? "text-[#005db2] font-bold border-r-4 border-[#005db2] bg-[#0075de]/10"
+        : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7]"
     }`;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-lg font-semibold text-slate-900">
-            LifeOS
-          </Link>
-          <nav className="flex items-center gap-4">
-            <NavLink to="/calendar" className={getNavLinkClass}>
-              Calendar
-            </NavLink>
-            <NavLink to="/goals" className={getNavLinkClass}>
-              Goals
-            </NavLink>
-            <NavLink to="/habits" className={getNavLinkClass}>
-              Habits
-            </NavLink>
-            <NavLink to="/notes" className={getNavLinkClass}>
-              Notes
-            </NavLink>
-            <NavLink to="/finance" className={getNavLinkClass}>
-              Finance & Budget
-            </NavLink>
-            <NavLink to="/chat" className={getNavLinkClass}>
-              AI Chat
-            </NavLink>
-            <NavLink to="/settings" className={getNavLinkClass}>
-              Settings
-            </NavLink>
-          </nav>
+    <div className="min-h-screen bg-[#f6f5f4] flex">
+      {/* ─── SideNavBar (Desktop Docked Sidebar) ────────────────────────── */}
+      <nav className="hidden lg:flex flex-col h-screen fixed left-0 top-0 pt-6 pb-6 bg-[#faf9f8] border-r border-[#c1c6d5] w-64 z-40">
+        {/* App Title Anchor */}
+        <div className="px-6 mb-8">
+          <h1 className="text-xl font-bold text-[#005db2] tracking-tight">LifeOS Executive</h1>
+          <p className="text-xs text-[#414753] mt-1">
+            Good morning, {user?.name || "Explorer"}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {isAuthenticated ? <NotificationBell /> : <Button variant="secondary">Sign in</Button>}
+
+        {/* Navigation Links */}
+        <div className="flex-1 flex flex-col gap-1.5 px-3">
+          <NavLink to="/" end className={getNavLinkClass}>
+            <LayoutDashboard className="size-5 shrink-0" />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/calendar" className={getNavLinkClass}>
+            <CalendarIcon className="size-5 shrink-0" />
+            <span>Calendar</span>
+          </NavLink>
+          <NavLink to="/habits" className={getNavLinkClass}>
+            <CheckSquare className="size-5 shrink-0" />
+            <span>Habits</span>
+          </NavLink>
+          <NavLink to="/goals" className={getNavLinkClass}>
+            <Flag className="size-5 shrink-0" />
+            <span>Goals</span>
+          </NavLink>
+          <NavLink to="/finance" className={getNavLinkClass}>
+            <Wallet className="size-5 shrink-0" />
+            <span>Finance</span>
+          </NavLink>
+          <NavLink to="/notes" className={getNavLinkClass}>
+            <FileText className="size-5 shrink-0" />
+            <span>Notes</span>
+          </NavLink>
         </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-        <Outlet />
-      </main>
+
+        {/* CTA & Footer */}
+        <div className="px-4 mt-auto space-y-4">
+          <NavLink
+            to="/chat"
+            className="w-full bg-[#005db2] text-white py-2.5 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#00468a] transition-colors shadow-xs"
+          >
+            <Bot className="size-4" />
+            AI Assistant
+          </NavLink>
+          <div className="border-t border-[#c1c6d5]/60 pt-4 flex flex-col gap-1">
+            <NavLink
+              to="/settings"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+            >
+              <Settings className="size-4" />
+              <span>Settings</span>
+            </NavLink>
+            <NavLink
+              to="/chat"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+            >
+              <HelpCircle className="size-4" />
+              <span>Support & Help</span>
+            </NavLink>
+            <NavLink
+              to="/notes"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+            >
+              <Archive className="size-4" />
+              <span>Archive</span>
+            </NavLink>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── BottomNavBar (Mobile Shared Nav) ───────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-[#faf9f8] border-t border-[#c1c6d5] shadow-md rounded-t-xl">
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center rounded-xl px-3 py-1.5 text-xs transition-colors ${
+              isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+            }`
+          }
+        >
+          <LayoutDashboard className="size-4" />
+          <span className="text-[10px] mt-0.5">Home</span>
+        </NavLink>
+        <NavLink
+          to="/calendar"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center rounded-xl px-3 py-1.5 text-xs transition-colors ${
+              isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+            }`
+          }
+        >
+          <CalendarIcon className="size-4" />
+          <span className="text-[10px] mt-0.5">Schedule</span>
+        </NavLink>
+        <NavLink
+          to="/habits"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center rounded-xl px-3 py-1.5 text-xs transition-colors ${
+              isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+            }`
+          }
+        >
+          <CheckSquare className="size-4" />
+          <span className="text-[10px] mt-0.5">Habits</span>
+        </NavLink>
+        <NavLink
+          to="/chat"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center rounded-xl px-3 py-1.5 text-xs transition-colors ${
+              isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+            }`
+          }
+        >
+          <Bot className="size-4" />
+          <span className="text-[10px] mt-0.5">AI</span>
+        </NavLink>
+      </nav>
+
+      {/* ─── Main Canvas ────────────────────────────────────────────────── */}
+      <div className="flex-1 lg:ml-64 pb-24 lg:pb-12 min-h-screen flex flex-col">
+        {/* TopAppBar (Shared Top Bar) */}
+        <header className="bg-[#4958aa] flex justify-between items-center w-full px-6 lg:px-10 py-3.5 sticky top-0 z-30 shadow-xs">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-white lg:hidden">LifeOS</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <NavLink
+              to="/settings"
+              className="text-white/80 hover:bg-white/10 transition-colors p-2 rounded-full"
+            >
+              <Settings className="size-5" />
+            </NavLink>
+            <div className="size-9 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {user?.name ? user.name.slice(0, 2).toUpperCase() : "EX"}
+            </div>
+          </div>
+        </header>
+
+        {/* Content Outlet */}
+        <main className="w-full flex-1">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
+
+

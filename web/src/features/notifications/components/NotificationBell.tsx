@@ -28,9 +28,9 @@ export function NotificationBell() {
           aria-label={
             unread > 0 ? `${unread} unread notifications` : "Notifications, no unread notifications"
           }
-          className="relative"
+          className="relative text-white hover:text-white hover:bg-white/10"
         >
-          <Bell className="size-5" />
+          <Bell className="size-5 text-white" />
           {unread > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-[#0075de] px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white">
               {badgeLabel}

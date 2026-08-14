@@ -66,7 +66,7 @@ export function CalendarPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 px-6 lg:px-10 py-6 max-w-7xl mx-auto w-full">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>

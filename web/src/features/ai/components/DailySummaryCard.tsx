@@ -1,11 +1,9 @@
 import {
   Sparkles,
-  Calendar,
   CheckCircle2,
   Clock,
   RefreshCw,
-  AlertCircle,
-  Target
+  AlertCircle
 } from "lucide-react";
 import type { DailySummary } from "@lifeos/shared";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -113,49 +111,45 @@ export function DailySummaryCard({
   const { yesterdayCompleted, todaySchedule, topPriorities, date } = summary;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-card/95 backdrop-blur-sm p-6 shadow-md transition-all hover:shadow-lg">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-2xs transition-all hover:shadow-md">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-violet-500 text-primary-foreground shadow-sm">
-            <Sparkles className="size-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Daily Summary</h2>
-            <p className="text-xs text-muted-foreground">{date} Overview & Insights</p>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-4 mb-6">
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="size-5 text-primary" />
+          <h2 className="text-[20px] font-bold text-foreground tracking-tight">
+            Daily Summary — Generated for Today
+          </h2>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           <Clock className="size-3.5" />
-          Generated for Today
+          {date || "Today"}
         </span>
       </div>
 
       {/* Grid Sections */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Top 3 Priorities */}
-        <div className="flex flex-col gap-3 rounded-xl bg-accent/30 p-4 border border-border/40">
-          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-primary uppercase">
-            <Target className="size-4" />
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Top 3 Priorities
-          </div>
+          </h3>
           {topPriorities.length === 0 ? (
             <p className="text-xs text-muted-foreground italic py-2">
               No specific priorities set for today.
             </p>
           ) : (
-            <ul className="flex flex-col gap-2.5">
+            <ul className="flex flex-col gap-3">
               {topPriorities.map((priority, index) => (
-                <li key={index} className="flex items-start gap-2.5 group">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
+                <li key={index} className="flex items-start gap-3 group">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                    <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {priority.title}
                     </p>
                     {priority.rationale && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
                         {priority.rationale}
                       </p>
                     )}
@@ -166,12 +160,11 @@ export function DailySummaryCard({
           )}
         </div>
 
-        {/* Yesterday's Accomplishments */}
-        <div className="flex flex-col gap-3 rounded-xl bg-accent/30 p-4 border border-border/40">
-          <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">
-            <CheckCircle2 className="size-4" />
-            Yesterday's Accomplishments
-          </div>
+        {/* Yesterday's Wins */}
+        <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/40 pt-4 md:pt-0 md:pl-6">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Yesterday's Wins
+          </h3>
           {yesterdayCompleted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-4 text-center">
               <p className="text-xs text-muted-foreground italic">
@@ -179,10 +172,10 @@ export function DailySummaryCard({
               </p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-2 overflow-y-auto max-h-44 pr-1">
+            <ul className="flex flex-col gap-2.5 overflow-y-auto max-h-44 pr-1">
               {yesterdayCompleted.map((item, idx) => (
                 <li key={idx} className="flex items-center gap-2 text-xs text-foreground">
-                  <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span className="truncate">{item.title}</span>
                 </li>
               ))}
@@ -190,23 +183,17 @@ export function DailySummaryCard({
           )}
         </div>
 
-        {/* Today's Schedule at a Glance */}
-        <div className="flex flex-col gap-3 rounded-xl bg-accent/30 p-4 border border-border/40">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-blue-600 dark:text-blue-400 uppercase">
-              <Calendar className="size-4" />
-              Today's Schedule
-            </div>
-            <span className="text-[11px] font-semibold text-muted-foreground">
-              {todaySchedule.length} event{todaySchedule.length === 1 ? "" : "s"}
-            </span>
-          </div>
+        {/* Today's Flow / Schedule Glance */}
+        <div className="flex flex-col gap-3 border-t md:border-t-0 md:border-l border-border/40 pt-4 md:pt-0 md:pl-6">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Today's Flow
+          </h3>
           {todaySchedule.length === 0 ? (
             <p className="text-xs text-muted-foreground italic py-2">
               No calendar events scheduled for today.
             </p>
           ) : (
-            <ul className="flex flex-col gap-2 overflow-y-auto max-h-44 pr-1">
+            <ul className="flex flex-col gap-2.5 overflow-y-auto max-h-44 pr-1">
               {todaySchedule.slice(0, 4).map((evt, idx) => {
                 const startTimeStr = new Date(evt.startTime).toLocaleTimeString([], {
                   hour: "2-digit",
@@ -215,7 +202,7 @@ export function DailySummaryCard({
                 return (
                   <li key={idx} className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-medium text-foreground truncate">{evt.title}</span>
-                    <span className="shrink-0 font-mono text-[10px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-border/60">
+                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground bg-accent px-2 py-0.5 rounded border border-border/50">
                       {evt.isAllDay ? "All Day" : startTimeStr}
                     </span>
                   </li>
@@ -228,3 +215,4 @@ export function DailySummaryCard({
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FileText, ArrowRight, Plus, Folder } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { notesApi } from "../../notes/api";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import type { NoteSummary } from "../../notes/types";
@@ -13,78 +13,75 @@ export function RecentNotesWidget() {
 
   const notes: NoteSummary[] = notesData?.notes || [];
 
-  return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <FileText className="size-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground text-sm">Recent Notes</h3>
-            <p className="text-[11px] text-muted-foreground">Knowledge & ideas</p>
-          </div>
-        </div>
+  const tagColors = [
+    "bg-purple-100 text-purple-700",
+    "bg-blue-100 text-blue-700",
+    "bg-emerald-100 text-emerald-700",
+    "bg-amber-100 text-amber-700"
+  ];
 
+  return (
+    <div className="bg-white rounded-xl border border-[#e6e6e6] p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-[20px] font-bold text-[#1a1c1c] flex items-center gap-2">
+          <FileText className="size-5 text-[#717784]" />
+          Recent Thoughts
+        </h3>
         <Link
           to="/notes"
-          className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 transition-colors"
+          className="text-[#005db2] text-sm font-semibold hover:underline transition-colors"
         >
-          View All <ArrowRight className="size-3" />
+          View All
         </Link>
       </div>
 
       {isLoading ? (
         <div className="flex flex-col gap-2.5">
-          <Skeleton className="h-12 w-full rounded-xl" />
-          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
         </div>
       ) : isError ? (
-        <p className="text-xs text-muted-foreground py-4 text-center">Unable to load recent notes.</p>
+        <p className="text-xs text-[#717784] py-4 text-center">Unable to load recent notes.</p>
       ) : notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-5 text-center">
-          <p className="text-xs text-muted-foreground mb-2">No notes created yet.</p>
+          <p className="text-xs text-[#717784] mb-2">No notes created yet.</p>
           <Link
             to="/notes"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-accent/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e6e6e6] bg-[#faf9f8] px-3.5 py-1.5 text-xs font-semibold text-[#1a1c1c] hover:bg-[#e9e8e7] transition-colors"
           >
             <Plus className="size-3.5" />
             Create Note
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2.5">
-          {notes.slice(0, 4).map((note: NoteSummary) => (
-            <Link
-              key={note.id}
-              to={`/notes/${note.id}`}
-              className="group flex flex-col gap-1 rounded-xl border border-border/40 bg-accent/20 p-3 transition-all hover:bg-accent/40 hover:border-amber-200 dark:hover:border-amber-900/50"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-foreground truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                  {note.title || "Untitled Note"}
-                </span>
-                <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
-                  {new Date(note.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </span>
-              </div>
+        <div className="grid grid-cols-1 gap-3">
+          {notes.slice(0, 3).map((note: NoteSummary, idx: number) => {
+            const tagColor = tagColors[idx % tagColors.length];
+            const tagLabel = note.tags?.[0] || (idx % 2 === 0 ? "Work" : "Personal");
 
-              {note.contentText && (
-                <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  {note.contentText}
-                </p>
-              )}
-
-              {note.folderId && (
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                  <Folder className="size-3 text-amber-500/70" />
-                  <span className="truncate">Folder</span>
+            return (
+              <Link
+                key={note.id}
+                to={`/notes/${note.id}`}
+                className="p-3 rounded-lg border border-[#e3e2e1] bg-white hover:bg-[#faf9f8] transition-colors block group"
+              >
+                <div className="flex justify-between items-start mb-1 gap-2">
+                  <span className="text-[13px] font-semibold text-[#1a1c1c] truncate group-hover:text-[#005db2] transition-colors">
+                    {note.title || "Untitled Note"}
+                  </span>
+                  <span className={`text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded shrink-0 ${tagColor}`}>
+                    {tagLabel}
+                  </span>
                 </div>
-              )}
-            </Link>
-          ))}
-        </ul>
+                <p className="text-[12px] text-[#717784] line-clamp-2">
+                  {note.contentText || "Click to open and edit this note in your workspace."}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
       )}
     </div>
   );
 }
+

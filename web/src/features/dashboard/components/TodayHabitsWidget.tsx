@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Circle, ArrowRight, Activity, Plus } from "lucide-react";
+import { CheckCircle2, Activity, Plus } from "lucide-react";
 import { apiClient } from "../../../lib/apiClient";
 import { toast } from "sonner";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -89,76 +89,43 @@ export function TodayHabitsWidget() {
   const progressPercent = habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
 
   return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <Activity className="size-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground text-sm">Habit Tracker</h3>
-              {habits.length > 0 && (
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  {completedCount}/{habits.length} Done
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground">Daily progress</p>
-          </div>
-        </div>
-
+    <div className="bg-white rounded-xl border border-[#e6e6e6] p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-[20px] font-bold text-[#1a1c1c] flex items-center gap-2">
+          <Activity className="size-5 text-[#717784]" />
+          Daily Habits
+        </h3>
         <Link
           to="/habits"
-          className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors"
+          className="text-[#005db2] text-sm font-semibold hover:underline transition-colors"
         >
-          View All <ArrowRight className="size-3" />
+          View All
         </Link>
       </div>
 
-      {/* Progress bar */}
-      {habits.length > 0 && (
-        <div className="mb-4 flex flex-col gap-1.5">
-          <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
-            <span>Progress Today</span>
-            <span>{progressPercent}%</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
-            <div
-              className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       {isHabitsLoading ? (
-        <div className="flex flex-col gap-2 py-1">
-          <Skeleton className="h-10 w-full rounded-xl" />
-          <Skeleton className="h-10 w-full rounded-xl" />
+        <div className="flex flex-col gap-2 py-1 mb-4">
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
         </div>
       ) : habits.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <p className="text-xs text-muted-foreground mb-3">No habits set up yet.</p>
+        <div className="flex flex-col items-center justify-center py-6 text-center mb-4">
+          <p className="text-xs text-[#717784] mb-3">No habits set up yet.</p>
           <Link
             to="/habits"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-accent/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e6e6e6] bg-[#faf9f8] px-3.5 py-1.5 text-xs font-semibold text-[#1a1c1c] hover:bg-[#e9e8e7] transition-colors"
           >
             <Plus className="size-3.5" />
             Create Habit
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <div className="space-y-4 border-b border-[#e3e2e1] pb-4 mb-4">
           {habits.slice(0, 6).map((habit) => {
             const isCompleted = getIsCompleted(habit._id);
-            const freqLabel =
-              typeof habit.frequency === "string"
-                ? habit.frequency
-                : habit.frequency?.type || "daily";
 
             return (
-              <li
+              <div
                 key={habit._id}
                 onClick={() =>
                   checkInMutation.mutate({
@@ -167,28 +134,22 @@ export function TodayHabitsWidget() {
                     completed: !isCompleted
                   })
                 }
-                className={`group flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all ${
-                  isCompleted
-                    ? "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/30 dark:bg-emerald-950/20"
-                    : "border-border/40 bg-accent/20 hover:bg-accent/40"
-                }`}
+                className="flex items-center justify-between group cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     type="button"
-                    className="text-emerald-600 transition-transform active:scale-90"
+                    className={`size-6 rounded flex items-center justify-center border-2 transition-all ${
+                      isCompleted
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-600 font-bold"
+                        : "border-[#c1c6d5] hover:border-[#005db2] bg-white text-transparent"
+                    }`}
                   >
-                    {isCompleted ? (
-                      <CheckCircle2 className="size-5 text-emerald-500 fill-emerald-500/20" />
-                    ) : (
-                      <Circle className="size-5 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
-                    )}
+                    <CheckCircle2 className={`size-4 ${isCompleted ? "opacity-100" : "opacity-0"}`} />
                   </button>
                   <span
-                    className={`text-xs font-medium truncate transition-colors ${
-                      isCompleted
-                        ? "text-muted-foreground line-through"
-                        : "text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+                    className={`text-sm font-medium transition-colors truncate ${
+                      isCompleted ? "line-through text-[#717784]" : "text-[#1a1c1c]"
                     }`}
                   >
                     {habit.title}
@@ -197,19 +158,35 @@ export function TodayHabitsWidget() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   {habit.currentStreak ? (
-                    <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
-                      🔥 {habit.currentStreak}d
+                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium">
+                      {habit.currentStreak} Day Streak
                     </span>
-                  ) : null}
-                  <span className="text-[10px] uppercase font-semibold text-muted-foreground bg-background px-2 py-0.5 rounded border border-border/50">
-                    {freqLabel}
-                  </span>
+                  ) : (
+                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium">
+                      Active
+                    </span>
+                  )}
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
+
+      {/* Mini Progress Bar */}
+      <div>
+        <div className="flex justify-between text-xs text-[#717784] font-medium mb-1">
+          <span>Completion</span>
+          <span className="font-bold text-[#005db2]">{progressPercent}%</span>
+        </div>
+        <div className="h-1.5 w-full bg-[#efeeed] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { DollarSign, ArrowRight, TrendingUp, TrendingDown, Wallet, Plus } from "lucide-react";
+import { DollarSign, Wallet, Plus } from "lucide-react";
 import { financeApi } from "../../finance/api";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import type { Transaction } from "../../finance/types";
@@ -20,68 +20,90 @@ export function FinanceSnapshotWidget() {
   const expense = summaryData?.monthlyTotals?.expense ?? 0;
   const transactions: Transaction[] = transactionsData?.data || [];
 
-  return (
-    <div className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Wallet className="size-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground text-sm">Finance & Budget</h3>
-            <p className="text-[11px] text-muted-foreground">Monthly cash flow</p>
-          </div>
-        </div>
+  const netBalance = (income - expense);
+  const totalFlow = income + expense;
+  const incomePercent = totalFlow > 0 ? Math.round((income / totalFlow) * 100) : 0;
+  const expensePercent = totalFlow > 0 ? Math.round((expense / totalFlow) * 100) : 0;
 
+  const currentMonthName = new Date().toLocaleDateString(undefined, { month: "long" });
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e6e6e6] p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-[20px] font-bold text-[#1a1c1c] flex items-center gap-2">
+          <Wallet className="size-5 text-[#717784]" />
+          Finance Pulse
+        </h3>
         <Link
           to="/finance"
-          className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+          className="text-[#005db2] text-sm font-semibold hover:underline transition-colors"
         >
-          View Finance <ArrowRight className="size-3" />
+          View Finance
         </Link>
       </div>
 
+      <div className="mb-6">
+        <p className="text-xs text-[#717784] mb-1">{currentMonthName} Net Cashflow</p>
+        <p className="text-3xl font-bold tracking-tight text-[#1a1c1c]">
+          ${netBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+      </div>
+
       {isSummaryLoading ? (
-        <Skeleton className="h-16 w-full rounded-xl mb-4" />
+        <Skeleton className="h-16 w-full rounded-lg mb-6" />
       ) : (
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="flex flex-col gap-1 rounded-xl border border-emerald-200/60 bg-emerald-50/50 p-3 dark:border-emerald-900/30 dark:bg-emerald-950/20">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              <TrendingUp className="size-3" />
-              Income
+        <div className="space-y-4 mb-6">
+          <div>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-[#414753] flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-emerald-500" /> Income
+              </span>
+              <span className="font-bold text-[#1a1c1c]">
+                ${income.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
             </div>
-            <div className="text-base font-bold text-emerald-700 dark:text-emerald-300">
-              ${income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                style={{ width: `${incomePercent}%` }}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 rounded-xl border border-rose-200/60 bg-rose-50/50 p-3 dark:border-rose-900/30 dark:bg-rose-950/20">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">
-              <TrendingDown className="size-3" />
-              Expenses
+          <div>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-[#414753] flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-rose-500" /> Expenses
+              </span>
+              <span className="font-bold text-[#1a1c1c]">
+                ${expense.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
             </div>
-            <div className="text-base font-bold text-rose-700 dark:text-rose-300">
-              ${expense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-rose-500 rounded-full transition-all duration-300"
+                style={{ width: `${expensePercent}%` }}
+              />
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+      <div className="flex items-center justify-between text-[11px] font-bold text-[#717784] uppercase tracking-wider mb-3">
         <span>Recent Transactions</span>
       </div>
 
       {isTxLoading ? (
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-10 w-full rounded-xl" />
-          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
         </div>
       ) : transactions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-5 text-center">
-          <p className="text-xs text-muted-foreground mb-2">No transactions recorded yet.</p>
+        <div className="flex flex-col items-center justify-center py-4 text-center">
+          <p className="text-xs text-[#717784] mb-2">No transactions recorded yet.</p>
           <Link
             to="/finance"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-accent/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e6e6e6] bg-[#faf9f8] px-3.5 py-1.5 text-xs font-semibold text-[#1a1c1c] hover:bg-[#e9e8e7] transition-colors"
           >
             <Plus className="size-3.5" />
             Add Transaction
@@ -89,36 +111,36 @@ export function FinanceSnapshotWidget() {
         </div>
       ) : (
         <ul className="flex flex-col gap-2">
-          {transactions.slice(0, 4).map((tx: Transaction) => {
+          {transactions.slice(0, 3).map((tx: Transaction) => {
             const isIncome = tx.type === "income";
             return (
               <li
                 key={tx.id || (tx as any)._id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-accent/20 p-2.5 text-xs"
+                className="flex items-center justify-between gap-3 rounded-lg border border-[#e3e2e1] bg-[#faf9f8] p-2.5 text-xs hover:bg-white transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${
+                    className={`flex size-6 shrink-0 items-center justify-center rounded ${
                       isIncome
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : "bg-rose-500/10 text-rose-600"
                     }`}
                   >
                     <DollarSign className="size-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-foreground truncate">
+                    <p className="font-semibold text-[#1a1c1c] truncate">
                       {tx.note || tx.category || "Transaction"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] text-[#717784]">
                       {tx.category} • {new Date(tx.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </p>
                   </div>
                 </div>
 
                 <span
-                  className={`font-mono font-semibold shrink-0 ${
-                    isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                  className={`font-mono font-bold shrink-0 ${
+                    isIncome ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
                   {isIncome ? "+" : "-"}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -131,3 +153,4 @@ export function FinanceSnapshotWidget() {
     </div>
   );
 }
+
