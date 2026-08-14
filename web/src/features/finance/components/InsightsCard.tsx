@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Sparkles, RefreshCw, AlertCircle, Cpu } from "lucide-react";
 import type { FinanceInsightsResponse } from "../types";
 import { financeApi } from "../api";
+import { MarkdownRenderer } from "../../ai/components/MarkdownRenderer";
 
 interface InsightsCardProps {
   initialData?: FinanceInsightsResponse | null;
@@ -128,7 +129,7 @@ export const InsightsCard: React.FC<InsightsCardProps> = ({
               Served by {data.providerServed} {data.fallbackOccurred ? "(via backup fallback)" : ""}
             </div>
           )}
-          <div className="whitespace-pre-wrap">{data.insights}</div>
+          <MarkdownRenderer content={data.insights} />
         </div>
       )}
     </div>
