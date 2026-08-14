@@ -225,22 +225,22 @@ export function FinancePage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-6xl mx-auto w-full">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Finance & Budgeting</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">Finance & Budgeting</h1>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-1">
             Manage transactions, set category budgets, and analyze spending trends.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsCategoryManagerOpen(true)}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 text-xs sm:text-sm"
           >
             <Tag className="size-4" />
             Categories
@@ -252,7 +252,7 @@ export function FinancePage() {
               setEditingTransaction(null);
               setIsTransactionFormOpen(true);
             }}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 text-xs sm:text-sm"
           >
             <Plus className="size-4" />
             Add Transaction

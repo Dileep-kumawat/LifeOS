@@ -33,11 +33,11 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f4] p-6 flex flex-col items-center">
+    <div className="min-h-screen bg-[#f6f5f4] p-4 sm:p-6 flex flex-col items-center w-full">
       <div className="w-full max-w-2xl flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#000000]">Account Settings</h1>
-          <Button variant="outline" onClick={handleLogout}>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#000000]">Account Settings</h1>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
             Sign Out
           </Button>
         </div>
@@ -74,14 +74,14 @@ export function SettingsPage() {
             <CardTitle className="text-red-600">Danger Zone</CardTitle>
             <CardDescription>Actions that impact your account lifecycle</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-[#000000]">Delete Account</span>
               <span className="text-xs text-[#615d59]">
                 Soft-delete account with 30-day permanent purge delay
               </span>
             </div>
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} className="w-full sm:w-auto">
               Delete Account
             </Button>
           </CardContent>

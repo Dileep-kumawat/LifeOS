@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Sparkles,
   Plus,
   ArrowUp,
-  ChevronDown,
   PanelLeft,
   Calendar,
   DollarSign,
   FileText,
-  Clock
+  Clock,
+  ArrowLeft,
+  SquarePen
 } from "lucide-react";
 import { useSocketChat } from "./hooks/useSocketChat";
 import { ConversationHistorySidebar } from "./components/ConversationHistorySidebar";
@@ -34,7 +36,9 @@ export const ChatPage: React.FC = () => {
   } = useSocketChat();
 
   const [input, setInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : false
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on new messages
@@ -92,30 +96,43 @@ export const ChatPage: React.FC = () => {
       {/* 2. Main Chat View */}
       <div className="flex-1 flex flex-col h-full min-h-0 bg-white relative overflow-hidden">
         {/* Top Header */}
-        <header className="px-4 py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-white z-10 shrink-0">
-          <div className="flex items-center gap-2">
+        <header className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#e5e5e5] flex items-center justify-between bg-white z-10 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link
+              to="/"
+              className="lg:hidden p-1.5 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+
             {!sidebarOpen && (
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors cursor-pointer"
-                title="Open sidebar"
+                className="p-1.5 sm:p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors cursor-pointer"
+                title="Open past chats"
               >
-                <PanelLeft className="w-4 h-4" />
+                <PanelLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
 
-            <button
-              type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#f4f4f4] transition-colors text-base font-bold text-[#0d0d0d]"
-            >
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-sm sm:text-base font-bold text-[#0d0d0d]">
               <span>LifeOS AI</span>
-              <ChevronDown className="w-4 h-4 text-[#8e8e8e]" />
-            </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-[#676767] bg-[#f4f4f4] px-2.5 py-1 rounded-full border border-[#e5e5e5]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => selectConversation(null)}
+              className="p-1.5 sm:p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-lg transition-colors"
+              title="New Chat"
+            >
+              <SquarePen className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            <span className="hidden sm:inline-flex text-[11px] font-medium text-[#676767] bg-[#f4f4f4] px-2.5 py-1 rounded-full border border-[#e5e5e5]">
               RAG Context + Tool Calling Active
             </span>
           </div>

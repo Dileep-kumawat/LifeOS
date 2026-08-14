@@ -163,43 +163,45 @@ function WeekView({ cursor, occurrences, onSelectDay, onOpenEvent }: SubViewProp
   const byDay = groupByDay(occurrences);
 
   return (
-    <div className="flex flex-col rounded-lg border border-[#e6e6e6]">
-      <div className="grid grid-cols-7 border-b border-[#e6e6e6] bg-[#f6f5f4]/50">
-        {days.map((day) => (
-          <DayHeader key={localDayKey(day)} day={day} onSelectDay={onSelectDay} />
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {days.map((day) => (
-          <div key={localDayKey(day)} className="border-l border-[#e6e6e6] first:border-l-0">
-            <AllDayChips
-              occurrences={(byDay[localDayKey(day)] ?? []).filter((o) => o.isAllDay)}
-              onOpenEvent={onOpenEvent}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex overflow-auto" style={{ maxHeight: 560 }}>
-        <div className="relative w-14 shrink-0">
-          {HOURS.map((hour) => (
-            <span
-              key={hour}
-              className="absolute right-2 -translate-y-1/2 text-[10px] text-[#a39e98]"
-              style={{ top: hour * HOUR_HEIGHT }}
-            >
-              {formatHour(hour)}
-            </span>
+    <div className="flex flex-col rounded-lg border border-[#e6e6e6] overflow-x-auto">
+      <div className="min-w-[620px] flex flex-col">
+        <div className="grid grid-cols-7 border-b border-[#e6e6e6] bg-[#f6f5f4]/50">
+          {days.map((day) => (
+            <DayHeader key={localDayKey(day)} day={day} onSelectDay={onSelectDay} />
           ))}
         </div>
-        <div className="grid flex-1 grid-cols-7">
+        <div className="grid grid-cols-7">
           {days.map((day) => (
             <div key={localDayKey(day)} className="border-l border-[#e6e6e6] first:border-l-0">
-              <TimeColumn
-                occurrences={(byDay[localDayKey(day)] ?? []).filter((o) => !o.isAllDay)}
+              <AllDayChips
+                occurrences={(byDay[localDayKey(day)] ?? []).filter((o) => o.isAllDay)}
                 onOpenEvent={onOpenEvent}
               />
             </div>
           ))}
+        </div>
+        <div className="flex overflow-y-auto" style={{ maxHeight: 560 }}>
+          <div className="relative w-14 shrink-0">
+            {HOURS.map((hour) => (
+              <span
+                key={hour}
+                className="absolute right-2 -translate-y-1/2 text-[10px] text-[#a39e98]"
+                style={{ top: hour * HOUR_HEIGHT }}
+              >
+                {formatHour(hour)}
+              </span>
+            ))}
+          </div>
+          <div className="grid flex-1 grid-cols-7">
+            {days.map((day) => (
+              <div key={localDayKey(day)} className="border-l border-[#e6e6e6] first:border-l-0">
+                <TimeColumn
+                  occurrences={(byDay[localDayKey(day)] ?? []).filter((o) => !o.isAllDay)}
+                  onOpenEvent={onOpenEvent}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -213,14 +215,15 @@ function MonthView({ cursor, occurrences, onSelectDay, onOpenEvent }: SubViewPro
   const MAX_CHIPS = 3;
 
   return (
-    <div className="flex flex-col rounded-lg border border-[#e6e6e6]">
+    <div className="flex flex-col rounded-lg border border-[#e6e6e6] overflow-hidden">
       <div className="grid grid-cols-7 border-b border-[#e6e6e6] bg-[#f6f5f4]/60">
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#615d59]"
+            className="px-1 sm:px-2 py-1.5 text-center sm:text-left text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-[#615d59]"
           >
-            {label}
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">{label[0]}</span>
           </div>
         ))}
       </div>
@@ -234,13 +237,13 @@ function MonthView({ cursor, occurrences, onSelectDay, onOpenEvent }: SubViewPro
               key={key}
               onClick={() => onSelectDay(day)}
               className={cn(
-                "flex min-h-24 cursor-pointer flex-col gap-1 border-b border-r border-[#e6e6e6] p-1 transition-colors hover:bg-[#e8f1fb]/30",
+                "flex min-h-16 sm:min-h-24 cursor-pointer flex-col gap-0.5 sm:gap-1 border-b border-r border-[#e6e6e6] p-0.5 sm:p-1 transition-colors hover:bg-[#e8f1fb]/30",
                 !inMonth && "bg-[#f6f5f4]/40"
               )}
             >
               <span
                 className={cn(
-                  "flex size-6 items-center justify-center self-end rounded-full text-xs",
+                  "flex size-5 sm:size-6 items-center justify-center self-end rounded-full text-[10px] sm:text-xs",
                   isSameDay(day, today)
                     ? "bg-[#0075de] font-bold text-white"
                     : inMonth
@@ -250,7 +253,7 @@ function MonthView({ cursor, occurrences, onSelectDay, onOpenEvent }: SubViewPro
               >
                 {format(day, "d")}
               </span>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-0.5 overflow-hidden">
                 {dayOccurrences.slice(0, MAX_CHIPS).map((occurrence) => (
                   <EventCard
                     key={occurrence.occurrenceId}
@@ -259,8 +262,8 @@ function MonthView({ cursor, occurrences, onSelectDay, onOpenEvent }: SubViewPro
                   />
                 ))}
                 {dayOccurrences.length > MAX_CHIPS && (
-                  <span className="px-1 text-[10px] text-[#615d59]">
-                    +{dayOccurrences.length - MAX_CHIPS} more
+                  <span className="px-0.5 sm:px-1 text-[9px] sm:text-[10px] text-[#615d59] font-medium truncate">
+                    +{dayOccurrences.length - MAX_CHIPS}
                   </span>
                 )}
               </div>

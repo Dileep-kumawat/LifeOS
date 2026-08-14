@@ -9,6 +9,7 @@ import { FolderTree } from "./FolderTree";
 import { FolderManager } from "./FolderManager";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/Button";
+import { cn } from "../../lib/utils";
 import type { NoteSummary, NoteFolder } from "./types";
 
 export function NotesListPage() {
@@ -126,14 +127,15 @@ export function NotesListPage() {
   }
 
   const isSearching = search.length > 0;
+  const [mobileFoldersOpen, setMobileFoldersOpen] = useState(false);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-3 sm:px-4 py-4 sm:py-6 w-full">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#e6e6e6] pb-4 sm:pb-5">
         <div className="flex flex-col gap-1">
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-[#000000]">
-            <StickyNote className="size-6 text-[#0075de]" />
+          <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-[#000000]">
+            <StickyNote className="size-5 sm:size-6 text-[#0075de]" />
             Notes
           </h1>
           <p className="text-xs text-[#615d59]">
@@ -144,16 +146,29 @@ export function NotesListPage() {
                 : "All your notes, organized in folders."}
           </p>
         </div>
-        <Button onClick={handleCreateNote}>
-          <FilePlus data-icon="inline-start" />
-          New Note
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileFoldersOpen(!mobileFoldersOpen)}
+            className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-[#e6e6e6] bg-white px-3 py-2 text-xs font-semibold text-[#414753] hover:bg-[#f6f5f4]"
+          >
+            <FolderPlus className="size-3.5 text-[#0075de]" />
+            <span>Folders {folders.length > 0 && `(${folders.length})`}</span>
+          </button>
+          <Button onClick={handleCreateNote} size="sm">
+            <FilePlus data-icon="inline-start" className="size-3.5" />
+            New Note
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* Sidebar */}
-        <aside className="w-full shrink-0 lg:w-60">
-          <div className="flex items-center justify-between px-1 pb-2">
+        {/* Sidebar (Desktop visible, mobile collapsible) */}
+        <aside className={cn(
+          "w-full shrink-0 lg:w-60 flex-col gap-2",
+          mobileFoldersOpen ? "flex" : "hidden lg:flex"
+        )}>
+          <div className="flex items-center justify-between px-1 pb-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#615d59]">
               Folders
             </span>
@@ -168,11 +183,14 @@ export function NotesListPage() {
             </button>
           </div>
 
-          <div className="rounded-xl border border-[#e6e6e6] bg-white p-2 shadow-sm">
+          <div className="rounded-xl border border-[#e6e6e6] bg-white p-2 shadow-xs">
             <FolderTree
               folders={folders}
               activeFolderId={selectedFolder}
-              onSelectFolder={setSelectedFolder}
+              onSelectFolder={(id) => {
+                setSelectedFolder(id);
+                setMobileFoldersOpen(false);
+              }}
               onNewFolder={(parentFolderId) => setFolderManager({ mode: "create", parentFolderId })}
               onRenameFolder={(folder) => setFolderManager({ mode: "rename", folder })}
               onDeleteFolder={handleDeleteFolder}
@@ -180,8 +198,8 @@ export function NotesListPage() {
             />
           </div>
 
-          <p className="mt-2 px-1 text-[11px] leading-relaxed text-[#a39e98]">
-            Drag a note onto a folder to move it. {total} note(s).
+          <p className="px-1 text-[11px] leading-relaxed text-[#a39e98]">
+            {total} note(s).
           </p>
         </aside>
 
@@ -197,7 +215,7 @@ export function NotesListPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search your notes…"
-              className="pl-9"
+              className="pl-9 text-xs sm:text-sm"
               aria-label="Search notes"
             />
             {isSearching && (

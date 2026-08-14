@@ -31,7 +31,15 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
   if (!isOpen) return null;
 
   return (
-    <aside className="w-64 bg-[#f9f9f9] border-r border-[#e5e5e5] flex flex-col h-full shrink-0 select-none text-[#0d0d0d]">
+    <>
+      {/* Mobile Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+        onClick={onToggleSidebar}
+        aria-hidden="true"
+      />
+
+      <aside className="fixed inset-y-0 left-0 z-50 lg:static w-64 bg-[#f9f9f9] border-r border-[#e5e5e5] flex flex-col h-full shrink-0 select-none text-[#0d0d0d] shadow-xl lg:shadow-none animate-in slide-in-from-left duration-200">
       {/* 1. Header: Logo / New Chat CTA */}
       <div className="p-3 flex items-center justify-between border-b border-[#e5e5e5]">
         <button
@@ -118,5 +126,6 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
         </Link>
       </div>
     </aside>
+    </>
   );
 };

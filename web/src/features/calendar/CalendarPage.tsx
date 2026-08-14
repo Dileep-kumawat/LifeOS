@@ -66,34 +66,36 @@ export function CalendarPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 px-6 lg:px-10 py-6 max-w-7xl mx-auto w-full">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-4 sm:gap-6 px-3 sm:px-6 lg:px-10 py-4 sm:py-6 max-w-7xl mx-auto w-full">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>
             Today
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Previous"
-            onClick={() => setCursor((c) => moveCursor(view, c, -1))}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Next"
-            onClick={() => setCursor((c) => moveCursor(view, c, 1))}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-          <h1 className="text-xl font-bold text-[#000000]">{viewLabel(view, cursor)}</h1>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Previous"
+              onClick={() => setCursor((c) => moveCursor(view, c, -1))}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Next"
+              onClick={() => setCursor((c) => moveCursor(view, c, 1))}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+          <h1 className="text-base sm:text-xl font-bold text-[#000000] ml-1">{viewLabel(view, cursor)}</h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
           <div
-            className="flex rounded-lg border border-[#e6e6e6] p-0.5"
+            className="flex rounded-lg border border-[#e6e6e6] p-0.5 bg-[#faf9f8]"
             role="tablist"
             aria-label="Calendar view"
           >
@@ -104,9 +106,9 @@ export function CalendarPage() {
                 aria-selected={view === v}
                 onClick={() => setView(v)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-sm capitalize transition-colors",
+                  "rounded-md px-2.5 sm:px-3 py-1 text-xs sm:text-sm capitalize transition-colors",
                   view === v
-                    ? "bg-[#0075de] font-medium text-white"
+                    ? "bg-[#0075de] font-medium text-white shadow-xs"
                     : "text-[#615d59] hover:bg-[#f6f5f4]"
                 )}
               >
@@ -114,7 +116,7 @@ export function CalendarPage() {
               </button>
             ))}
           </div>
-          <Button size="sm" onClick={handleNewEvent}>
+          <Button size="sm" onClick={handleNewEvent} className="text-xs sm:text-sm">
             + New event
           </Button>
         </div>

@@ -53,12 +53,12 @@ export function GoalListPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto py-6 px-4">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto py-4 sm:py-6 px-3 sm:px-4 w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e6e6e6] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e6e6e6] pb-4 sm:pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#000000] flex items-center gap-2">
-            <Target className="size-6 text-[#0075de]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-[#000000] flex items-center gap-2">
+            <Target className="size-5 sm:size-6 text-[#0075de]" />
             Goals
           </h1>
           <p className="text-xs text-[#615d59] mt-1">
@@ -68,7 +68,7 @@ export function GoalListPage() {
 
         <button
           onClick={() => setIsFormOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0075de] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#005bab] transition-all"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0075de] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#005bab] transition-all"
         >
           <Plus className="size-4" data-icon="inline-start" />
           <span>New Goal</span>
@@ -76,12 +76,12 @@ export function GoalListPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {["all", "active", "completed", "abandoned"].map((tab) => (
           <button
             key={tab}
             onClick={() => setStatusFilter(tab)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-all ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize whitespace-nowrap transition-all ${
               statusFilter === tab
                 ? "bg-[#0075de] text-white shadow-sm"
                 : "bg-white text-[#615d59] border border-[#e6e6e6] hover:bg-[#f6f5f4]"

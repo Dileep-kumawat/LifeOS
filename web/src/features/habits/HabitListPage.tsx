@@ -137,12 +137,12 @@ export function HabitListPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto py-6 px-4">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto py-4 sm:py-6 px-3 sm:px-4 w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e6e6e6] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e6e6e6] pb-4 sm:pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#000000] flex items-center gap-2">
-            <Activity className="size-6 text-[#0075de]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-[#000000] flex items-center gap-2">
+            <Activity className="size-5 sm:size-6 text-[#0075de]" />
             Habits & Routines
           </h1>
           <p className="text-xs text-[#615d59] mt-1">
@@ -155,7 +155,7 @@ export function HabitListPage() {
             setEditingHabit(null);
             setIsFormOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0075de] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#005bab] transition-all"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0075de] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#005bab] transition-all"
         >
           <Plus className="size-4" data-icon="inline-start" />
           <span>New Habit</span>

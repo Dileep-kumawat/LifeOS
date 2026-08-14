@@ -113,9 +113,9 @@ export function HabitCard({
       </div>
 
       {/* 7-Day History Indicator */}
-      <div className="flex items-center justify-between gap-1 border-t border-[#e6e6e6] pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e6e6e6] pt-3">
         <span className="text-xs font-medium text-[#615d59]">Recent 7 days:</span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto">
           {last7Days.map((item) => {
             const isToday = item.date === todayDateStr;
             let bgClass = "bg-[#f6f5f4] text-[#a39e98] border-[#e6e6e6]";
@@ -141,12 +141,12 @@ export function HabitCard({
                 }`}
               >
                 <div
-                  className={`flex size-6 items-center justify-center rounded-md text-[10px] font-bold border transition-colors ${bgClass}`}
+                  className={`flex size-5 sm:size-6 items-center justify-center rounded-md text-[9px] sm:text-[10px] font-bold border transition-colors ${bgClass}`}
                 >
                   {item.record?.completed === true ? (
-                    <Check className="size-3 stroke-[3]" />
+                    <Check className="size-2.5 sm:size-3 stroke-[3]" />
                   ) : item.record?.completed === false ? (
-                    <X className="size-3 stroke-[3]" />
+                    <X className="size-2.5 sm:size-3 stroke-[3]" />
                   ) : (
                     item.dayLabel.slice(0, 1)
                   )}
@@ -158,12 +158,12 @@ export function HabitCard({
       </div>
 
       {/* Quick Today Check-In Controls */}
-      <div className="flex items-center justify-between gap-2 rounded-lg bg-[#f6f5f4] p-2.5 border border-[#e6e6e6]">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#f6f5f4] p-2.5 border border-[#e6e6e6]">
         <span className="text-xs font-semibold text-[#31302e]">Today's Status:</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => onToggleCheckIn(habit._id, todayDateStr, !isCheckedInToday)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition-all ${
               isCheckedInToday
                 ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
                 : "bg-white text-[#000000] border border-[#e6e6e6] hover:bg-emerald-50 hover:text-emerald-700"
@@ -175,7 +175,7 @@ export function HabitCard({
 
           <button
             onClick={() => onToggleCheckIn(habit._id, todayDateStr, false)}
-            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+            className={`inline-flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium transition-all ${
               isMissedToday
                 ? "bg-rose-600 text-white shadow-sm hover:bg-rose-700"
                 : "bg-white text-[#615d59] border border-[#e6e6e6] hover:bg-rose-50 hover:text-rose-700"
@@ -183,7 +183,7 @@ export function HabitCard({
             title="Mark explicitly as missed"
           >
             <X className="size-3.5" data-icon="inline-start" />
-            <span>{isMissedToday ? "Missed" : "Missed"}</span>
+            <span>Missed</span>
           </button>
         </div>
       </div>

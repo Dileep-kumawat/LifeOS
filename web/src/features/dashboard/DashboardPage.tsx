@@ -84,55 +84,55 @@ export function DashboardPage() {
   return (
     <div className="w-full flex flex-col">
       {/* 1. EXECUTIVE HERO HEADER */}
-      <section className="w-full bg-[#213183] text-white px-6 lg:px-10 py-12 lg:py-16 flex flex-col gap-6 relative overflow-hidden">
+      <section className="w-full bg-[#213183] text-white px-4 sm:px-6 lg:px-10 py-8 sm:py-12 lg:py-16 flex flex-col gap-4 sm:gap-6 relative overflow-hidden">
         {/* Decorative subtle glow in background */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#0075de] rounded-full blur-[100px] opacity-20 pointer-events-none" />
 
-        <div className="flex items-center gap-3 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 z-10 flex-wrap">
           <div className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium flex items-center gap-2 backdrop-blur-sm shadow-[0_0_15px_rgba(151,165,254,0.3)]">
             <div className="size-2 rounded-full bg-[#97a5fe] animate-pulse" />
             LifeOS Executive Hub
           </div>
-          <span className="text-white/70">|</span>
+          <span className="text-white/70 hidden sm:inline">|</span>
           <span className="text-white/90 text-xs font-medium">{formattedDate}</span>
         </div>
 
         <div className="max-w-3xl z-10">
-          <h1 className="text-3xl lg:text-5xl font-bold tracking-[-1.875px] mb-4 text-white">
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-[-1px] sm:tracking-[-1.875px] mb-2 sm:mb-4 text-white">
             {greeting}, {user?.name || "Explorer"}{" "}
             <span className="inline-block hover:rotate-12 transition-transform cursor-pointer">👋</span>
           </h1>
-          <p className="text-base lg:text-lg text-white/80 max-w-2xl">
+          <p className="text-xs sm:text-base lg:text-lg text-white/80 max-w-2xl leading-relaxed">
             Here is your daily command center across tasks, habits, finances, and goals.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 mt-4 z-10">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-4 z-10">
           {/* Quick Actions */}
           <Link
             to="/notes"
-            className="px-4 py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
           >
             <Plus className="size-3.5 text-amber-600" />
             Note
           </Link>
           <Link
             to="/habits"
-            className="px-4 py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
           >
             <Plus className="size-3.5 text-emerald-600" />
             Habit
           </Link>
           <Link
             to="/goals"
-            className="px-4 py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
           >
             <Plus className="size-3.5 text-purple-600" />
             Goal
           </Link>
           <Link
             to="/finance"
-            className="px-4 py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white text-[#1a1c1c] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-[#faf9f8] transition-colors shadow-xs"
           >
             <Plus className="size-3.5 text-blue-600" />
             Expense
@@ -141,7 +141,7 @@ export function DashboardPage() {
           {/* Primary CTA */}
           <Link
             to="/chat"
-            className="sm:ml-auto px-6 py-2.5 rounded-lg bg-[#005db2] text-white text-xs font-bold flex items-center gap-2 hover:bg-[#00468a] hover:-translate-y-0.5 transition-all shadow-lg shadow-[#005db2]/30"
+            className="sm:ml-auto px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg bg-[#005db2] text-white text-xs font-bold flex items-center gap-2 hover:bg-[#00468a] hover:-translate-y-0.5 transition-all shadow-lg shadow-[#005db2]/30"
           >
             <Sparkles className="size-4" />
             AI Assistant
@@ -150,7 +150,7 @@ export function DashboardPage() {
       </section>
 
       {/* Main Content Overlapping Wrapper */}
-      <div className="px-6 lg:px-10 py-8 flex flex-col gap-6 max-w-7xl mx-auto w-full -mt-8 z-20">
+      <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex flex-col gap-6 max-w-7xl mx-auto w-full -mt-6 sm:-mt-8 z-20">
         {/* 2. AI DAILY BRIEFING CARD */}
         <DailySummaryCard
           isLoading={isSummaryLoading}
@@ -162,7 +162,7 @@ export function DashboardPage() {
         />
 
         {/* 3. QUICK KPI STAT GRID */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
             title="Today's Schedule"
             value={`${todayEvents.length} Event${todayEvents.length === 1 ? "" : "s"}`}
