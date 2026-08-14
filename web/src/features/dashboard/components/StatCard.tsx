@@ -77,14 +77,14 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        "group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border/80 bg-card p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/20",
+        "group relative flex items-center gap-4 overflow-hidden rounded-xl border border-border/80 bg-card p-5 shadow-2xs transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-md active:scale-[0.99] focus-within:ring-2 focus-within:ring-primary/20",
         styles.glow
       )}
     >
       {/* Side Accent Color Bar */}
       <div
         className={cn(
-          "w-2.5 h-12 rounded-full shrink-0 transition-transform duration-200 group-hover:scale-105",
+          "w-2.5 h-12 rounded-full shrink-0 transition-all duration-200 group-hover:scale-y-110 group-hover:w-3",
           colorVariant === "blue" && "bg-blue-500",
           colorVariant === "emerald" && "bg-emerald-500",
           colorVariant === "amber" && "bg-amber-500",
@@ -96,7 +96,7 @@ export function StatCard({
       <div className="flex flex-col min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            {Icon && <Icon className="size-3.5 text-muted-foreground shrink-0" />}
+            {Icon && <Icon className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:scale-110" />}
             <span className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
               {title}
             </span>
@@ -104,7 +104,7 @@ export function StatCard({
         </div>
 
         <div className="flex items-baseline gap-2 mt-0.5">
-          <span className="text-2xl font-extrabold tracking-tight text-foreground">
+          <span className="text-2xl font-extrabold tracking-tight text-foreground transition-transform duration-200 group-hover:translate-x-0.5">
             {value}
           </span>
           {subtitle && (

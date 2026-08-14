@@ -44,15 +44,15 @@ export function NotificationItem({ notification, onOpen }: NotificationItemProps
       onClick={() => onOpen(notification)}
       aria-label={describe(notification)}
       className={cn(
-        "flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f6f5f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0075de]",
+        "group flex w-full gap-3 px-4 py-3 text-left transition-all duration-150 hover:bg-[#f6f5f4] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0075de] cursor-pointer",
         unread && "bg-[#f3f8ff]"
       )}
     >
       <span
         aria-hidden="true"
-        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#f6f5f4] text-[#615d59]"
+        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#f6f5f4] text-[#615d59] transition-all duration-150 group-hover:scale-110 group-hover:bg-white shadow-2xs"
       >
-        <Icon className="size-4" />
+        <Icon className="size-4 transition-transform duration-150 group-hover:text-[#0075de]" />
       </span>
 
       <span className="flex min-w-0 flex-col gap-0.5">

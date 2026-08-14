@@ -45,11 +45,11 @@ export function NoteCard({
           onSelect?.(note.id);
         }
       }}
-      className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-[#e6e6e6] bg-white p-4 shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0075de]"
+      className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-[#e6e6e6] bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-[#c1c6d5] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0075de]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
-          <h3 className="truncate text-sm font-semibold text-[#000000]">
+          <h3 className="truncate text-sm font-semibold text-[#000000] group-hover:text-[#0075de] transition-colors duration-150">
             {note.title || "Untitled"}
           </h3>
           <p className="line-clamp-3 text-xs leading-relaxed text-[#615d59]">{snippet}</p>
@@ -62,7 +62,7 @@ export function NoteCard({
               e.stopPropagation();
               onDelete(note.id);
             }}
-            className="rounded-md p-1.5 text-[#a39e98] opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100"
+            className="rounded-md p-1.5 text-[#a39e98] opacity-0 transition-all duration-150 hover:bg-red-50 hover:text-red-600 hover:scale-110 active:scale-90 focus-visible:opacity-100 group-hover:opacity-100 cursor-pointer"
           >
             <Trash2 className="size-4" />
           </button>
@@ -71,12 +71,12 @@ export function NoteCard({
 
       <div className="flex items-center justify-between gap-2 border-t border-[#e6e6e6] pt-2.5">
         <div className="flex min-w-0 items-center gap-2">
-          <FileText className="size-3.5 shrink-0 text-[#a39e98]" aria-hidden="true" />
+          <FileText className="size-3.5 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110" aria-hidden="true" />
           <span className="text-[11px] text-[#615d59]">
             {formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}
           </span>
           {folderName && (
-            <span className="inline-flex max-w-[10rem] items-center gap-1 truncate rounded-full border border-[#e6e6e6] bg-white px-2 py-0.5 text-[10px] font-medium text-[#0075de]">
+            <span className="inline-flex max-w-[10rem] items-center gap-1 truncate rounded-full border border-[#e6e6e6] bg-white px-2 py-0.5 text-[10px] font-medium text-[#0075de] transition-transform duration-150 hover:scale-105 cursor-default">
               <Folder className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{folderName}</span>
             </span>
@@ -86,7 +86,7 @@ export function NoteCard({
         {note.tags.length > 0 && (
           <div className="flex shrink-0 items-center gap-1">
             <Tag className="size-3 text-[#a39e98]" aria-hidden="true" />
-            <span className="text-[11px] text-[#31302e]">{note.tags.slice(0, 2).join(", ")}</span>
+            <span className="text-[11px] text-[#31302e] font-medium transition-colors duration-150 group-hover:text-[#0075de]">{note.tags.slice(0, 2).join(", ")}</span>
             {note.tags.length > 2 && (
               <span className="text-[11px] text-[#a39e98]">+{note.tags.length - 2}</span>
             )}

@@ -120,7 +120,7 @@ export function TodayHabitsWidget() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-4 border-b border-[#e3e2e1] pb-4 mb-4">
+        <div className="space-y-2 border-b border-[#e3e2e1] pb-4 mb-4">
           {habits.slice(0, 6).map((habit) => {
             const isCompleted = getIsCompleted(habit._id);
 
@@ -134,22 +134,22 @@ export function TodayHabitsWidget() {
                     completed: !isCompleted
                   })
                 }
-                className="flex items-center justify-between group cursor-pointer"
+                className="flex items-center justify-between group cursor-pointer p-2 -mx-2 rounded-lg transition-all duration-150 hover:bg-[#f6f5f4] active:scale-[0.99]"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     type="button"
-                    className={`size-6 rounded flex items-center justify-center border-2 transition-all ${
+                    className={`size-6 rounded flex items-center justify-center border-2 transition-all duration-150 active:scale-75 ${
                       isCompleted
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-600 font-bold"
-                        : "border-[#c1c6d5] hover:border-[#005db2] bg-white text-transparent"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-600 font-bold animate-check-pop"
+                        : "border-[#c1c6d5] hover:border-[#005db2] hover:scale-110 bg-white text-transparent"
                     }`}
                   >
-                    <CheckCircle2 className={`size-4 ${isCompleted ? "opacity-100" : "opacity-0"}`} />
+                    <CheckCircle2 className={`size-4 ${isCompleted ? "opacity-100 scale-100" : "opacity-0 scale-50"} transition-all duration-150`} />
                   </button>
                   <span
-                    className={`text-sm font-medium transition-colors truncate ${
-                      isCompleted ? "line-through text-[#717784]" : "text-[#1a1c1c]"
+                    className={`text-sm font-medium transition-all duration-150 truncate ${
+                      isCompleted ? "line-through text-[#717784]" : "text-[#1a1c1c] group-hover:text-[#005db2]"
                     }`}
                   >
                     {habit.title}
@@ -158,11 +158,11 @@ export function TodayHabitsWidget() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   {habit.currentStreak ? (
-                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium">
+                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium transition-transform duration-150 group-hover:scale-105">
                       {habit.currentStreak} Day Streak
                     </span>
                   ) : (
-                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium">
+                    <span className="text-xs text-[#717784] px-2.5 py-0.5 rounded-full bg-[#efeeed] font-medium transition-transform duration-150 group-hover:scale-105">
                       Active
                     </span>
                   )}
@@ -181,7 +181,7 @@ export function TodayHabitsWidget() {
         </div>
         <div className="h-1.5 w-full bg-[#efeeed] rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+            className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import {
   ChevronRight,
-  ChevronDown,
   Folder,
   FolderOpen,
   Files,
@@ -66,8 +65,8 @@ function TreeRow({
     <li>
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-md py-1 pr-2 text-sm",
-          active ? "bg-[#f6f5f4] text-[#000000]" : "text-[#31302e] hover:bg-[#f6f5f4]"
+          "group flex items-center gap-1 rounded-md py-1 pr-2 text-sm transition-all duration-150 active:scale-[0.99]",
+          active ? "bg-[#f6f5f4] text-[#000000] font-semibold" : "text-[#31302e] hover:bg-[#f6f5f4]"
         )}
         style={{ paddingLeft: `${depth * 0.75 + 0.25}rem` }}
         onDragOver={onMoveNoteToFolder ? (e) => e.preventDefault() : undefined}
@@ -81,22 +80,22 @@ function TreeRow({
             setExpanded((v) => !v);
           }}
           className={cn(
-            "flex size-5 shrink-0 items-center justify-center rounded text-[#a39e98]",
-            hasChildren ? "opacity-100" : "opacity-0"
+            "flex size-5 shrink-0 items-center justify-center rounded text-[#a39e98] transition-transform duration-150 hover:text-[#000000]",
+            hasChildren ? "opacity-100 cursor-pointer" : "opacity-0 pointer-events-none"
           )}
         >
-          {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          <ChevronRight className={cn("size-4 transition-transform duration-200", expanded && "rotate-90")} />
         </button>
 
         <button
           type="button"
           onClick={onSelect}
-          className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+          className="flex min-w-0 flex-1 items-center gap-1.5 text-left cursor-pointer"
         >
           {active ? (
-            <FolderOpen className="size-4 shrink-0 text-[#0075de]" aria-hidden="true" />
+            <FolderOpen className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110" aria-hidden="true" />
           ) : (
-            <Folder className="size-4 shrink-0 text-[#a39e98]" aria-hidden="true" />
+            <Folder className="size-4 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110 group-hover:text-[#0075de]" aria-hidden="true" />
           )}
           <span className="truncate">{folder.name}</span>
           {count !== undefined && count > 0 && (
@@ -104,12 +103,12 @@ function TreeRow({
           )}
         </button>
 
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           <button
             type="button"
             aria-label={`New subfolder in ${folder.name}`}
             onClick={onNew}
-            className="rounded p-0.5 text-[#a39e98] hover:text-[#0075de]"
+            className="rounded p-0.5 text-[#a39e98] hover:text-[#0075de] hover:scale-115 active:scale-90 transition-all duration-150 cursor-pointer"
           >
             <Plus className="size-3.5" />
           </button>
@@ -117,7 +116,7 @@ function TreeRow({
             type="button"
             aria-label={`Rename ${folder.name}`}
             onClick={onRename}
-            className="rounded p-0.5 text-[#a39e98] hover:text-[#000000]"
+            className="rounded p-0.5 text-[#a39e98] hover:text-[#000000] hover:scale-115 active:scale-90 transition-all duration-150 cursor-pointer"
           >
             <Pencil className="size-3.5" />
           </button>
@@ -125,7 +124,7 @@ function TreeRow({
             type="button"
             aria-label={`Delete ${folder.name}`}
             onClick={onDelete}
-            className="rounded p-0.5 text-[#a39e98] hover:text-red-600"
+            className="rounded p-0.5 text-[#a39e98] hover:text-red-600 hover:scale-115 active:scale-90 transition-all duration-150 cursor-pointer"
           >
             <Trash2 className="size-3.5" />
           </button>

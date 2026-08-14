@@ -26,8 +26,8 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         onCheckedChange?.(!checked);
       }}
       className={cn(
-        "inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0075de] disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-[#0075de]" : "bg-[#e6e6e6]",
+        "inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0075de] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+        checked ? "bg-[#0075de]" : "bg-[#d1d0ce] hover:bg-[#c1c0bd]",
         className
       )}
       {...props}
@@ -35,7 +35,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow transition-transform",
+          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-md transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
           checked ? "translate-x-5" : "translate-x-0"
         )}
       />

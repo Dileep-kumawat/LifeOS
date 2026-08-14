@@ -62,7 +62,7 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
               <span className="text-neutral-400">/ ₹{limit.toFixed(2)}</span>
             </span>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border ${badgeStyle}`}
+              className={`text-xs px-2 py-0.5 rounded-full border transition-transform duration-150 hover:scale-105 cursor-default shadow-2xs ${badgeStyle}`}
             >
               {statusText}
             </span>
@@ -73,7 +73,7 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
       {/* Progress Track */}
       <div className="relative w-full h-3 bg-neutral-100 rounded-full overflow-hidden border border-neutral-200">
         <div
-          className={`h-full transition-all duration-500 rounded-full ${barColor}`}
+          className={`h-full transition-all duration-500 ease-out rounded-full ${barColor}`}
           style={{ width: `${visualWidth}%` }}
           role="progressbar"
           aria-valuenow={Math.round(percent)}

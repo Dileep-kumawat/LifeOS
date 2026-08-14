@@ -39,13 +39,13 @@ export function NotificationBell({
             unread > 0 ? `${unread} unread notifications` : "Notifications, no unread notifications"
           }
           className={cn(
-            "relative text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all",
+            "group relative text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all duration-150 active:scale-90",
             className
           )}
         >
-          <Bell className="size-5 text-current" />
+          <Bell className="size-5 text-current transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
           {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-[#0075de] px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white">
+            <span className="absolute -right-0.5 -top-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-[#0075de] px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white animate-pulse-ring">
               {badgeLabel}
             </span>
           )}

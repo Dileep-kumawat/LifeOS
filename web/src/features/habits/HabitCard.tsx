@@ -63,13 +63,13 @@ export function HabitCard({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-[#e6e6e6] bg-white p-5 shadow-sm transition-all hover:shadow-md">
+    <div className="flex flex-col gap-4 rounded-xl border border-[#e6e6e6] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div
-          className="flex flex-col gap-1 cursor-pointer"
+          className="flex flex-col gap-1 cursor-pointer group/title"
           onClick={() => onSelectHabit?.(habit._id)}
         >
-          <h3 className="text-lg font-semibold text-[#000000] hover:text-[#0075de] transition-colors">
+          <h3 className="text-lg font-semibold text-[#000000] group-hover/title:text-[#0075de] transition-colors duration-150">
             {habit.title}
           </h3>
           <div className="flex items-center gap-2 text-xs text-[#615d59]">
@@ -93,7 +93,7 @@ export function HabitCard({
           {onEditHabit && (
             <button
               onClick={() => onEditHabit(habit)}
-              className="rounded-md p-1.5 text-[#615d59] hover:bg-[#f6f5f4] hover:text-[#000000]"
+              className="rounded-md p-1.5 text-[#615d59] hover:bg-[#f6f5f4] hover:text-[#000000] active:scale-90 transition-all duration-150 cursor-pointer"
               title="Edit habit"
             >
               <Edit className="size-4" />
@@ -103,7 +103,7 @@ export function HabitCard({
           {onDeleteHabit && (
             <button
               onClick={() => onDeleteHabit(habit._id)}
-              className="rounded-md p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700"
+              className="rounded-md p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 active:scale-90 transition-all duration-150 cursor-pointer"
               title="Delete habit"
             >
               <Trash2 className="size-4" />
@@ -121,9 +121,9 @@ export function HabitCard({
             let bgClass = "bg-[#f6f5f4] text-[#a39e98] border-[#e6e6e6]";
 
             if (item.record?.completed === true) {
-              bgClass = "bg-emerald-500 text-white border-emerald-600";
+              bgClass = "bg-emerald-500 text-white border-emerald-600 shadow-2xs";
             } else if (item.record?.completed === false) {
-              bgClass = "bg-rose-500 text-white border-rose-600";
+              bgClass = "bg-rose-500 text-white border-rose-600 shadow-2xs";
             } else if (isToday) {
               bgClass = "bg-white text-[#615d59] border-[#0075de] border-2";
             }
@@ -141,7 +141,7 @@ export function HabitCard({
                 }`}
               >
                 <div
-                  className={`flex size-5 sm:size-6 items-center justify-center rounded-md text-[9px] sm:text-[10px] font-bold border transition-colors ${bgClass}`}
+                  className={`flex size-5 sm:size-6 items-center justify-center rounded-md text-[9px] sm:text-[10px] font-bold border transition-all duration-150 hover:scale-125 cursor-default ${bgClass}`}
                 >
                   {item.record?.completed === true ? (
                     <Check className="size-2.5 sm:size-3 stroke-[3]" />
@@ -163,22 +163,22 @@ export function HabitCard({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => onToggleCheckIn(habit._id, todayDateStr, !isCheckedInToday)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold active:scale-95 transition-all duration-150 cursor-pointer ${
               isCheckedInToday
-                ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
-                : "bg-white text-[#000000] border border-[#e6e6e6] hover:bg-emerald-50 hover:text-emerald-700"
+                ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:shadow"
+                : "bg-white text-[#000000] border border-[#e6e6e6] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
             }`}
           >
-            <Check className="size-3.5" data-icon="inline-start" />
+            <Check className={`size-3.5 ${isCheckedInToday ? "animate-check-pop" : ""}`} data-icon="inline-start" />
             <span>{isCheckedInToday ? "Completed" : "Mark Done"}</span>
           </button>
 
           <button
             onClick={() => onToggleCheckIn(habit._id, todayDateStr, false)}
-            className={`inline-flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium transition-all ${
+            className={`inline-flex items-center gap-1 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium active:scale-95 transition-all duration-150 cursor-pointer ${
               isMissedToday
                 ? "bg-rose-600 text-white shadow-sm hover:bg-rose-700"
-                : "bg-white text-[#615d59] border border-[#e6e6e6] hover:bg-rose-50 hover:text-rose-700"
+                : "bg-white text-[#615d59] border border-[#e6e6e6] hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
             }`}
             title="Mark explicitly as missed"
           >

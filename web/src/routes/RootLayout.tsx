@@ -55,17 +55,17 @@ export function RootLayout() {
   };
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+    `group flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 active:scale-[0.98] ${
       isActive
-        ? "text-[#005db2] font-bold border-r-4 border-[#005db2] bg-[#0075de]/10"
-        : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7]"
+        ? "text-[#005db2] font-bold border-r-4 border-[#005db2] bg-[#0075de]/10 shadow-2xs"
+        : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5"
     }`;
 
   const getDrawerNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+    `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 active:scale-[0.98] ${
       isActive
-        ? "text-[#005db2] font-bold bg-[#0075de]/10"
-        : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7]"
+        ? "text-[#005db2] font-bold bg-[#0075de]/10 shadow-2xs"
+        : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5"
     }`;
 
   return (
@@ -77,17 +77,17 @@ export function RootLayout() {
     >
       {/* ─── Mobile / Tablet Top Header (<lg) ────────────────────────────── */}
       {!isChat && (
-        <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40">
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40 transition-all duration-200">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="p-1.5 -ml-1 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-colors"
+              className="p-1.5 -ml-1 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-all duration-150 active:scale-95"
               aria-label="Open navigation menu"
             >
               <Menu className="size-5" />
             </button>
-            <NavLink to="/" className="flex items-center gap-2 min-w-0">
+            <NavLink to="/" className="flex items-center gap-2 min-w-0 transition-transform duration-150 active:scale-95">
               <span className="font-bold text-base text-[#005db2] tracking-tight truncate">
                 LifeOS
               </span>
@@ -98,7 +98,7 @@ export function RootLayout() {
             <NotificationBell align="end" />
             <NavLink
               to="/chat"
-              className="p-2 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-colors"
+              className="p-2 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-all duration-150 active:scale-95"
               aria-label="AI Assistant"
             >
               <Bot className="size-5" />
@@ -130,7 +130,7 @@ export function RootLayout() {
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="p-1.5 text-[#414753] hover:text-[#1a1c1c] hover:bg-[#e9e8e7] rounded-lg transition-colors"
+                className="p-1.5 text-[#414753] hover:text-[#1a1c1c] hover:bg-[#e9e8e7] rounded-lg transition-all duration-150 active:scale-95"
                 aria-label="Close navigation menu"
               >
                 <X className="size-5" />
@@ -143,27 +143,27 @@ export function RootLayout() {
                 Navigation
               </span>
               <NavLink to="/" end className={getDrawerNavLinkClass}>
-                <LayoutDashboard className="size-4 shrink-0" />
+                <LayoutDashboard className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Dashboard</span>
               </NavLink>
               <NavLink to="/calendar" className={getDrawerNavLinkClass}>
-                <CalendarIcon className="size-4 shrink-0" />
+                <CalendarIcon className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Calendar</span>
               </NavLink>
               <NavLink to="/habits" className={getDrawerNavLinkClass}>
-                <CheckSquare className="size-4 shrink-0" />
+                <CheckSquare className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Habits</span>
               </NavLink>
               <NavLink to="/goals" className={getDrawerNavLinkClass}>
-                <Flag className="size-4 shrink-0" />
+                <Flag className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Goals</span>
               </NavLink>
               <NavLink to="/finance" className={getDrawerNavLinkClass}>
-                <Wallet className="size-4 shrink-0" />
+                <Wallet className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Finance</span>
               </NavLink>
               <NavLink to="/notes" className={getDrawerNavLinkClass}>
-                <FileText className="size-4 shrink-0" />
+                <FileText className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Notes</span>
               </NavLink>
 
@@ -172,15 +172,15 @@ export function RootLayout() {
                   Tools & Account
                 </span>
                 <NavLink to="/chat" className={getDrawerNavLinkClass}>
-                  <Bot className="size-4 shrink-0 text-[#005db2]" />
+                  <Bot className="size-4 shrink-0 text-[#005db2] transition-transform duration-150 group-hover:scale-110 animate-float-subtle" />
                   <span className="font-semibold text-[#005db2]">AI Assistant</span>
                 </NavLink>
                 <NavLink to="/settings" className={getDrawerNavLinkClass}>
-                  <Settings className="size-4 shrink-0" />
+                  <Settings className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                   <span>Settings</span>
                 </NavLink>
                 <NavLink to="/chat" className={getDrawerNavLinkClass}>
-                  <HelpCircle className="size-4 shrink-0" />
+                  <HelpCircle className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                   <span>Support & Help</span>
                 </NavLink>
               </div>
@@ -195,7 +195,7 @@ export function RootLayout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all duration-150 active:scale-95"
                 title="Sign Out"
                 aria-label="Sign out"
               >
@@ -211,7 +211,7 @@ export function RootLayout() {
         {/* App Title Anchor */}
         <div className="px-6 mb-8 flex items-center justify-between">
           <div className="min-w-0 pr-2">
-            <h1 className="text-xl font-bold text-[#005db2] tracking-tight">LifeOS Executive</h1>
+            <h1 className="text-xl font-bold text-[#005db2] tracking-tight hover:opacity-90 transition-opacity">LifeOS Executive</h1>
             <p className="text-xs text-[#414753] mt-1">
               Good morning, {user?.name || "Explorer"}
             </p>
@@ -222,27 +222,27 @@ export function RootLayout() {
         {/* Navigation Links */}
         <div className="flex-1 flex flex-col gap-1.5 px-3">
           <NavLink to="/" end className={getNavLinkClass}>
-            <LayoutDashboard className="size-5 shrink-0" />
+            <LayoutDashboard className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Dashboard</span>
           </NavLink>
           <NavLink to="/calendar" className={getNavLinkClass}>
-            <CalendarIcon className="size-5 shrink-0" />
+            <CalendarIcon className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Calendar</span>
           </NavLink>
           <NavLink to="/habits" className={getNavLinkClass}>
-            <CheckSquare className="size-5 shrink-0" />
+            <CheckSquare className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Habits</span>
           </NavLink>
           <NavLink to="/goals" className={getNavLinkClass}>
-            <Flag className="size-5 shrink-0" />
+            <Flag className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Goals</span>
           </NavLink>
           <NavLink to="/finance" className={getNavLinkClass}>
-            <Wallet className="size-5 shrink-0" />
+            <Wallet className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Finance</span>
           </NavLink>
           <NavLink to="/notes" className={getNavLinkClass}>
-            <FileText className="size-5 shrink-0" />
+            <FileText className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Notes</span>
           </NavLink>
         </div>
@@ -251,31 +251,31 @@ export function RootLayout() {
         <div className="px-4 mt-auto space-y-4">
           <NavLink
             to="/chat"
-            className="w-full bg-[#005db2] text-white py-2.5 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#00468a] transition-colors shadow-xs"
+            className="w-full bg-[#005db2] text-white py-2.5 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#00468a] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150 shadow-xs group"
           >
-            <Bot className="size-4" />
+            <Bot className="size-4 transition-transform duration-200 group-hover:scale-115 animate-float-subtle" />
             AI Assistant
           </NavLink>
           <div className="border-t border-[#c1c6d5]/60 pt-4 flex flex-col gap-1">
             <NavLink
               to="/settings"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+              className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
             >
-              <Settings className="size-4" />
+              <Settings className="size-4 transition-transform duration-150 group-hover:rotate-45" />
               <span>Settings</span>
             </NavLink>
             <NavLink
               to="/chat"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+              className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
             >
-              <HelpCircle className="size-4" />
+              <HelpCircle className="size-4 transition-transform duration-150 group-hover:scale-110" />
               <span>Support & Help</span>
             </NavLink>
             <NavLink
               to="/notes"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] transition-all"
+              className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
             >
-              <Archive className="size-4" />
+              <Archive className="size-4 transition-transform duration-150 group-hover:scale-110" />
               <span>Archive</span>
             </NavLink>
           </div>
@@ -289,8 +289,8 @@ export function RootLayout() {
             to="/"
             end
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-colors min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -300,8 +300,8 @@ export function RootLayout() {
           <NavLink
             to="/calendar"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-colors min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -311,8 +311,8 @@ export function RootLayout() {
           <NavLink
             to="/habits"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-colors min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -322,8 +322,8 @@ export function RootLayout() {
           <NavLink
             to="/notes"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-colors min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold" : "text-[#414753] hover:bg-[#e3e2e1]"
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -333,7 +333,7 @@ export function RootLayout() {
           <button
             type="button"
             onClick={() => setIsMobileDrawerOpen(true)}
-            className="flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs text-[#414753] hover:bg-[#e3e2e1] transition-colors min-w-[54px]"
+            className="flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs text-[#414753] hover:bg-[#e3e2e1] active:scale-90 transition-all duration-150 min-w-[54px]"
           >
             <Menu className="size-4" />
             <span className="text-[10px] mt-0.5">More</span>

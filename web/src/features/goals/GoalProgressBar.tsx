@@ -23,7 +23,7 @@ export function GoalProgressBar({
         <div className="flex items-center gap-1.5">
           {isMilestoneDerived ? (
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] px-2 py-0.5 text-[11px] text-[#0075de] border border-[#e6e6e6]"
+              className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] px-2 py-0.5 text-[11px] text-[#0075de] border border-[#e6e6e6] transition-transform duration-150 hover:scale-105 cursor-default"
               title="Progress is automatically calculated from milestone completion"
             >
               <ListChecks className="size-3.5" data-icon="inline-start" />
@@ -33,7 +33,7 @@ export function GoalProgressBar({
             </span>
           ) : (
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] px-2 py-0.5 text-[11px] text-[#615d59] border border-[#e6e6e6]"
+              className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] px-2 py-0.5 text-[11px] text-[#615d59] border border-[#e6e6e6] transition-transform duration-150 hover:scale-105 cursor-default"
               title="Manual progress entry"
             >
               <Edit3 className="size-3.5" data-icon="inline-start" />
@@ -41,12 +41,12 @@ export function GoalProgressBar({
             </span>
           )}
         </div>
-        <span className="font-semibold text-[#000000]">{clampedProgress}%</span>
+        <span className="font-semibold text-[#000000] tabular-nums transition-all duration-300">{clampedProgress}%</span>
       </div>
 
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-[#f6f5f4] border border-[#e6e6e6]">
         <div
-          className={`h-full transition-all duration-300 ${
+          className={`h-full transition-all duration-500 ease-out rounded-full ${
             isMilestoneDerived ? "bg-[#0075de]" : "bg-[#2a9d99]"
           }`}
           style={{ width: `${clampedProgress}%` }}

@@ -151,7 +151,7 @@ export const ChatPage: React.FC = () => {
 
             {/* Centered Large ChatGPT Search/Prompt Bar */}
             <form onSubmit={handleSubmit} className="w-full mb-8">
-              <div className="w-full bg-white border border-[#e5e5e5] rounded-3xl shadow-sm focus-within:shadow-md focus-within:border-[#b4b4b4] p-3 flex flex-col gap-3 transition-all">
+              <div className="w-full bg-white border border-[#e5e5e5] rounded-3xl shadow-sm focus-within:shadow-md focus-within:border-[#0075de] focus-within:ring-2 focus-within:ring-[#0075de]/15 p-3 flex flex-col gap-3 transition-all duration-200">
                 <input
                   type="text"
                   value={input}
@@ -164,7 +164,7 @@ export const ChatPage: React.FC = () => {
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-full transition-colors"
+                      className="p-2 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] active:scale-90 rounded-full transition-all duration-150 cursor-pointer"
                       title="Add attachment"
                     >
                       <Plus className="w-4 h-4" />
@@ -174,7 +174,7 @@ export const ChatPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!input.trim() || isStreaming}
-                    className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] disabled:opacity-30 transition-all shadow-xs"
+                    className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] hover:scale-105 active:scale-90 disabled:opacity-30 disabled:hover:scale-100 transition-all duration-150 shadow-xs cursor-pointer"
                   >
                     <ArrowUp className="w-4 h-4 stroke-[2.5]" />
                   </button>
@@ -189,12 +189,12 @@ export const ChatPage: React.FC = () => {
                   key={idx}
                   type="button"
                   onClick={() => handlePromptCardClick(card.prompt)}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#e5e5e5] hover:border-[#b4b4b4] hover:bg-[#f9f9f9] transition-all text-xs text-[#2b2b2b] font-normal group"
+                  className="flex items-start gap-3 p-3.5 rounded-2xl border border-[#e5e5e5] hover:border-[#b4b4b4] hover:bg-[#f9f9f9] hover:-translate-y-0.5 hover:shadow-xs active:scale-[0.98] transition-all duration-150 text-xs text-[#2b2b2b] font-normal group cursor-pointer"
                 >
-                  <div className="p-2 bg-[#f4f4f4] rounded-xl shrink-0 group-hover:bg-white transition-colors">
+                  <div className="p-2 bg-[#f4f4f4] rounded-xl shrink-0 group-hover:bg-white group-hover:scale-110 transition-all duration-150 shadow-2xs">
                     {card.icon}
                   </div>
-                  <span className="mt-1 leading-snug">{card.title}</span>
+                  <span className="mt-1 leading-snug font-medium group-hover:text-[#005db2] transition-colors duration-150">{card.title}</span>
                 </button>
               ))}
             </div>
@@ -223,10 +223,10 @@ export const ChatPage: React.FC = () => {
             <div className="p-4 bg-white border-t border-[#f0f0f0] shrink-0">
               <div className="max-w-3xl mx-auto w-full flex flex-col items-center gap-2">
                 <form onSubmit={handleSubmit} className="w-full">
-                  <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#b4b4b4] p-2.5 flex items-center gap-2 transition-all">
+                  <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#0075de] focus-within:ring-2 focus-within:ring-[#0075de]/15 p-2.5 flex items-center gap-2 transition-all duration-200">
                     <button
                       type="button"
-                      className="p-1.5 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] rounded-full transition-colors"
+                      className="p-1.5 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] active:scale-90 rounded-full transition-all duration-150 cursor-pointer"
                       title="Add attachment"
                     >
                       <Plus className="w-4 h-4" />
@@ -243,7 +243,7 @@ export const ChatPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={!input.trim() || isStreaming}
-                      className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] disabled:opacity-30 transition-all shrink-0"
+                      className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] hover:scale-105 active:scale-90 disabled:opacity-30 disabled:hover:scale-100 transition-all duration-150 shrink-0 cursor-pointer"
                     >
                       <ArrowUp className="w-4 h-4 stroke-[2.5]" />
                     </button>

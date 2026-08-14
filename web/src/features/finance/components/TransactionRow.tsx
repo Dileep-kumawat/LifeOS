@@ -81,10 +81,10 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
   }).format(transaction.amount);
 
   return (
-    <div className="group flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors">
+    <div className="group flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/40 hover:-translate-y-0.5 hover:shadow-2xs active:scale-[0.99] transition-all duration-150">
       <div className="flex items-center gap-3.5 min-w-0">
         <div
-          className={`flex items-center justify-center size-10 rounded-full border shrink-0 ${getCategoryBadgeColor(
+          className={`flex items-center justify-center size-10 rounded-full border shrink-0 transition-transform duration-150 group-hover:scale-110 shadow-2xs ${getCategoryBadgeColor(
             transaction.category,
             transaction.type
           )}`}
@@ -94,11 +94,11 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
 
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground text-sm truncate">
+            <span className="font-medium text-foreground text-sm truncate group-hover:text-primary transition-colors">
               {transaction.category}
             </span>
             <span
-              className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border ${
+              className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-transform duration-150 group-hover:scale-105 ${
                 isIncome
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                   : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
@@ -127,7 +127,7 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
 
       <div className="flex items-center gap-3 shrink-0">
         <span
-          className={`text-base font-semibold tracking-tight ${
+          className={`text-base font-semibold tracking-tight tabular-nums transition-transform duration-150 group-hover:scale-105 ${
             isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
           }`}
         >
@@ -139,7 +139,7 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
             <Button
               variant="ghost"
               size="sm"
-              className="size-8 p-0"
+              className="size-8 p-0 hover:scale-110 active:scale-90 transition-all duration-150"
               onClick={() => onEdit(transaction)}
               title="Edit transaction"
             >
@@ -150,7 +150,7 @@ export function TransactionRow({ transaction, onEdit, onDelete }: TransactionRow
             <Button
               variant="ghost"
               size="sm"
-              className="size-8 p-0 hover:bg-rose-500/10 hover:text-rose-600"
+              className="size-8 p-0 hover:bg-rose-500/10 hover:text-rose-600 hover:scale-110 active:scale-90 transition-all duration-150"
               onClick={() => onDelete(transaction)}
               title="Delete transaction"
             >
