@@ -28,6 +28,9 @@ import { NotesScreen } from "../screens/main/NotesScreen";
 import { FinanceScreen } from "../screens/main/FinanceScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
 
+import { SyncStatusIndicator } from "../components/ui/SyncStatusIndicator";
+import { syncEngine } from "../services/syncEngine";
+
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -54,6 +57,11 @@ function MainTabNavigator() {
         headerStyle: { backgroundColor: colors.surface },
         headerTitleStyle: { color: colors.ink, fontWeight: "600" },
         headerShadowVisible: false,
+        headerRight: () => (
+          <View style={{ marginRight: 16 }}>
+            <SyncStatusIndicator />
+          </View>
+        ),
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.hairline,
@@ -66,6 +74,7 @@ function MainTabNavigator() {
         tabBarInactiveTintColor: colors.inkFaint
       }}
     >
+
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
@@ -126,6 +135,18 @@ export function RootNavigator() {
     bootstrap();
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncEngine.startSyncEngine();
+    } else {
+      syncEngine.stopSyncEngine();
+    }
+    return () => {
+      syncEngine.stopSyncEngine();
+    };
+  }, [isAuthenticated]);
+
+
   if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
@@ -139,6 +160,7 @@ export function RootNavigator() {
       {isAuthenticated ? <MainTabNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
+
 }
 
 const styles = StyleSheet.create({

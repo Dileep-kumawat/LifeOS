@@ -18,6 +18,7 @@ import { notificationsRouter } from "./routes/notifications.js";
 import { aiChatRouter } from "./routes/aiChat.js";
 import { aiSummaryRouter } from "./routes/aiSummary.js";
 import { financeRouter } from "./routes/finance.js";
+import { syncRouter } from "./routes/sync.js";
 import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
 import { setupChatSocket } from "./services/ai/chatSocket.js";
@@ -54,7 +55,9 @@ async function main() {
   v1.use(aiChatRouter);
   v1.use(aiSummaryRouter);
   v1.use(financeRouter);
+  v1.use(syncRouter);
   app.use("/api/v1", v1);
+
 
   // Start the single background job worker (queued deliveries, later OCR,
   // embeddings, daily summaries). No-op under tests.

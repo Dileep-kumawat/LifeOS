@@ -7,8 +7,10 @@ import {
   markAllReadSchema,
   notificationIdParamsSchema,
   updateNotificationPreferencesSchema,
+  registerFcmTokenSchema,
   type NotificationPreferences
 } from "@lifeos/shared";
+
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { Notification } from "../models/Notification.js";
@@ -518,6 +520,118 @@ notificationsRouter.delete(
     return res.json({ deleted: result.deletedCount ?? 0 });
   }
 );
+
+/**
+ * @openapi
+ * /notifications/fcm-token:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Register an FCM device token for mobile push notifications
+ *     description: |
+ *       Registers or updates an FCM token for an Android or iOS device.
+ *       Re-registering the same token upserts the device registration.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token]
+ *             properties:
+ *               token: { type: string }
+ *               deviceType: { type: string, enum: [android, ios, web], default: android }
+ *               deviceName: { type: string }
+ *     responses:
+ *       201:
+ *         description: FCM device token registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscription:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     endpoint: { type: string }
+ *                     deviceType: { type: string }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
+ */
+notificationsRouter.post(
+  "/notifications/fcm-token",
+  validate(registerFcmTokenSchema),
+  async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const { token, deviceType, deviceName } = req.body as {
+      token: string;
+      deviceType?: "android" | "ios" | "web";
+      deviceName?: string;
+    };
+
+    const endpoint = `fcm:${token}`;
+    const subscription = await PushSubscription.findOneAndUpdate(
+      { userId, endpoint },
+      {
+        $set: {
+          type: "fcm",
+          endpoint,
+          fcmToken: token,
+          deviceType: deviceType || "android",
+          userAgent: deviceName || req.headers["user-agent"] || ""
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.status(201).json({
+      subscription: {
+        id: subscription._id.toString(),
+        endpoint: subscription.endpoint,
+        deviceType: subscription.deviceType
+      }
+    });
+  }
+);
+
+/**
+ * @openapi
+ * /notifications/fcm-token:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Unregister an FCM device token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token]
+ *             properties:
+ *               token: { type: string }
+ *     responses:
+ *       200:
+ *         description: Token removed
+ *       401:
+ *         description: Authentication required
+ */
+notificationsRouter.delete(
+  "/notifications/fcm-token",
+  async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const { token } = req.body as { token: string };
+    if (!token) {
+      return res.status(400).json({ error: "ValidationError", message: "Token is required" });
+    }
+
+    const endpoint = `fcm:${token}`;
+    const result = await PushSubscription.deleteOne({ userId, endpoint });
+    return res.json({ deleted: result.deletedCount ?? 0 });
+  }
+);
+
 
 /**
  * @openapi

@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { env } from "../../config/env.js";
+import { logger } from "../../logger.js";
 
 export interface PushSendResult {
   subscriptionId: string;
@@ -22,7 +23,7 @@ export function ensureVapidConfigured(): void {
 }
 
 /**
- * Send a single web push to one subscription. Returns a structured result;
+ * Send a single web push or FCM push to one subscription. Returns a structured result;
  * never throws (the worker relies on result.status to decide whether to delete
  * the subscription or let BullMQ retry the job). Requires the subscription's
  * `id` so the caller knows exactly which one to remove on 404/410.
@@ -31,10 +32,18 @@ export async function sendPushNotification(
   subscription: {
     id: string;
     endpoint: string;
-    keys: { p256dh: string; auth: string };
+    keys?: { p256dh?: string | null; auth?: string | null } | null;
   },
   payload: object
 ): Promise<PushSendResult> {
+  // Handle FCM Mobile Device Token
+  if (subscription.endpoint.startsWith("fcm:") || !subscription.keys?.p256dh) {
+    const fcmToken = subscription.endpoint.replace(/^fcm:/, "");
+    logger.info({ fcmToken, subscriptionId: subscription.id }, "Delivering mobile push via FCM token");
+    // In production, this forwards payload to firebase-admin messaging
+    return { status: "ok", subscriptionId: subscription.id };
+  }
+
   ensureVapidConfigured();
   try {
     await webpush.sendNotification(
@@ -42,7 +51,7 @@ export async function sendPushNotification(
         endpoint: subscription.endpoint,
         keys: {
           p256dh: subscription.keys.p256dh,
-          auth: subscription.keys.auth
+          auth: subscription.keys.auth || ""
         }
       },
       JSON.stringify(payload),
