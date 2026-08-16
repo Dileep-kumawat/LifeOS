@@ -52,6 +52,61 @@ npm run dev:web     # separate terminal
 
 If running the API on the host instead of in Docker, edit `api/.env` and point `MONGO_URI`/`REDIS_URL` at `localhost` instead of the Docker service names (see comments in `api/.env.example`).
 
+## Running the Mobile App (Expo)
+
+### Running on Physical Device via USB Cable
+
+#### 📱 Android (via USB Debugging)
+
+1. **Enable USB Debugging on your phone:**
+   - Go to **Settings** → **About Phone** → tap **Build Number** 7 times until Developer Mode is unlocked.
+   - Go to **Settings** → **System** / **Developer Options** → enable **USB Debugging**.
+
+2. **Connect Phone to PC:**
+   - Connect your phone using a USB cable.
+   - Set USB connection mode to **File Transfer / MTP**.
+   - Accept the prompt on your phone: *"Allow USB debugging from this computer"*.
+
+3. **Verify Device Connection:**
+   ```bash
+   adb devices
+   ```
+   *(Your device should show with status `device`)*.
+
+4. **Port Forwarding (Essential for Bundler & Local API access):**
+   ```bash
+   # Forward Metro bundler port
+   adb reverse tcp:8081 tcp:8081
+
+   # Forward LifeOS API backend port (allows mobile app to reach http://localhost:4000)
+   adb reverse tcp:4000 tcp:4000
+   ```
+
+5. **Start Expo & Run on Android:**
+   - Install **Expo Go** from Google Play Store on your phone.
+   - Start the mobile app:
+     ```bash
+     cd mobile
+     npx expo start --localhost
+     ```
+     *(or from workspace root: `npm run dev:mobile`)*
+   - Press **`a`** in your terminal to launch and bundle the app directly onto your phone.
+
+---
+
+#### 🍎 iOS (iPhone via USB)
+
+1. **Install Expo Go** from the Apple App Store.
+2. **Connect iPhone via Cable** and tap **"Trust This Computer"** when prompted.
+3. **Start Expo:**
+   ```bash
+   cd mobile
+   npx expo start --localhost
+   ```
+4. Open the **Camera app** on your iPhone and scan the QR code displayed in the terminal to open in Expo Go.
+
+---
+
 ## Storybook
 
 ```bash

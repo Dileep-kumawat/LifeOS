@@ -118,7 +118,8 @@ authRouter.post("/auth/register", validate(registerSchema), async (req: Request,
 
     return res.status(201).json({
       user: formatUserProfile(user),
-      accessToken
+      accessToken,
+      refreshToken: rawToken
     });
   } catch (err) {
     return res
@@ -201,7 +202,8 @@ authRouter.post(
 
       return res.json({
         user: formatUserProfile(user),
-        accessToken
+        accessToken,
+        refreshToken: rawToken
       });
     } catch (err) {
       return res.status(500).json({ error: "InternalServerError", message: "Failed to log in" });
@@ -250,7 +252,8 @@ authRouter.post(
  */
 authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
   try {
-    const rawToken = req.cookies?.refreshToken;
+    const rawToken =
+      req.body?.refreshToken || (req.headers["x-refresh-token"] as string) || req.cookies?.refreshToken;
     if (!rawToken) {
       return res.status(401).json({
         error: "Unauthorized",
@@ -275,7 +278,8 @@ authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
 
     return res.json({
       user: formatUserProfile(user),
-      accessToken
+      accessToken,
+      refreshToken: newRawToken
     });
   } catch (err: any) {
     clearRefreshCookie(res);
@@ -306,7 +310,8 @@ authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
  *               message: Logged out successfully
  */
 authRouter.post("/auth/logout", async (req: Request, res: Response) => {
-  const rawToken = req.cookies?.refreshToken;
+  const rawToken =
+    req.body?.refreshToken || (req.headers["x-refresh-token"] as string) || req.cookies?.refreshToken;
   if (rawToken) {
     await revokeRefreshToken(rawToken);
   }
