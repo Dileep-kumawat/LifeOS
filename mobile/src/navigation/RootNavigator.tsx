@@ -9,7 +9,8 @@ import {
   CheckSquare,
   FileText,
   DollarSign,
-  Settings
+  Settings,
+  Sparkles
 } from "lucide-react-native";
 
 import { useAuthStore } from "../store/authStore";
@@ -26,6 +27,7 @@ import { CalendarScreen } from "../screens/main/CalendarScreen";
 import { HabitsGoalsScreen } from "../screens/main/HabitsGoalsScreen";
 import { NotesScreen } from "../screens/main/NotesScreen";
 import { FinanceScreen } from "../screens/main/FinanceScreen";
+import { ChatScreen } from "../screens/main/ChatScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
 import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScreen";
 
@@ -116,6 +118,13 @@ function MainTabNavigator() {
           }}
         />
         <Tab.Screen
+          name="Assistant"
+          component={ChatScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
           name="Settings"
           component={SettingsScreen}
           options={{
@@ -131,6 +140,16 @@ function AuthenticatedNavigator() {
   return (
     <AppStack.Navigator screenOptions={{ headerShown: false }}>
       <AppStack.Screen name="MainTabs" component={MainTabNavigator} />
+      <AppStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.surface },
+          headerTitleStyle: { color: colors.ink, fontWeight: "600" },
+          headerShadowVisible: false
+        }}
+      />
       <AppStack.Screen
         name="ConflictResolution"
         component={ConflictResolutionScreen}

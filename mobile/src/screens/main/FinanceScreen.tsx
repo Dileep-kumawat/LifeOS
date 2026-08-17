@@ -16,6 +16,7 @@ import type { LocalTransaction, LocalBudget } from "../../db/schema";
 import { TransactionFormModal } from "../../components/finance/TransactionFormModal";
 import { BudgetFormModal } from "../../components/finance/BudgetFormModal";
 import { CategoryBreakdownChart, TrendLineChart } from "../../components/finance/FinanceCharts";
+import { FinanceInsightsCard } from "../../components/finance/FinanceInsightsCard";
 
 type FinanceTab = "transactions" | "budgets" | "analytics";
 
@@ -343,6 +344,7 @@ export function FinanceScreen() {
 
         {activeTab === "analytics" && (
           <View style={styles.analyticsContainer}>
+            <FinanceInsightsCard />
             <CategoryBreakdownChart
               data={summary.categoryBreakdown}
               totalExpense={summary.totalExpense}

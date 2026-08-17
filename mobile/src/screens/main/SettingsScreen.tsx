@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { RefreshCw, LogOut } from "lucide-react-native";
+import { View, StyleSheet, TouchableOpacity, Alert, TextInput, Switch } from "react-native";
+import { RefreshCw, LogOut, Sparkles, Check } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { authApi } from "../../services/apiClient";
+import { aiChatService } from "../../services/aiChatService";
 import { tokenStorage } from "../../services/tokenStorage";
 import { notificationService } from "../../services/notificationService";
 import { syncEngine } from "../../services/syncEngine";
@@ -24,6 +25,14 @@ export function SettingsScreen() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  // Daily Summary Preferences State
+  const [deliveryTime, setDeliveryTime] = useState("07:00");
+  const [channelPush, setChannelPush] = useState(true);
+  const [channelInApp, setChannelInApp] = useState(true);
+  const [channelEmail, setChannelEmail] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
   useEffect(() => {
     async function loadInfo() {
       const fcm = await tokenStorage.getItem("lifeos_fcm_device_token");
@@ -31,9 +40,49 @@ export function SettingsScreen() {
 
       const scheduled = notificationService.getScheduledNotifications();
       setScheduledCount(scheduled.length);
+
+      if (isOnline) {
+        try {
+          const { preferences } = await aiChatService.getNotificationPreferences();
+          if (preferences?.dailySummary) {
+            setDeliveryTime(preferences.dailySummary.deliveryTime || "07:00");
+            const channels = preferences.dailySummary.channels || ["push", "in_app"];
+            setChannelPush(channels.includes("push"));
+            setChannelInApp(channels.includes("in_app"));
+            setChannelEmail(channels.includes("email"));
+          }
+        } catch {
+          /* use defaults */
+        }
+      }
     }
     loadInfo();
-  }, []);
+  }, [isOnline]);
+
+  const handleSaveSummaryPrefs = async () => {
+    if (!isOnline) return;
+    setSavingPrefs(true);
+    try {
+      const channels: ("push" | "in_app" | "email")[] = [];
+      if (channelPush) channels.push("push");
+      if (channelInApp) channels.push("in_app");
+      if (channelEmail) channels.push("email");
+
+      await aiChatService.updateNotificationPreferences({
+        dailySummary: {
+          deliveryTime,
+          channels,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+        }
+      });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to update preferences.");
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const handleManualSync = async () => {
     setIsSyncing(true);
@@ -130,7 +179,7 @@ export function SettingsScreen() {
         <View style={styles.infoRow}>
           <ThemedText variant="bodySm" color={colors.inkMuted}>FCM Server Push:</ThemedText>
           <ThemedText variant="bodySm" color={fcmToken ? colors.success : colors.warning} style={styles.infoValue}>
-            {fcmToken ? "Registered" : "Not Registered"}
+            {fcmToken ? "Registered (Active)" : "Not Registered"}
           </ThemedText>
         </View>
 
@@ -146,6 +195,88 @@ export function SettingsScreen() {
           variant="outline"
           size="sm"
           onPress={handleRegisterFcm}
+          style={{ marginTop: spacing.sm }}
+        />
+      </Card>
+
+      {/* AI Daily Summary Preferences Card */}
+      <Card style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs }}>
+            <Sparkles size={18} color={colors.primary} />
+            <ThemedText variant="title" style={styles.sectionTitle}>
+              AI Daily Summary Delivery
+            </ThemedText>
+          </View>
+        </View>
+
+        <ThemedText variant="caption" color={colors.inkMuted} style={{ marginBottom: spacing.xs }}>
+          Configure automated morning AI summary delivery time and routing channels.
+        </ThemedText>
+
+        {/* Delivery Time Input */}
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>Delivery Time (HH:MM):</ThemedText>
+          <TextInput
+            value={deliveryTime}
+            onChangeText={setDeliveryTime}
+            placeholder="07:00"
+            placeholderTextColor={colors.inkMuted}
+            style={styles.timeInput}
+            maxLength={5}
+          />
+        </View>
+
+        {/* Channels toggles */}
+        <View style={styles.toggleRow}>
+          <View>
+            <ThemedText variant="bodySm">Push Notification (FCM)</ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted}>
+              Direct to this mobile device
+            </ThemedText>
+          </View>
+          <Switch
+            value={channelPush}
+            onValueChange={setChannelPush}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View>
+            <ThemedText variant="bodySm">In-App Notification</ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted}>
+              Notification inbox bell
+            </ThemedText>
+          </View>
+          <Switch
+            value={channelInApp}
+            onValueChange={setChannelInApp}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View>
+            <ThemedText variant="bodySm">Email Summary</ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted}>
+              Sent to account email
+            </ThemedText>
+          </View>
+          <Switch
+            value={channelEmail}
+            onValueChange={setChannelEmail}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        <Button
+          title={savingPrefs ? "Saving..." : savedSuccess ? "Preferences Saved!" : "Save Delivery Preferences"}
+          variant={savedSuccess ? "secondary" : "primary"}
+          size="sm"
+          onPress={handleSaveSummaryPrefs}
+          disabled={savingPrefs || !isOnline}
+          icon={savedSuccess ? <Check size={14} color={colors.success} /> : undefined}
           style={{ marginTop: spacing.sm }}
         />
       </Card>
@@ -207,6 +338,27 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontWeight: "600"
+  },
+  timeInput: {
+    width: 70,
+    height: 32,
+    backgroundColor: colors.canvasSoft,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.sm,
+    paddingHorizontal: 8,
+    textAlign: "center",
+    fontWeight: "700",
+    fontSize: 12,
+    color: colors.ink
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline
   },
   logoutButton: {
     marginTop: spacing.sm,

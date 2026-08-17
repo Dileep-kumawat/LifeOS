@@ -1,12 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Calendar, CheckSquare, Target, DollarSign, ArrowRight } from "lucide-react-native";
+import { Calendar, CheckSquare, Target, DollarSign, ArrowRight, Sparkles } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
+import { useSyncStore } from "../../store/syncStore";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { Card } from "../../components/ui/Card";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { SyncStatusIndicator } from "../../components/ui/SyncStatusIndicator";
+import { DailySummaryCard } from "../../components/ai/DailySummaryCard";
+import { aiChatService, type DailySummaryResponse } from "../../services/aiChatService";
 import { eventRepo } from "../../db/repositories/eventRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
 import { goalRepo } from "../../db/repositories/goalRepo";
@@ -16,6 +19,7 @@ import type { LocalEvent, LocalHabit, LocalGoal } from "../../db/schema";
 
 export function DashboardScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
+  const isOnline = useSyncStore((state) => state.isOnline);
 
   const [todayEvents, setTodayEvents] = useState<LocalEvent[]>([]);
   const [habits, setHabits] = useState<LocalHabit[]>([]);
@@ -23,7 +27,45 @@ export function DashboardScreen({ navigation }: any) {
   const [activeGoals, setActiveGoals] = useState<LocalGoal[]>([]);
   const [financeSummary, setFinanceSummary] = useState({ totalExpense: 0, totalIncome: 0 });
 
+  // Daily Summary State
+  const [dailySummaryState, setDailySummaryState] = useState<DailySummaryResponse>({
+    generated: false,
+    reason: null,
+    deliveryTime: "07:00",
+    summary: null
+  });
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [isSummaryError, setIsSummaryError] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
   const todayStr = new Date().toISOString().split("T")[0];
+
+  const loadDailySummary = useCallback(async () => {
+    if (!isOnline) return;
+    setIsSummaryLoading(true);
+    setIsSummaryError(false);
+    try {
+      const res = await aiChatService.getTodaySummary();
+      setDailySummaryState(res);
+    } catch {
+      setIsSummaryError(true);
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  }, [isOnline]);
+
+  const handleGenerateNow = async () => {
+    if (!isOnline) return;
+    setIsGeneratingSummary(true);
+    try {
+      const res = await aiChatService.getTodaySummary();
+      setDailySummaryState(res);
+    } catch {
+      setIsSummaryError(true);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
 
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
@@ -51,7 +93,8 @@ export function DashboardScreen({ navigation }: any) {
 
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+    loadDailySummary();
+  }, [loadDashboardData, loadDailySummary]);
 
   return (
     <ScreenContainer scrollable>
@@ -67,6 +110,44 @@ export function DashboardScreen({ navigation }: any) {
           <SyncStatusIndicator />
         </View>
       </View>
+
+      {/* AI Daily Summary Card */}
+      <View style={{ marginBottom: spacing.sm }}>
+        <DailySummaryCard
+          isLoading={isSummaryLoading}
+          isError={isSummaryError}
+          onRetry={loadDailySummary}
+          generated={dailySummaryState.generated}
+          deliveryTime={dailySummaryState.deliveryTime || "07:00"}
+          summary={dailySummaryState.summary}
+          onGenerateNow={handleGenerateNow}
+          isGenerating={isGeneratingSummary}
+        />
+      </View>
+
+      {/* AI Assistant Quick Launcher */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => navigation?.navigate("Assistant")}
+        style={{ marginBottom: spacing.sm }}
+      >
+        <Card style={[styles.moduleCard, styles.aiAssistantLauncher]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.iconTitleRow}>
+              <View style={[styles.iconWrap, { backgroundColor: "#E0F2FE" }]}>
+                <Sparkles size={16} color={colors.primary} />
+              </View>
+              <View>
+                <ThemedText variant="heading3">Ask LifeOS AI</ThemedText>
+                <ThemedText variant="caption" color={colors.inkMuted}>
+                  Live assistant with connected tools & insights
+                </ThemedText>
+              </View>
+            </View>
+            <ArrowRight size={16} color={colors.primary} />
+          </View>
+        </Card>
+      </TouchableOpacity>
 
       {/* Quick Overview Grid */}
       <View style={styles.overviewGrid}>
@@ -228,6 +309,11 @@ const styles = StyleSheet.create({
   },
   moduleCard: {
     padding: spacing.md
+  },
+  aiAssistantLauncher: {
+    borderWidth: 1.5,
+    borderColor: "#BAE6FD",
+    backgroundColor: "#F0F9FF"
   },
   cardHeader: {
     flexDirection: "row",
