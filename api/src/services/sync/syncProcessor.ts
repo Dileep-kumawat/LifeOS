@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
 import {
-
   type SyncPushItem,
   type SyncPushItemResult,
   type SyncModule,
@@ -27,6 +26,104 @@ import {
 import { recalculateBudgetSpend } from "../budgetService.js";
 import { enqueueEmbeddingJob, deleteEmbedding } from "../ai/embeddingJob.js";
 import { logger } from "../../logger.js";
+
+/**
+ * ARCHITECTURAL DESIGN DECISION (SRS §2.5, FR-14.3, NFR-2.5):
+ * Habits use keyed dedup because same-day check-ins are semantically equivalent, not conflicting;
+ * Finance uses the same surfaced-conflict treatment as Notes despite being rare, because financial data can't be silently discarded.
+ */
+
+function normalizeValue(v: any): string {
+  if (v === undefined || v === null) return "";
+  if (v instanceof Date) {
+    return isNaN(v.getTime()) ? "" : v.toISOString();
+  }
+  if (typeof v === "string") {
+    const trimmed = v.trim();
+    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(trimmed)) {
+      const d = new Date(trimmed);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
+    }
+    return trimmed;
+  }
+  if (typeof v === "object") {
+    return JSON.stringify(v);
+  }
+  return String(v).trim();
+}
+
+export function toPlainObject(doc: any): any {
+  if (!doc) return null;
+  if (typeof doc.toObject === "function") return doc.toObject();
+  return doc;
+}
+
+export interface FieldMergeResult<T = any> {
+  hasConflict: boolean;
+  conflictingFields: string[];
+  cleanMergedData: T;
+}
+
+/**
+ * Compare client and server fields against an optional common base.
+ * - If only one side modified a field from base, that edit is merged cleanly without conflict.
+ * - If both sides modified the SAME field to different values, it is marked as a true conflict.
+ */
+export function diffAndMergeFields<T extends Record<string, any>>(
+  serverDoc: T,
+  clientData: Record<string, any>,
+  baseDoc: Record<string, any> | null | undefined,
+  fields: string[]
+): FieldMergeResult<T> {
+  const conflictingFields: string[] = [];
+  const cleanMergedData: any = { ...serverDoc };
+
+  for (const field of fields) {
+    const clientVal = clientData[field];
+    const serverVal = (serverDoc as any)[field];
+    const baseVal = baseDoc ? (baseDoc as any)[field] : undefined;
+
+    if (clientVal === undefined) {
+      continue;
+    }
+
+    const normClient = normalizeValue(clientVal);
+    const normServer = normalizeValue(serverVal);
+
+    if (normClient === normServer) {
+      cleanMergedData[field] = clientVal;
+      continue;
+    }
+
+    if (baseDoc) {
+      const normBase = normalizeValue(baseVal);
+      const clientChanged = normClient !== normBase;
+      const serverChanged = normServer !== normBase;
+
+      if (clientChanged && !serverChanged) {
+        // Client modified this field; server did not -> apply client edit
+        cleanMergedData[field] = clientVal;
+      } else if (!clientChanged && serverChanged) {
+        // Server modified this field; client did not -> keep server edit
+        cleanMergedData[field] = serverVal;
+      } else if (clientChanged && serverChanged) {
+        // Both modified this field differently -> true conflict
+        conflictingFields.push(field);
+      }
+    } else {
+      // Without a base document, any differing field is flagged
+      conflictingFields.push(field);
+    }
+  }
+
+  return {
+    hasConflict: conflictingFields.length > 0,
+    conflictingFields,
+    cleanMergedData
+  };
+}
 
 /**
  * Recalculate habit stats after a check-in change
@@ -95,16 +192,13 @@ function prioritizeChanges(changes: SyncPushItem[]): SyncPushItem[] {
   };
 
   return [...changes].sort((a, b) => {
-    // Creates first, then updates, then deletes
     const opA = opPriority[a.operation] ?? 99;
     const opB = opPriority[b.operation] ?? 99;
     if (opA !== opB) return opA - opB;
 
-    // For creates & updates, follow dependency hierarchy
     if (a.operation !== "delete") {
       return (modulePriority[a.module] ?? 50) - (modulePriority[b.module] ?? 50);
     }
-    // For deletes, reverse dependency hierarchy
     return (modulePriority[b.module] ?? 50) - (modulePriority[a.module] ?? 50);
   });
 }
@@ -145,7 +239,7 @@ async function processSinglePushItem(
   item: SyncPushItem,
   _deviceId?: string
 ): Promise<SyncPushItemResult> {
-  const { id, module, operation, data = {}, lastModifiedAt } = item;
+  const { id, module, operation, data = {}, lastModifiedAt, forceResolution } = item;
   const userObjectId = new Types.ObjectId(userId);
 
   switch (module) {
@@ -179,18 +273,33 @@ async function processSinglePushItem(
 
         const existing = await Habit.findOne({ _id: id, userId: userObjectId });
         let doc: any;
-        if (existing) {
-          // Conflict detection: if server record was modified more recently than client timestamp
+        if (existing && !forceResolution) {
           const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
-            return {
-              id,
-              module,
-              status: "conflict",
-              conflictData: existing.toObject(),
-              serverRecord: existing.toObject()
-            };
+            const fieldsToCheck = ["title", "frequency", "reminderTime", "reminderEnabled"];
+            const baseDoc = data.baseRecord || data.base || null;
+            const merge = diffAndMergeFields(toPlainObject(existing), habitData, baseDoc, fieldsToCheck);
+            if (merge.hasConflict) {
+              return {
+                id,
+                module,
+                status: "conflict",
+                conflictingFields: merge.conflictingFields,
+                conflictData: {
+                  clientRecord: habitData,
+                  serverRecord: toPlainObject(existing),
+                  conflictingFields: merge.conflictingFields
+                },
+                serverRecord: toPlainObject(existing)
+              };
+            }
+            Object.assign(existing, merge.cleanMergedData);
+            doc = await existing.save();
+          } else {
+            Object.assign(existing, habitData);
+            doc = await existing.save();
           }
+        } else if (existing) {
           Object.assign(existing, habitData);
           doc = await existing.save();
         } else {
@@ -198,7 +307,7 @@ async function processSinglePushItem(
         }
 
         await enqueueEmbeddingJob("habit", doc._id, userObjectId);
-        return { id, module, status: "applied", serverRecord: doc.toObject() };
+        return { id, module, status: "applied", serverRecord: toPlainObject(doc) };
       }
       break;
     }
@@ -221,6 +330,7 @@ async function processSinglePushItem(
 
         const isCompleted = completed !== undefined ? Boolean(completed) : true;
 
+        // Idempotent dedup keyed by (habitId, date) — single simple boolean LWW, no conflict UI
         const checkIn = await HabitCheckIn.findOneAndUpdate(
           { habitId: new Types.ObjectId(habitId), date, userId: userObjectId },
           {
@@ -268,38 +378,87 @@ async function processSinglePushItem(
           { upsert: true }
         );
 
+        const txData = {
+          amount,
+          type,
+          category: categoryName,
+          date,
+          note: data.note || "",
+          receiptAttachment: data.receiptAttachment || null
+        };
+
         const existing = await Transaction.findOne({ _id: id, userId: userObjectId });
         let doc: any;
-        if (existing) {
+        if (existing && !forceResolution) {
+          const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
+          if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
+            const fieldsToCheck = ["amount", "type", "category", "date", "note", "receiptAttachment"];
+            const baseDoc = data.baseRecord || data.base || null;
+            const merge = diffAndMergeFields(
+              toPlainObject(existing),
+              txData,
+              baseDoc,
+              fieldsToCheck
+            );
+
+            if (merge.hasConflict) {
+              // True conflict on sensitive financial record: surface for explicit user resolution
+              return {
+                id,
+                module,
+                status: "conflict",
+                conflictingFields: merge.conflictingFields,
+                conflictData: {
+                  clientRecord: { id, ...txData, lastModifiedAt },
+                  serverRecord: toPlainObject(existing),
+                  conflictingFields: merge.conflictingFields
+                },
+                serverRecord: toPlainObject(existing)
+              };
+            }
+
+            // Clean merge of disjoint fields
+            const prevState = {
+              category: existing.category,
+              amount: existing.amount,
+              type: existing.type,
+              date: existing.date
+            };
+            Object.assign(existing, merge.cleanMergedData);
+            doc = await existing.save();
+            await onTransactionUpdated(doc, prevState);
+            return { id, module, status: "applied", serverRecord: toPlainObject(doc) };
+          }
+
           const prevState = {
             category: existing.category,
             amount: existing.amount,
             type: existing.type,
             date: existing.date
           };
-          existing.amount = amount;
-          existing.type = type;
-          existing.category = categoryName;
-          existing.date = date;
-          existing.note = data.note || "";
-          existing.receiptAttachment = data.receiptAttachment || null;
+          Object.assign(existing, txData);
+          doc = await existing.save();
+          await onTransactionUpdated(doc, prevState);
+        } else if (existing) {
+          const prevState = {
+            category: existing.category,
+            amount: existing.amount,
+            type: existing.type,
+            date: existing.date
+          };
+          Object.assign(existing, txData);
           doc = await existing.save();
           await onTransactionUpdated(doc, prevState);
         } else {
           doc = await Transaction.create({
             _id: id,
             userId: userObjectId,
-            amount,
-            type,
-            category: categoryName,
-            date,
-            note: data.note || "",
-            receiptAttachment: data.receiptAttachment || null
+            ...txData
           });
           await onTransactionCreated(doc);
         }
 
-        return { id, module, status: "applied", serverRecord: doc.toObject() };
+        return { id, module, status: "applied", serverRecord: toPlainObject(doc) };
       }
       break;
     }
@@ -314,23 +473,60 @@ async function processSinglePushItem(
       if (operation === "create" || operation === "update") {
         const limit = Number(data.limit);
         const categoryName = (data.category || "General").trim();
-        const budget = await Budget.findOneAndUpdate(
-          { userId: userObjectId, category: categoryName, period: "monthly" },
-          {
-            $set: {
-              _id: id,
-              userId: userObjectId,
-              category: categoryName,
-              limit,
-              period: "monthly",
-              currentSpend: data.currentSpend || 0,
-              notifiedOverspend: Boolean(data.notifiedOverspend)
+
+        const budgetData = {
+          userId: userObjectId,
+          category: categoryName,
+          limit,
+          period: "monthly" as const,
+          currentSpend: data.currentSpend || 0,
+          notifiedOverspend: Boolean(data.notifiedOverspend)
+        };
+
+        const existing = await Budget.findOne({ _id: id, userId: userObjectId });
+        let budget: any;
+
+        if (existing && !forceResolution) {
+          const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
+          if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
+            const fieldsToCheck = ["limit", "category"];
+            const baseDoc = data.baseRecord || data.base || null;
+            const merge = diffAndMergeFields(toPlainObject(existing), budgetData, baseDoc, fieldsToCheck);
+            if (merge.hasConflict) {
+              return {
+                id,
+                module,
+                status: "conflict",
+                conflictingFields: merge.conflictingFields,
+                conflictData: {
+                  clientRecord: { id, ...budgetData, lastModifiedAt },
+                  serverRecord: toPlainObject(existing),
+                  conflictingFields: merge.conflictingFields
+                },
+                serverRecord: toPlainObject(existing)
+              };
             }
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
+            Object.assign(existing, merge.cleanMergedData);
+            budget = await existing.save();
+          } else {
+            Object.assign(existing, budgetData);
+            budget = await existing.save();
+          }
+        } else {
+          budget = await Budget.findOneAndUpdate(
+            { userId: userObjectId, category: categoryName, period: "monthly" },
+            {
+              $set: {
+                _id: id,
+                ...budgetData
+              }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+        }
+
         await recalculateBudgetSpend(userObjectId.toString(), categoryName, new Date());
-        return { id, module, status: "applied", serverRecord: budget.toObject() };
+        return { id, module, status: "applied", serverRecord: toPlainObject(budget) };
       }
       break;
     }
@@ -391,14 +587,33 @@ async function processSinglePushItem(
 
         const existing = await Event.findOne({ _id: id, userId: userObjectId });
         let doc: any;
+        let conflictNotice: string | undefined;
+
         if (existing) {
+          const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
+          // Detect if another device updated this event since client last synced
+          if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
+            const fieldsToCheck = ["title", "description", "location", "startTime", "endTime", "recurrenceRule"];
+            const merge = diffAndMergeFields(existing.toObject(), eventData, null, fieldsToCheck);
+            if (merge.hasConflict) {
+              // Calendar Strategy: Server applies LWW, but flags conflict notice for user
+              conflictNotice = "This event was updated on another device and your local change was overwritten";
+            }
+          }
+
           Object.assign(existing, eventData);
           doc = await existing.save();
         } else {
           doc = await Event.create({ _id: id, ...eventData });
         }
 
-        return { id, module, status: "applied", serverRecord: doc.toObject() };
+        return {
+          id,
+          module,
+          status: "applied",
+          conflictNotice,
+          serverRecord: doc.toObject()
+        };
       }
       break;
     }
@@ -470,20 +685,103 @@ async function processSinglePushItem(
         const folderId = data.folderId ? new Types.ObjectId(data.folderId) : null;
         const tags = Array.isArray(data.tags) ? data.tags : [];
 
+        const incomingNoteData = {
+          title,
+          content,
+          contentText,
+          folderId,
+          tags
+        };
+
         const existing = await Note.findOne({ _id: id, userId: userObjectId });
         let doc: any;
-        if (existing) {
+
+        if (existing && !forceResolution) {
           const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
-            return {
-              id,
-              module,
-              status: "conflict",
-              conflictData: existing.toObject(),
-              serverRecord: existing.toObject()
-            };
+            // Field-level 3-way merge using NoteVersion history
+            const baseVersion = await NoteVersion.findOne({
+              noteId: id,
+              userId: userObjectId,
+              createdAt: { $lte: new Date(lastModifiedAt) }
+            }).sort({ versionNumber: -1 });
+
+            const baseDoc = toPlainObject(baseVersion) || data.baseRecord || data.base || null;
+            const merge = diffAndMergeFields(
+              toPlainObject(existing),
+              incomingNoteData,
+              baseDoc,
+              ["title", "content", "contentText", "folderId", "tags"]
+            );
+
+            if (merge.hasConflict) {
+              // True conflict on the SAME field! Keep both versions in NoteVersion history.
+              const lastVersion = await NoteVersion.findOne({
+                noteId: id,
+                userId: userObjectId
+              }).sort({ versionNumber: -1 });
+              const nextVersionNum = (lastVersion?.versionNumber || 0) + 1;
+
+              await NoteVersion.create({
+                noteId: existing._id,
+                userId: userObjectId,
+                versionNumber: nextVersionNum,
+                title,
+                content,
+                contentText,
+                folderId,
+                tags,
+                changeSource: "conflict_merge"
+              });
+
+              return {
+                id,
+                module,
+                status: "conflict",
+                conflictingFields: merge.conflictingFields,
+                conflictData: {
+                  clientRecord: { id, ...incomingNoteData, lastModifiedAt },
+                  serverRecord: toPlainObject(existing),
+                  conflictingFields: merge.conflictingFields,
+                  baseVersionNumber: baseVersion?.versionNumber ?? null
+                },
+                serverRecord: toPlainObject(existing)
+              };
+            }
+
+            // Disjoint fields: apply clean auto-merged result
+            Object.assign(existing, merge.cleanMergedData);
+            doc = await existing.save();
+
+            const lastVersion = await NoteVersion.findOne({
+              noteId: id,
+              userId: userObjectId
+            }).sort({ versionNumber: -1 });
+            const nextVersionNum = (lastVersion?.versionNumber || 0) + 1;
+            await NoteVersion.create({
+              noteId: doc._id,
+              userId: userObjectId,
+              versionNumber: nextVersionNum,
+              title: doc.title,
+              content: doc.content,
+              contentText: doc.contentText,
+              folderId: doc.folderId,
+              tags: doc.tags,
+              changeSource: "sync"
+            });
+
+            await enqueueEmbeddingJob("note", doc._id, userObjectId);
+            return { id, module, status: "applied", serverRecord: toPlainObject(doc) };
           }
 
+          existing.title = title;
+          existing.content = content;
+          existing.contentText = contentText;
+          existing.folderId = folderId;
+          existing.tags = tags;
+          doc = await existing.save();
+        } else if (existing) {
+          // Force resolution write
           existing.title = title;
           existing.content = content;
           existing.contentText = contentText;
@@ -502,7 +800,7 @@ async function processSinglePushItem(
           });
         }
 
-        // Increment version
+        // Increment version history
         const lastVersion = await NoteVersion.findOne({ noteId: id, userId: userObjectId }).sort({
           versionNumber: -1
         });
@@ -516,11 +814,11 @@ async function processSinglePushItem(
           contentText: doc.contentText,
           folderId: doc.folderId,
           tags: doc.tags,
-          changeSource: "sync"
+          changeSource: forceResolution ? "conflict_merge" : "sync"
         });
 
         await enqueueEmbeddingJob("note", doc._id, userObjectId);
-        return { id, module, status: "applied", serverRecord: doc.toObject() };
+        return { id, module, status: "applied", serverRecord: toPlainObject(doc) };
       }
       break;
     }
@@ -529,9 +827,7 @@ async function processSinglePushItem(
       if (operation === "delete") {
         const folder = await NoteFolder.findOneAndDelete({ _id: id, userId: userObjectId });
         if (folder) {
-          // Reassign notes to root
           await Note.updateMany({ folderId: id, userId: userObjectId }, { $set: { folderId: null } });
-          // Reparent children
           await NoteFolder.updateMany(
             { parentFolderId: id, userId: userObjectId },
             { $set: { parentFolderId: folder.parentFolderId ?? null } }
@@ -610,6 +906,48 @@ async function recordTombstone(userId: string, module: string, entityId: string)
   } catch (err) {
     logger.warn({ err, userId, module, entityId }, "Failed to record sync tombstone");
   }
+}
+
+/**
+ * Direct conflict resolution helper
+ */
+export async function resolveSyncConflict(
+  userId: string,
+  id: string,
+  module: SyncModule,
+  resolution: "keep_local" | "keep_server" | "manual_merge",
+  resolvedData?: any
+): Promise<SyncPushItemResult> {
+  const userObjectId = new Types.ObjectId(userId);
+
+  if (resolution === "keep_server") {
+    let serverRecord: any = null;
+    if (module === "notes") serverRecord = await Note.findOne({ _id: id, userId: userObjectId });
+    else if (module === "transactions") serverRecord = await Transaction.findOne({ _id: id, userId: userObjectId });
+    else if (module === "budgets") serverRecord = await Budget.findOne({ _id: id, userId: userObjectId });
+    else if (module === "habits") serverRecord = await Habit.findOne({ _id: id, userId: userObjectId });
+
+    return {
+      id,
+      module,
+      status: "applied",
+      serverRecord: serverRecord?.toObject()
+    };
+  }
+
+  // keep_local or manual_merge: apply with forceResolution = true
+  return processSinglePushItem(
+    userId,
+    {
+      id,
+      module,
+      operation: "update",
+      data: resolvedData,
+      lastModifiedAt: Date.now(),
+      forceResolution: true,
+      resolutionSource: resolution
+    }
+  );
 }
 
 /**

@@ -27,11 +27,14 @@ import { HabitsGoalsScreen } from "../screens/main/HabitsGoalsScreen";
 import { NotesScreen } from "../screens/main/NotesScreen";
 import { FinanceScreen } from "../screens/main/FinanceScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
+import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScreen";
 
 import { SyncStatusIndicator } from "../components/ui/SyncStatusIndicator";
+import { ConflictNoticeBanner } from "../components/ui/ConflictNoticeBanner";
 import { syncEngine } from "../services/syncEngine";
 
 const AuthStack = createNativeStackNavigator();
+const AppStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function AuthNavigator() {
@@ -51,73 +54,91 @@ function AuthNavigator() {
 
 function MainTabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: true,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTitleStyle: { color: colors.ink, fontWeight: "600" },
-        headerShadowVisible: false,
-        headerRight: () => (
-          <View style={{ marginRight: 16 }}>
-            <SyncStatusIndicator />
-          </View>
-        ),
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.hairline,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.inkFaint
-      }}
-    >
+    <View style={{ flex: 1 }}>
+      <ConflictNoticeBanner />
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.surface },
+          headerTitleStyle: { color: colors.ink, fontWeight: "600" },
+          headerShadowVisible: false,
+          headerRight: () => (
+            <View style={{ marginRight: 16 }}>
+              <SyncStatusIndicator />
+            </View>
+          ),
+          tabBarStyle: {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.hairline,
+            borderTopWidth: 1,
+            height: 60,
+            paddingBottom: 8,
+            paddingTop: 6
+          },
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.inkFaint
+        }}
+      >
+        <Tab.Screen
+          name="Dashboard"
+          component={DashboardScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Calendar"
+          component={CalendarScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Habits & Goals"
+          component={HabitsGoalsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Notes"
+          component={NotesScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Finance"
+          component={FinanceScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />
+          }}
+        />
+      </Tab.Navigator>
+    </View>
+  );
+}
 
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
+function AuthenticatedNavigator() {
+  return (
+    <AppStack.Navigator screenOptions={{ headerShown: false }}>
+      <AppStack.Screen name="MainTabs" component={MainTabNavigator} />
+      <AppStack.Screen
+        name="ConflictResolution"
+        component={ConflictResolutionScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} />
+          presentation: "modal",
+          headerShown: false
         }}
       />
-      <Tab.Screen
-        name="Calendar"
-        component={CalendarScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />
-        }}
-      />
-      <Tab.Screen
-        name="Habits & Goals"
-        component={HabitsGoalsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size} />
-        }}
-      />
-      <Tab.Screen
-        name="Notes"
-        component={NotesScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />
-        }}
-      />
-      <Tab.Screen
-        name="Finance"
-        component={FinanceScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size} />
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />
-        }}
-      />
-    </Tab.Navigator>
+    </AppStack.Navigator>
   );
 }
 
@@ -146,7 +167,6 @@ export function RootNavigator() {
     };
   }, [isAuthenticated]);
 
-
   if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
@@ -157,10 +177,9 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabNavigator /> : <AuthNavigator />}
+      {isAuthenticated ? <AuthenticatedNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
-
 }
 
 const styles = StyleSheet.create({

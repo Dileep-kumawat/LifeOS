@@ -27,7 +27,9 @@ export const syncPushItemSchema = z.object({
   operation: z.enum(syncOperations),
   data: z.record(z.any()).optional(),
   lastModifiedAt: z.number(),
-  clientId: z.string().optional()
+  clientId: z.string().optional(),
+  forceResolution: z.boolean().optional(),
+  resolutionSource: z.enum(["keep_local", "keep_server", "manual_merge"]).optional()
 });
 
 export type SyncPushItem = z.infer<typeof syncPushItemSchema>;
@@ -45,10 +47,22 @@ export const syncPushItemResultSchema = z.object({
   status: z.enum(["applied", "conflict", "error"]),
   error: z.string().optional(),
   conflictData: z.record(z.any()).optional(),
-  serverRecord: z.record(z.any()).optional()
+  serverRecord: z.record(z.any()).optional(),
+  conflictNotice: z.string().optional(),
+  conflictingFields: z.array(z.string()).optional()
 });
 
 export type SyncPushItemResult = z.infer<typeof syncPushItemResultSchema>;
+
+export const syncResolveConflictRequestSchema = z.object({
+  id: z.string().min(1),
+  module: z.enum(syncModules),
+  resolution: z.enum(["keep_local", "keep_server", "manual_merge"]),
+  resolvedData: z.record(z.any()).optional(),
+  deviceId: z.string().optional()
+});
+
+export type SyncResolveConflictRequest = z.infer<typeof syncResolveConflictRequestSchema>;
 
 export const syncPushResponseSchema = z.object({
   cursor: z.string(),

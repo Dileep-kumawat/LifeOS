@@ -6,6 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import { useSyncStore } from "../store/syncStore";
 import { getDatabase } from "../db/database";
 import { tokenStorage } from "./tokenStorage";
+import type { LocalSyncConflict } from "../db/schema";
 import type {
   SyncModule,
   SyncPushItem,
@@ -33,7 +34,6 @@ let syncIntervalTimer: any = null;
 let appStateSubscription: { remove: () => void } | null = null;
 let inMemoryCursor: string | null = null;
 
-
 export const syncEngine = {
   /**
    * Get the saved cursor from storage / memory
@@ -59,6 +59,18 @@ export const syncEngine = {
     } catch {
       // Ignore storage errors on cursor
     }
+  },
+
+  /**
+   * Load unresolved conflicts from local database into sync store
+   */
+  async loadConflicts(): Promise<LocalSyncConflict[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<LocalSyncConflict>(
+      "SELECT * FROM sync_conflicts WHERE status = 'unresolved';"
+    );
+    useSyncStore.getState().setConflicts(rows);
+    return rows;
   },
 
   /**
@@ -109,8 +121,6 @@ export const syncEngine = {
       }
 
       if (!validToken) {
-        // Refresh token expired - user must re-authenticate.
-        // DO NOT delete pending local changes.
         useSyncStore.getState().setLastError("Session expired. Please log in to sync changes.");
         useSyncStore.getState().setSyncStatus("error");
         await this.countPendingRecords();
@@ -149,16 +159,58 @@ export const syncEngine = {
           const tableMapping = SYNC_TABLES.find((t) => t.module === result.module);
           if (!tableMapping) continue;
 
+          // Dispatch lightweight conflict notices (e.g. for Calendar LWW)
+          if (result.conflictNotice) {
+            useSyncStore.getState().addConflictNotice(result.conflictNotice);
+          }
+
           if (result.status === "applied") {
             await db.runAsync(
               `UPDATE ${tableMapping.tableName} SET syncStatus = 'synced' WHERE id = ?;`,
               result.id
             );
+            // Clean up any resolved conflict
+            await db.runAsync(`DELETE FROM sync_conflicts WHERE entityId = ?;`, result.id);
+            useSyncStore.getState().removeConflict(result.id);
           } else if (result.status === "conflict") {
             await db.runAsync(
               `UPDATE ${tableMapping.tableName} SET syncStatus = 'conflict' WHERE id = ?;`,
               result.id
             );
+
+            // Record full conflict details in local SQLite for user review
+            const localRecord = await db.getFirstAsync<any>(
+              `SELECT * FROM ${tableMapping.tableName} WHERE id = ?;`,
+              result.id
+            );
+
+            const conflictObj: LocalSyncConflict = {
+              id: result.id,
+              entityId: result.id,
+              module: result.module,
+              localData: JSON.stringify(localRecord || {}),
+              remoteData: JSON.stringify(result.serverRecord || result.conflictData?.serverRecord || {}),
+              conflictingFields: JSON.stringify(
+                result.conflictingFields || result.conflictData?.conflictingFields || []
+              ),
+              status: "unresolved",
+              createdAt: new Date().toISOString()
+            };
+
+            await db.runAsync(
+              `INSERT OR REPLACE INTO sync_conflicts (id, entityId, module, localData, remoteData, conflictingFields, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+              conflictObj.id,
+              conflictObj.entityId,
+              conflictObj.module,
+              conflictObj.localData,
+              conflictObj.remoteData,
+              conflictObj.conflictingFields,
+              conflictObj.status,
+              conflictObj.createdAt
+            );
+
+            useSyncStore.getState().addConflict(conflictObj);
+            useSyncStore.getState().addConflictNotice(`Conflict detected in ${result.module} — tap to resolve.`);
           }
         }
 
@@ -187,8 +239,8 @@ export const syncEngine = {
             serverRecord.id || serverRecord._id
           );
 
-          // If local edit is pending, don't silently overwrite
-          if (localRecord && localRecord.syncStatus === "pending") {
+          // If local edit is pending or in conflict, do not silently overwrite
+          if (localRecord && (localRecord.syncStatus === "pending" || localRecord.syncStatus === "conflict")) {
             continue;
           }
 
@@ -222,7 +274,7 @@ export const syncEngine = {
             `SELECT syncStatus FROM ${tableName} WHERE id = ?;`,
             deletedId
           );
-          if (!localRecord || localRecord.syncStatus !== "pending") {
+          if (!localRecord || (localRecord.syncStatus !== "pending" && localRecord.syncStatus !== "conflict")) {
             await db.runAsync(`DELETE FROM ${tableName} WHERE id = ?;`, deletedId);
           }
         }
@@ -232,7 +284,8 @@ export const syncEngine = {
         await this.saveCursor(latestCursor);
       }
 
-      // Step 6: Update sync state
+      // Step 6: Update sync state & conflict list
+      await this.loadConflicts();
       const remainingPending = await this.countPendingRecords();
       useSyncStore.getState().setSyncStatus(remainingPending > 0 ? "pending" : "synced");
       useSyncStore.getState().setLastSyncedAt(Date.now());
@@ -245,9 +298,88 @@ export const syncEngine = {
       useSyncStore.getState().setLastError(err.message || "Sync failed");
       return false;
     } finally {
-
       isSyncing = false;
     }
+  },
+
+  /**
+   * Explicitly resolve a pending conflict
+   */
+  async resolveConflict(
+    conflictId: string,
+    resolution: "keep_local" | "keep_server" | "manual_merge",
+    mergedData?: any
+  ): Promise<boolean> {
+    const db = await getDatabase();
+    const conflict = await db.getFirstAsync<LocalSyncConflict>(
+      "SELECT * FROM sync_conflicts WHERE id = ? OR entityId = ?;",
+      conflictId,
+      conflictId
+    );
+
+    if (!conflict) return false;
+
+    const tableMapping = SYNC_TABLES.find((t) => t.module === conflict.module);
+    if (!tableMapping) return false;
+
+    const localParsed = JSON.parse(conflict.localData || "{}");
+    const remoteParsed = JSON.parse(conflict.remoteData || "{}");
+
+    let resolvedRecord: any;
+
+    if (resolution === "keep_local") {
+      resolvedRecord = localParsed;
+    } else if (resolution === "keep_server") {
+      resolvedRecord = remoteParsed;
+    } else {
+      resolvedRecord = { ...remoteParsed, ...localParsed, ...mergedData };
+    }
+
+    // Update local table
+    const entityId = conflict.entityId;
+    const columns = Object.keys(resolvedRecord)
+      .filter((k) => k !== "_id" && k !== "__v")
+      .concat(["id", "syncStatus", "lastModifiedAt"]);
+
+    const columnList = columns.map((c) => `\`${c}\``).join(", ");
+    const placeholders = columns.map(() => "?").join(", ");
+
+    const values = columns.map((col) => {
+      if (col === "id") return entityId;
+      if (col === "syncStatus") return "synced";
+      if (col === "lastModifiedAt") return Date.now();
+
+      const val = resolvedRecord[col];
+      return typeof val === "object" && val !== null ? JSON.stringify(val) : val;
+    });
+
+    await db.runAsync(
+      `INSERT OR REPLACE INTO ${tableMapping.tableName} (${columnList}) VALUES (${placeholders});`,
+      ...values
+    );
+
+    // Remove from local conflicts table
+    await db.runAsync("DELETE FROM sync_conflicts WHERE id = ? OR entityId = ?;", conflictId, conflictId);
+    useSyncStore.getState().removeConflict(conflictId);
+
+    // Call server conflict resolution endpoint
+    try {
+      await apiClient.post("/sync/resolve-conflict", {
+        id: entityId,
+        module: conflict.module,
+        resolution,
+        resolvedData: resolvedRecord
+      });
+    } catch {
+      // If offline, mark as pending to sync when back online
+      await db.runAsync(
+        `UPDATE ${tableMapping.tableName} SET syncStatus = 'pending' WHERE id = ?;`,
+        entityId
+      );
+    }
+
+    await this.countPendingRecords();
+    return true;
   },
 
   /**
@@ -256,7 +388,8 @@ export const syncEngine = {
   startSyncEngine(): void {
     this.stopSyncEngine();
 
-    // Initial sync
+    // Initial sync and conflict loading
+    this.loadConflicts().catch(() => {});
     this.syncNow().catch(() => {});
 
     // Periodic sync every 5 minutes

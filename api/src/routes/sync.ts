@@ -3,13 +3,45 @@ import { requireAuth } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import {
   syncPushRequestSchema,
-  syncPullRequestSchema
+  syncPullRequestSchema,
+  syncResolveConflictRequestSchema
 } from "@lifeos/shared";
-import { processSyncPush, processSyncPull } from "../services/sync/syncProcessor.js";
+import {
+  processSyncPush,
+  processSyncPull,
+  resolveSyncConflict
+} from "../services/sync/syncProcessor.js";
 
 export const syncRouter = Router();
 
 syncRouter.use(requireAuth);
+
+/**
+ * @openapi
+ * /sync/resolve-conflict:
+ *   post:
+ *     tags:
+ *       - Sync
+ *     summary: Explicitly resolve a pending sync conflict
+ *     description: |
+ *       Applies the user's resolution choice ("keep_local" | "keep_server" | "manual_merge")
+ *       and persists the resolved state to MongoDB with version history.
+ */
+syncRouter.post(
+  "/sync/resolve-conflict",
+  validate(syncResolveConflictRequestSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id.toString();
+      const { id, module, resolution, resolvedData } = req.body;
+
+      const result = await resolveSyncConflict(userId, id, module, resolution, resolvedData);
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: "Internal Server Error", message: err.message });
+    }
+  }
+);
 
 /**
  * @openapi

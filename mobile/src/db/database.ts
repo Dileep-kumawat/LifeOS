@@ -119,9 +119,19 @@ class InMemoryDatabaseAdapter implements DatabaseAdapter {
       if (whereClause.includes("syncStatus = 'synced'")) {
         items = items.filter((item: any) => item.syncStatus === "synced");
       }
+      if (whereClause.includes("syncStatus = 'conflict'")) {
+        items = items.filter((item: any) => item.syncStatus === "conflict");
+      }
+      if (whereClause.includes("status = 'unresolved'")) {
+        items = items.filter((item: any) => item.status === "unresolved");
+      }
       if (whereClause.includes("id = ?")) {
         const idVal = params[paramIdx++];
         items = items.filter((item: any) => item.id === idVal);
+      }
+      if (whereClause.includes("entityId = ?")) {
+        const entityVal = params[paramIdx++];
+        items = items.filter((item: any) => item.entityId === entityVal);
       }
       if (whereClause.includes("userId = ?")) {
         const userVal = params[paramIdx++];

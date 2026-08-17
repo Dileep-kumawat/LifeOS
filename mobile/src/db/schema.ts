@@ -156,6 +156,17 @@ export interface LocalNoteVersion extends SyncableEntity {
   createdAt: string;
 }
 
+export interface LocalSyncConflict {
+  id: string;
+  entityId: string;
+  module: string;
+  localData: string; // JSON string of local record
+  remoteData: string; // JSON string of server record
+  conflictingFields: string; // JSON array of conflicting field names
+  status: "unresolved" | "resolved";
+  createdAt: string;
+}
+
 /**
  * SQL DDL statements for creating all local database tables and indexes
  */
@@ -335,4 +346,16 @@ CREATE TABLE IF NOT EXISTS note_versions (
   lastModifiedAt INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_note_versions_note ON note_versions(noteId, versionNumber);
+
+CREATE TABLE IF NOT EXISTS sync_conflicts (
+  id TEXT PRIMARY KEY,
+  entityId TEXT NOT NULL,
+  module TEXT NOT NULL,
+  localData TEXT NOT NULL,
+  remoteData TEXT NOT NULL,
+  conflictingFields TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'unresolved',
+  createdAt TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sync_conflicts_status ON sync_conflicts(status, module);
 `;

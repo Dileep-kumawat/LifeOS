@@ -1,5 +1,6 @@
 import { TouchableOpacity, View, StyleSheet, ActivityIndicator } from "react-native";
-import { CloudOff, CheckCircle2, AlertCircle } from "lucide-react-native";
+import { CloudOff, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useSyncStore } from "../../store/syncStore";
 import { syncEngine } from "../../services/syncEngine";
 import { ThemedText } from "./ThemedText";
@@ -10,15 +11,36 @@ interface SyncStatusIndicatorProps {
 }
 
 export function SyncStatusIndicator({ compact = false }: SyncStatusIndicatorProps) {
+  const navigation = useNavigation<any>();
   const status = useSyncStore((state) => state.status);
   const pendingCount = useSyncStore((state) => state.pendingCount);
+  const conflicts = useSyncStore((state) => state.conflicts);
   const isOnline = useSyncStore((state) => state.isOnline);
 
   const handlePress = () => {
+    if (conflicts.length > 0) {
+      try {
+        navigation.navigate("ConflictResolution");
+        return;
+      } catch {}
+    }
     syncEngine.syncNow().catch(() => {});
   };
 
   const renderContent = () => {
+    if (conflicts.length > 0) {
+      return (
+        <View style={styles.content}>
+          <AlertTriangle size={14} color={colors.warning} />
+          {!compact && (
+            <ThemedText variant="caption" color={colors.warning} style={styles.text}>
+              {conflicts.length} conflict{conflicts.length > 1 ? "s" : ""}
+            </ThemedText>
+          )}
+        </View>
+      );
+    }
+
     if (!isOnline || status === "offline") {
       return (
         <View style={styles.content}>
@@ -89,6 +111,7 @@ export function SyncStatusIndicator({ compact = false }: SyncStatusIndicatorProp
       onPress={handlePress}
       style={[
         styles.container,
+        conflicts.length > 0 && styles.containerConflict,
         status === "syncing" && styles.containerSyncing,
         compact ? styles.compact : styles.regular
       ]}
@@ -110,6 +133,10 @@ const styles = StyleSheet.create({
   containerSyncing: {
     borderColor: colors.primary,
     backgroundColor: colors.canvasSoft
+  },
+  containerConflict: {
+    borderColor: colors.warning,
+    backgroundColor: "#fff9db"
   },
   regular: {
     paddingHorizontal: spacing.sm,
