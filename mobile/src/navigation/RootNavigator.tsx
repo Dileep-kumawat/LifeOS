@@ -32,6 +32,7 @@ import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScre
 import { SyncStatusIndicator } from "../components/ui/SyncStatusIndicator";
 import { ConflictNoticeBanner } from "../components/ui/ConflictNoticeBanner";
 import { syncEngine } from "../services/syncEngine";
+import { notificationService } from "../services/notificationService";
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -152,6 +153,8 @@ export function RootNavigator() {
       await getDatabase();
       // Attempt silent session restore from SecureStore
       await authApi.restoreSession();
+      // Initialize notification handlers
+      await notificationService.initialize();
     }
     bootstrap();
   }, []);
@@ -159,6 +162,7 @@ export function RootNavigator() {
   useEffect(() => {
     if (isAuthenticated) {
       syncEngine.startSyncEngine();
+      notificationService.initialize().catch(() => {});
     } else {
       syncEngine.stopSyncEngine();
     }

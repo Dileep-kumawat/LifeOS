@@ -1,8 +1,8 @@
 import { Text, TextProps } from "react-native";
-import { type as textStyles } from "../../theme";
+import { typography } from "../../theme";
 
 export interface ThemedTextProps extends TextProps {
-  variant?: keyof typeof textStyles;
+  variant?: keyof typeof typography;
   color?: string;
 }
 
@@ -15,7 +15,7 @@ export function ThemedText({
   return (
     <Text
       style={[
-        textStyles[variant],
+        typography[variant],
         color ? { color } : undefined,
         style
       ]}

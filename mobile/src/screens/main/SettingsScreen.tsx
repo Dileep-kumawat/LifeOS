@@ -1,31 +1,59 @@
 import { useEffect, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { RefreshCw, LogOut } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
+import { useSyncStore } from "../../store/syncStore";
 import { authApi } from "../../services/apiClient";
 import { tokenStorage } from "../../services/tokenStorage";
+import { notificationService } from "../../services/notificationService";
+import { syncEngine } from "../../services/syncEngine";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { colors, spacing } from "../../theme";
+import { colors, radius, spacing } from "../../theme";
 
 export function SettingsScreen() {
   const user = useAuthStore((state) => state.user);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const [hasSecureRefreshToken, setHasSecureRefreshToken] = useState<boolean | null>(null);
+  const isOnline = useSyncStore((state) => state.isOnline);
+  const syncStatus = useSyncStore((state) => state.status);
+  const pendingCount = useSyncStore((state) => state.pendingCount);
+
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [scheduledCount, setScheduledCount] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    async function checkToken() {
-      const token = await tokenStorage.getRefreshToken();
-      setHasSecureRefreshToken(!!token);
+    async function loadInfo() {
+      const fcm = await tokenStorage.getItem("lifeos_fcm_device_token");
+      setFcmToken(fcm);
+
+      const scheduled = notificationService.getScheduledNotifications();
+      setScheduledCount(scheduled.length);
     }
-    checkToken();
+    loadInfo();
   }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncEngine.syncNow();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleRegisterFcm = async () => {
+    const token = await notificationService.registerDeviceToken();
+    setFcmToken(token);
+    Alert.alert("FCM Registered", `Device token successfully synced with backend for push notifications.`);
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
+      await notificationService.unregisterDeviceToken();
       await authApi.logout();
     } catch (err: any) {
       console.warn("Logout error:", err);
@@ -37,12 +65,92 @@ export function SettingsScreen() {
   return (
     <ScreenContainer scrollable>
       <View style={styles.header}>
-        <ThemedText variant="heading2">Settings & Profile</ThemedText>
+        <ThemedText variant="heading2">Settings & Sync</ThemedText>
         <ThemedText variant="bodySm" color={colors.inkMuted}>
-          Session and app preferences
+          Offline status, notifications & account
         </ThemedText>
       </View>
 
+      {/* Offline Sync Status Card */}
+      <Card style={styles.card}>
+        <View style={styles.cardHeader}>
+          <ThemedText variant="title" style={styles.sectionTitle}>
+            Offline-First Sync Status
+          </ThemedText>
+          <TouchableOpacity
+            onPress={handleManualSync}
+            disabled={isSyncing || !isOnline}
+            style={[styles.syncIconBtn, (!isOnline || isSyncing) && { opacity: 0.5 }]}
+          >
+            <RefreshCw size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>Network Connection:</ThemedText>
+          <ThemedText variant="bodySm" color={isOnline ? colors.success : colors.error} style={styles.infoValue}>
+            {isOnline ? "Online" : "Offline (Airplane Mode)"}
+          </ThemedText>
+        </View>
+
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>Sync Engine State:</ThemedText>
+          <ThemedText variant="bodySm" style={[styles.infoValue, { textTransform: "capitalize" }]}>
+            {syncStatus}
+          </ThemedText>
+        </View>
+
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>Pending Local Mutations:</ThemedText>
+          <ThemedText
+            variant="bodySm"
+            color={pendingCount > 0 ? colors.warning : colors.success}
+            style={styles.infoValue}
+          >
+            {pendingCount} records
+          </ThemedText>
+        </View>
+
+        <Button
+          title={isSyncing ? "Syncing..." : "Sync Now"}
+          variant="outline"
+          size="sm"
+          onPress={handleManualSync}
+          disabled={isSyncing || !isOnline}
+          style={{ marginTop: spacing.sm }}
+        />
+      </Card>
+
+      {/* Notifications Card (FR-13.5) */}
+      <Card style={styles.card}>
+        <ThemedText variant="title" style={styles.sectionTitle}>
+          Mobile Notifications (FR-13.5)
+        </ThemedText>
+
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>FCM Server Push:</ThemedText>
+          <ThemedText variant="bodySm" color={fcmToken ? colors.success : colors.warning} style={styles.infoValue}>
+            {fcmToken ? "Registered" : "Not Registered"}
+          </ThemedText>
+        </View>
+
+        <View style={styles.infoRow}>
+          <ThemedText variant="bodySm" color={colors.inkMuted}>Notifee Local Triggers:</ThemedText>
+          <ThemedText variant="bodySm" color={colors.success} style={styles.infoValue}>
+            {scheduledCount} active offline reminders
+          </ThemedText>
+        </View>
+
+        <Button
+          title="Refresh FCM Device Token"
+          variant="outline"
+          size="sm"
+          onPress={handleRegisterFcm}
+          style={{ marginTop: spacing.sm }}
+        />
+      </Card>
+
+      {/* Account Profile Card */}
       <Card style={styles.card}>
         <ThemedText variant="title" style={styles.sectionTitle}>
           Account Profile
@@ -57,35 +165,7 @@ export function SettingsScreen() {
         </View>
         <View style={styles.infoRow}>
           <ThemedText variant="bodySm" color={colors.inkMuted}>Role:</ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.role || "user"}</ThemedText>
-        </View>
-        <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Status:</ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.status || "active"}</ThemedText>
-        </View>
-      </Card>
-
-      <Card style={styles.card}>
-        <ThemedText variant="title" style={styles.sectionTitle}>
-          Security & Storage Status
-        </ThemedText>
-        <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Access Token (Memory):</ThemedText>
-          <ThemedText variant="bodySm" color={accessToken ? colors.success : colors.error}>
-            {accessToken ? "Present in Zustand" : "None"}
-          </ThemedText>
-        </View>
-        <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Refresh Token (SecureStore):</ThemedText>
-          <ThemedText variant="bodySm" color={hasSecureRefreshToken ? colors.success : colors.error}>
-            {hasSecureRefreshToken ? "Hardware Encrypted" : "None"}
-          </ThemedText>
-        </View>
-        <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Local DB (SQLite):</ThemedText>
-          <ThemedText variant="bodySm" color={colors.success}>
-            11 Models Initialized
-          </ThemedText>
+          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.role?.toUpperCase() || "USER"}</ThemedText>
         </View>
       </Card>
 
@@ -96,6 +176,7 @@ export function SettingsScreen() {
         fullWidth
         loading={loggingOut}
         onPress={handleLogout}
+        icon={<LogOut size={16} color={colors.ink} />}
         style={styles.logoutButton}
       />
     </ScreenContainer>
@@ -105,7 +186,18 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   header: { marginBottom: spacing.md, marginTop: spacing.xs },
   card: { padding: spacing.md, marginBottom: spacing.md },
-  sectionTitle: { marginBottom: spacing.sm, color: colors.ink },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.xs
+  },
+  syncIconBtn: {
+    padding: spacing.xs,
+    backgroundColor: colors.canvasSoft,
+    borderRadius: radius.full
+  },
+  sectionTitle: { color: colors.ink },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -114,10 +206,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.hairline
   },
   infoValue: {
-    color: colors.inkSecondary,
-    fontWeight: "500"
+    fontWeight: "600"
   },
   logoutButton: {
-    marginTop: spacing.md
+    marginTop: spacing.sm,
+    marginBottom: spacing.xl
   }
 });

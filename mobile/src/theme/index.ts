@@ -171,3 +171,4 @@ export const shadows = {
 } as const;
 
 export const motion = rawMotion;
+export const typography = type;

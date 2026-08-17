@@ -1,7 +1,9 @@
+import React from "react";
 import {
   Pressable,
   ActivityIndicator,
   ViewStyle,
+  TextStyle,
   StyleProp,
   StyleSheet
 } from "react-native";
@@ -11,11 +13,13 @@ import { ThemedText } from "./ThemedText";
 export interface ButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: "primary" | "secondary" | "utility" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "utility" | "ghost" | "danger" | "outline";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   disabled?: boolean;
+  icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   fullWidth?: boolean;
 }
 
@@ -26,7 +30,9 @@ export function Button({
   size = "md",
   loading = false,
   disabled = false,
+  icon,
   style,
+  textStyle,
   fullWidth = false
 }: ButtonProps) {
   const isPrimary = variant === "primary";
@@ -34,19 +40,28 @@ export function Button({
   const isUtility = variant === "utility";
   const isGhost = variant === "ghost";
   const isDanger = variant === "danger";
+  const isOutline = variant === "outline";
 
   const getBackgroundColor = (pressed: boolean) => {
     if (isPrimary) return pressed ? colors.primaryActive : colors.primary;
     if (isSecondary) return pressed ? colors.canvasSoft : colors.surface;
     if (isUtility) return pressed ? colors.canvasSoft : colors.surface;
-    if (isDanger) return pressed ? "#c0392b" : "#e74c3c";
+    if (isDanger) return pressed ? "#c0392b" : colors.error;
+    if (isOutline) return pressed ? colors.canvasSoft : "transparent";
     return "transparent";
   };
 
   const getTextColor = () => {
     if (isPrimary || isDanger) return colors.onPrimary;
     if (isGhost) return colors.primary;
+    if (isOutline) return colors.primary;
     return colors.ink;
+  };
+
+  const getBorderColor = () => {
+    if (isSecondary || isUtility) return colors.hairline;
+    if (isOutline) return colors.inputBorder;
+    return "transparent";
   };
 
   return (
@@ -61,13 +76,14 @@ export function Button({
         isUtility && styles.roundedUtility,
         isGhost && styles.ghost,
         isDanger && styles.pill,
+        isOutline && styles.roundedUtility,
         size === "sm" && styles.sizeSm,
         size === "md" && styles.sizeMd,
         size === "lg" && styles.sizeLg,
         fullWidth && styles.fullWidth,
         {
           backgroundColor: getBackgroundColor(pressed),
-          borderColor: isSecondary || isUtility ? colors.hairline : "transparent",
+          borderColor: getBorderColor(),
           opacity: disabled ? 0.5 : pressed ? 0.9 : 1
         },
         style
@@ -76,12 +92,18 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={getTextColor()} size="small" />
       ) : (
-        <ThemedText
-          variant={size === "sm" ? "caption" : "button"}
-          style={{ color: getTextColor(), fontWeight: isUtility ? "600" : "500" }}
-        >
-          {title}
-        </ThemedText>
+        <>
+          {icon ? <>{icon}</> : null}
+          <ThemedText
+            variant={size === "sm" ? "caption" : "button"}
+            style={[
+              { color: getTextColor(), fontWeight: isUtility ? "600" : "500", marginLeft: icon ? 6 : 0 },
+              textStyle
+            ]}
+          >
+            {title}
+          </ThemedText>
+        </>
       )}
     </Pressable>
   );

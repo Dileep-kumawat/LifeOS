@@ -1,28 +1,321 @@
-import { View, StyleSheet } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Plus, Search, FolderPlus } from "lucide-react-native";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
+import { TextInput } from "../../components/ui/TextInput";
+import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { colors, spacing } from "../../theme";
+import { colors, radius, spacing } from "../../theme";
+import { useAuthStore } from "../../store/authStore";
+import { noteRepo } from "../../db/repositories/noteRepo";
+import { syncEngine } from "../../services/syncEngine";
+import type { LocalNote, LocalNoteFolder } from "../../db/schema";
+
+import { NoteCard } from "../../components/notes/NoteCard";
+import { NoteEditorModal } from "../../components/notes/NoteEditorModal";
+import { FolderManagerModal } from "../../components/notes/FolderManagerModal";
 
 export function NotesScreen() {
+  const user = useAuthStore((state) => state.user);
+  const [notes, setNotes] = useState<LocalNote[]>([]);
+  const [folders, setFolders] = useState<LocalNoteFolder[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFolderId, setSelectedFolderId] = useState<string | "all">("all");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const [editingNote, setEditingNote] = useState<LocalNote | null>(null);
+  const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
+  const [isFolderModalVisible, setIsFolderModalVisible] = useState(false);
+
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+
+    const folderList = await noteRepo.listFolders(user.id);
+    setFolders(folderList);
+
+    const tagList = await noteRepo.listTags(user.id);
+    setTags(tagList);
+
+    const options: { folderId?: string | null; tag?: string; search?: string } = {};
+    if (selectedFolderId !== "all") {
+      options.folderId = selectedFolderId;
+    }
+    if (selectedTag) {
+      options.tag = selectedTag;
+    }
+    if (searchQuery.trim()) {
+      options.search = searchQuery.trim();
+    }
+
+    const noteList = await noteRepo.listNotes(user.id, options);
+    setNotes(noteList);
+  }, [user?.id, selectedFolderId, selectedTag, searchQuery]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleSaveNote = async (noteData: {
+    title: string;
+    content: string;
+    contentText: string;
+    folderId: string | null;
+    tags: string;
+  }) => {
+    if (!user?.id) return;
+
+    if (editingNote) {
+      await noteRepo.updateNote(editingNote.id, noteData);
+    } else {
+      await noteRepo.createNote({
+        userId: user.id,
+        ...noteData
+      });
+    }
+
+    await loadData();
+    syncEngine.syncNow().catch(() => {});
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    if (!user?.id) return;
+    await noteRepo.deleteNote(id);
+    await loadData();
+    syncEngine.syncNow().catch(() => {});
+  };
+
+  const handleCreateFolder = async (name: string) => {
+    if (!user?.id) return;
+    await noteRepo.createFolder({
+      userId: user.id,
+      name,
+      parentFolderId: null
+    });
+    await loadData();
+    syncEngine.syncNow().catch(() => {});
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    if (!user?.id) return;
+    await noteRepo.deleteFolder(id);
+    if (selectedFolderId === id) {
+      setSelectedFolderId("all");
+    }
+    await loadData();
+    syncEngine.syncNow().catch(() => {});
+  };
+
+  const folderMap = new Map<string, LocalNoteFolder>();
+  folders.forEach((f) => folderMap.set(f.id, f));
+
   return (
-    <ScreenContainer scrollable>
-      <View style={styles.header}>
-        <ThemedText variant="heading2">Notes & Docs</ThemedText>
-        <ThemedText variant="bodySm" color={colors.inkMuted}>
-          Rich text, folders & version history
-        </ThemedText>
+    <ScreenContainer scrollable={false}>
+      {/* Top Action Bar */}
+      <View style={styles.topBar}>
+        <ThemedText variant="heading2">Notes</ThemedText>
+        <View style={styles.topBtnRow}>
+          <TouchableOpacity
+            onPress={() => setIsFolderModalVisible(true)}
+            style={styles.folderBtn}
+          >
+            <FolderPlus size={18} color={colors.ink} />
+          </TouchableOpacity>
+          <Button
+            title="New Note"
+            icon={<Plus size={16} color={colors.onPrimary} />}
+            onPress={() => {
+              setEditingNote(null);
+              setIsNoteModalVisible(true);
+            }}
+            style={styles.addBtn}
+          />
+        </View>
       </View>
-      <Card style={styles.card}>
-        <ThemedText variant="bodyMd" color={colors.inkMuted}>
-          Notes module with NoteVersion history (FR-5.6) ready for Prompt 4 and conflict resolution. Local schema mirrored in SQLite.
-        </ThemedText>
-      </Card>
+
+      {/* Search Input */}
+      <View style={styles.searchRow}>
+        <Search size={16} color={colors.inkMuted} style={styles.searchIcon} />
+        <TextInput
+          placeholder="Search title, content..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+        />
+      </View>
+
+      {/* Folder & Tag Horizontal Filters */}
+      <View style={styles.filterStrip}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+          {/* Folders */}
+          <TouchableOpacity
+            onPress={() => setSelectedFolderId("all")}
+            style={[styles.filterChip, selectedFolderId === "all" && styles.filterChipSelected]}
+          >
+            <ThemedText
+              variant="caption"
+              color={selectedFolderId === "all" ? colors.onPrimary : colors.ink}
+              style={{ fontWeight: "600" }}
+            >
+              All Notes
+            </ThemedText>
+          </TouchableOpacity>
+
+          {folders.map((f) => {
+            const isSelected = selectedFolderId === f.id;
+            return (
+              <TouchableOpacity
+                key={f.id}
+                onPress={() => setSelectedFolderId(isSelected ? "all" : f.id)}
+                style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+              >
+                <ThemedText
+                  variant="caption"
+                  color={isSelected ? colors.onPrimary : colors.ink}
+                  style={{ fontWeight: "600" }}
+                >
+                  📁 {f.name}
+                </ThemedText>
+              </TouchableOpacity>
+            );
+          })}
+
+          {/* Tags */}
+          {tags.map((t) => {
+            const isSelected = selectedTag === t;
+            return (
+              <TouchableOpacity
+                key={t}
+                onPress={() => setSelectedTag(isSelected ? null : t)}
+                style={[styles.filterChip, isSelected && styles.filterChipTagSelected]}
+              >
+                <ThemedText
+                  variant="caption"
+                  color={isSelected ? colors.onPrimary : colors.inkMuted}
+                  style={{ fontWeight: "600" }}
+                >
+                  #{t}
+                </ThemedText>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Notes List */}
+      <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+        {notes.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <ThemedText variant="bodyMd" color={colors.inkMuted} style={{ textAlign: "center" }}>
+              {searchQuery || selectedFolderId !== "all" || selectedTag
+                ? "No notes matching the selected filters."
+                : "No notes yet. Tap '+ New Note' to start writing with rich formatting."}
+            </ThemedText>
+          </Card>
+        ) : (
+          notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              folder={note.folderId ? folderMap.get(note.folderId) : undefined}
+              onPress={(n) => {
+                setEditingNote(n);
+                setIsNoteModalVisible(true);
+              }}
+            />
+          ))
+        )}
+      </ScrollView>
+
+      {/* Note Editor Modal */}
+      <NoteEditorModal
+        visible={isNoteModalVisible}
+        onClose={() => setIsNoteModalVisible(false)}
+        noteToEdit={editingNote}
+        folders={folders}
+        onSave={handleSaveNote}
+        onDelete={handleDeleteNote}
+      />
+
+      {/* Folder Manager Modal */}
+      <FolderManagerModal
+        visible={isFolderModalVisible}
+        onClose={() => setIsFolderModalVisible(false)}
+        folders={folders}
+        onCreateFolder={handleCreateFolder}
+        onDeleteFolder={handleDeleteFolder}
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { marginBottom: spacing.md, marginTop: spacing.xs },
-  card: { padding: spacing.md }
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs
+  },
+  topBtnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs
+  },
+  folderBtn: {
+    padding: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline
+  },
+  addBtn: {
+    height: 38,
+    paddingHorizontal: spacing.md
+  },
+  searchRow: {
+    position: "relative",
+    marginBottom: spacing.xs
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 12,
+    top: 14,
+    zIndex: 1
+  },
+  searchInput: {
+    paddingLeft: 36
+  },
+  filterStrip: {
+    marginBottom: spacing.sm
+  },
+  filterScroll: {
+    flexDirection: "row"
+  },
+  filterChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    marginRight: 6
+  },
+  filterChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  filterChipTagSelected: {
+    backgroundColor: colors.accentPurpleDeep,
+    borderColor: colors.accentPurpleDeep
+  },
+  listContainer: {
+    flex: 1
+  },
+  emptyCard: {
+    padding: spacing.xl,
+    marginTop: spacing.md
+  }
 });
