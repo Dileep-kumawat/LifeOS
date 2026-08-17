@@ -136,7 +136,22 @@ export const syncEngine = {
           `SELECT * FROM ${tableName} WHERE syncStatus = 'pending';`
         );
         for (const row of rows) {
-          const { id, syncStatus, lastModifiedAt, ...data } = row;
+          const { id, syncStatus, lastModifiedAt, createdAt, updatedAt, ...rawFields } = row;
+
+          // Safely deserialize any JSON string fields before sending over HTTP
+          const data: Record<string, any> = {};
+          for (const [key, val] of Object.entries(rawFields)) {
+            if (typeof val === "string" && (val.startsWith("{") || val.startsWith("["))) {
+              try {
+                data[key] = JSON.parse(val);
+              } catch {
+                data[key] = val;
+              }
+            } else {
+              data[key] = val;
+            }
+          }
+
           pendingChanges.push({
             id,
             module,
@@ -211,6 +226,9 @@ export const syncEngine = {
 
             useSyncStore.getState().addConflict(conflictObj);
             useSyncStore.getState().addConflictNotice(`Conflict detected in ${result.module} — tap to resolve.`);
+          } else if (result.status === "error") {
+            console.error(`[SyncEngine] Push error for ${result.module} (${result.id}):`, result.error);
+            useSyncStore.getState().setLastError(`Sync error on ${result.module}: ${result.error}`);
           }
         }
 

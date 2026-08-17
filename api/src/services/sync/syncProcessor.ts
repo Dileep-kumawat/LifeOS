@@ -54,6 +54,21 @@ function normalizeValue(v: any): string {
   return String(v).trim();
 }
 
+export function parseJsonIfString(val: any, fallback: any = val): any {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return fallback;
+      }
+    }
+  }
+  return val;
+}
+
 export function toPlainObject(doc: any): any {
   if (!doc) return null;
   if (typeof doc.toObject === "function") return doc.toObject();
@@ -262,12 +277,12 @@ async function processSinglePushItem(
         const habitData = {
           userId: userObjectId,
           title: data.title.trim(),
-          frequency: data.frequency || { type: "daily", daysOfWeek: [], timesPerPeriod: 1 },
+          frequency: parseJsonIfString(data.frequency, { type: "daily", daysOfWeek: [], timesPerPeriod: 1 }),
           reminderTime: data.reminderTime ?? null,
           reminderEnabled: Boolean(data.reminderEnabled),
-          currentStreak: data.currentStreak || 0,
-          longestStreak: data.longestStreak || 0,
-          completionRate: data.completionRate || 0,
+          currentStreak: Number(data.currentStreak) || 0,
+          longestStreak: Number(data.longestStreak) || 0,
+          completionRate: Number(data.completionRate) || 0,
           lastCheckInDate: data.lastCheckInDate ?? null
         };
 
@@ -335,11 +350,13 @@ async function processSinglePushItem(
           { habitId: new Types.ObjectId(habitId), date, userId: userObjectId },
           {
             $set: {
+              completed: isCompleted
+            },
+            $setOnInsert: {
               _id: id,
               habitId: new Types.ObjectId(habitId),
               userId: userObjectId,
-              date,
-              completed: isCompleted
+              date
             }
           },
           { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -517,8 +534,10 @@ async function processSinglePushItem(
             { userId: userObjectId, category: categoryName, period: "monthly" },
             {
               $set: {
-                _id: id,
                 ...budgetData
+              },
+              $setOnInsert: {
+                _id: id
               }
             },
             { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -543,10 +562,12 @@ async function processSinglePushItem(
           { userId: userObjectId, name: data.name.trim(), type: data.type },
           {
             $set: {
-              _id: id,
-              userId: userObjectId,
               name: data.name.trim(),
               type: data.type
+            },
+            $setOnInsert: {
+              _id: id,
+              userId: userObjectId
             }
           },
           { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -579,8 +600,8 @@ async function processSinglePushItem(
           isAllDay: Boolean(data.isAllDay),
           recurrenceRule: data.recurrenceRule || null,
           recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
-          exceptions: data.exceptions || [],
-          reminderLeadMinutes: data.reminderLeadMinutes ?? null,
+          exceptions: parseJsonIfString(data.exceptions, []),
+          reminderLeadMinutes: data.reminderLeadMinutes !== undefined && data.reminderLeadMinutes !== null ? Number(data.reminderLeadMinutes) : null,
           isOverride: Boolean(data.isOverride),
           parentEventId: data.parentEventId ? new Types.ObjectId(data.parentEventId) : null
         };
@@ -633,9 +654,9 @@ async function processSinglePushItem(
           return { id, module, status: "error", error: "Goal title is required" };
         }
 
-        const milestones = Array.isArray(data.milestones) ? data.milestones : [];
-        let progress = typeof data.progressPercent === "number" ? data.progressPercent : 0;
-        if (milestones.length > 0) {
+        const milestones = parseJsonIfString(data.milestones, []);
+        let progress = typeof data.progressPercent === "number" ? data.progressPercent : Number(data.progressPercent) || 0;
+        if (Array.isArray(milestones) && milestones.length > 0) {
           const completedCount = milestones.filter((m: any) => m.completed).length;
           progress = Math.round((completedCount / milestones.length) * 100);
         }
@@ -647,9 +668,9 @@ async function processSinglePushItem(
           targetDate: data.targetDate ? new Date(data.targetDate) : null,
           status: data.status || "active",
           progressPercent: progress,
-          milestones,
-          linkedEventIds: Array.isArray(data.linkedEventIds) ? data.linkedEventIds : [],
-          linkedNoteIds: Array.isArray(data.linkedNoteIds) ? data.linkedNoteIds : []
+          milestones: Array.isArray(milestones) ? milestones : [],
+          linkedEventIds: parseJsonIfString(data.linkedEventIds, []),
+          linkedNoteIds: parseJsonIfString(data.linkedNoteIds, [])
         };
 
         const existing = await Goal.findOne({ _id: id, userId: userObjectId });
@@ -680,17 +701,17 @@ async function processSinglePushItem(
 
       if (operation === "create" || operation === "update") {
         const title = (data.title || "").trim();
-        const content = data.content || { type: "doc", content: [] };
+        const content = parseJsonIfString(data.content, { type: "doc", content: [] });
         const contentText = data.contentText || extractTextFromDoc(content);
         const folderId = data.folderId ? new Types.ObjectId(data.folderId) : null;
-        const tags = Array.isArray(data.tags) ? data.tags : [];
+        const tags = parseJsonIfString(data.tags, []);
 
         const incomingNoteData = {
           title,
           content,
           contentText,
           folderId,
-          tags
+          tags: Array.isArray(tags) ? tags : []
         };
 
         const existing = await Note.findOne({ _id: id, userId: userObjectId });
@@ -730,7 +751,7 @@ async function processSinglePushItem(
                 content,
                 contentText,
                 folderId,
-                tags,
+                tags: Array.isArray(tags) ? tags : [],
                 changeSource: "conflict_merge"
               });
 
@@ -778,7 +799,7 @@ async function processSinglePushItem(
           existing.content = content;
           existing.contentText = contentText;
           existing.folderId = folderId;
-          existing.tags = tags;
+          existing.tags = Array.isArray(tags) ? tags : [];
           doc = await existing.save();
         } else if (existing) {
           // Force resolution write
@@ -786,7 +807,7 @@ async function processSinglePushItem(
           existing.content = content;
           existing.contentText = contentText;
           existing.folderId = folderId;
-          existing.tags = tags;
+          existing.tags = Array.isArray(tags) ? tags : [];
           doc = await existing.save();
         } else {
           doc = await Note.create({
@@ -796,7 +817,7 @@ async function processSinglePushItem(
             content,
             contentText,
             folderId,
-            tags
+            tags: Array.isArray(tags) ? tags : []
           });
         }
 
@@ -848,10 +869,12 @@ async function processSinglePushItem(
           { _id: id, userId: userObjectId },
           {
             $set: {
-              _id: id,
               userId: userObjectId,
               name,
               parentFolderId
+            },
+            $setOnInsert: {
+              _id: id
             }
           },
           { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -873,16 +896,18 @@ async function processSinglePushItem(
           { _id: id, userId: userObjectId },
           {
             $set: {
-              _id: id,
               noteId: new Types.ObjectId(data.noteId),
               userId: userObjectId,
-              versionNumber: data.versionNumber || 1,
+              versionNumber: Number(data.versionNumber) || 1,
               title: data.title || "",
-              content: data.content || { type: "doc", content: [] },
+              content: parseJsonIfString(data.content, { type: "doc", content: [] }),
               contentText: data.contentText || "",
               folderId: data.folderId ? new Types.ObjectId(data.folderId) : null,
-              tags: data.tags || [],
+              tags: parseJsonIfString(data.tags, []),
               changeSource: data.changeSource || "sync"
+            },
+            $setOnInsert: {
+              _id: id
             }
           },
           { upsert: true, new: true, setDefaultsOnInsert: true }
