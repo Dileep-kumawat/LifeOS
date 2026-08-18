@@ -23,7 +23,10 @@ const spec = swaggerJsdoc({
 
 #### 1. Connection & Authentication Handshake
 * **WS Endpoint**: <code>ws://&lt;host&gt;:&lt;port&gt;/socket.io/</code> (or via HTTP upgrade with <code>transports: ["websocket", "polling"]</code>)
-* **Auth Token**: Pass JWT Access Token via Socket.IO auth object (<code>auth: { token: "&lt;jwt_access_token&gt;" }</code>) or HTTP Header (<code>Authorization: Bearer &lt;token&gt;</code>).
+* **Auth Token**: Pass JWT Access Token via:
+  * **Socket.IO Auth Object (Mobile / React Native standard)**: <code>{ auth: { token: "&lt;jwt_access_token&gt;" } }</code>
+  * **HTTP Header**: <code>Authorization: Bearer &lt;token&gt;</code>
+  * **Browser Cookie (Web standard)**: <code>Cookie: accessToken=&lt;jwt_access_token&gt;</code>
 
 #### 2. Client-to-Server Events (Upstream)
 | Event | Action & Description | Example Payload |
