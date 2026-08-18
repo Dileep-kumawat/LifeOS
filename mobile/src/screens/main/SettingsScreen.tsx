@@ -315,8 +315,14 @@ export function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { marginBottom: spacing.md, marginTop: spacing.xs },
-  card: { padding: spacing.md, marginBottom: spacing.md },
+  header: {
+    marginBottom: spacing.md,
+    marginTop: spacing.xs
+  },
+  card: {
+    padding: spacing.md,
+    marginBottom: spacing.sm
+  },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -328,11 +334,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.canvasSoft,
     borderRadius: radius.full
   },
-  sectionTitle: { color: colors.ink },
+  sectionTitle: {
+    color: colors.ink,
+    letterSpacing: -0.2
+  },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: spacing.xxs + 2,
+    alignItems: "center",
+    paddingVertical: spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline
   },
@@ -340,8 +350,8 @@ const styles = StyleSheet.create({
     fontWeight: "600"
   },
   timeInput: {
-    width: 70,
-    height: 32,
+    width: 76,
+    height: 34,
     backgroundColor: colors.canvasSoft,
     borderWidth: 1,
     borderColor: colors.hairline,
@@ -349,7 +359,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     textAlign: "center",
     fontWeight: "700",
-    fontSize: 12,
+    fontSize: 13,
     color: colors.ink
   },
   toggleRow: {
@@ -362,6 +372,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginTop: spacing.sm,
-    marginBottom: spacing.xl
+    marginBottom: spacing.xxl
   }
 });
+

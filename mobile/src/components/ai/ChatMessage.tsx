@@ -11,7 +11,8 @@ import {
 import type { ChatMessage as ChatMessageType } from "../../services/aiChatService";
 import { ThemedText } from "../ui/ThemedText";
 import { MarkdownText } from "./MarkdownText";
-import { colors, radius, spacing } from "../../theme";
+import { colors, radius, spacing, shadows } from "../../theme";
+
 
 export interface ChatMessageProps {
   message: ChatMessageType;
@@ -182,14 +183,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md
   },
   userBubble: {
-    backgroundColor: colors.canvasSoft,
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderTopRightRadius: radius.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     maxWidth: "85%",
     borderWidth: 1,
-    borderColor: colors.hairline
+    borderColor: colors.hairline,
+    ...shadows.card
   },
   userText: {
     color: colors.ink,
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.full,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.secondary, // Deep indigo per DESIGN.md
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2
@@ -240,13 +242,15 @@ const styles = StyleSheet.create({
   },
   agentName: {
     fontWeight: "700",
-    color: colors.ink
+    color: colors.ink,
+    letterSpacing: -0.1
   },
   contentWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "flex-end"
   },
+
   streamingCursor: {
     width: 6,
     height: 16,

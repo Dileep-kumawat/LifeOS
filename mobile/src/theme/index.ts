@@ -150,25 +150,26 @@ export const shadows = {
   card: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
     elevation: 1
   } as ViewStyle,
   raised: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 3
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2
   } as ViewStyle,
   overlay: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 6
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+    elevation: 5
   } as ViewStyle
 } as const;
 
 export const motion = rawMotion;
 export const typography = type;
+

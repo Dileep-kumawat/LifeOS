@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
-    paddingVertical: spacing.sm
+    paddingVertical: spacing.md
   },
   errorCard: {
     backgroundColor: "#FEF2F2",
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: colors.surface,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radius.sm,
     borderWidth: 1,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     fontWeight: "600"
   },
   scheduledCard: {
-    backgroundColor: colors.canvasSoft
+    backgroundColor: colors.surface
   },
   scheduledHeader: {
     flexDirection: "row",
@@ -299,15 +299,15 @@ const styles = StyleSheet.create({
   },
   scheduledBadge: {
     backgroundColor: colors.canvasSoft,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: radius.xs,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.hairline
   },
   scheduledBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "600",
     color: colors.inkSecondary
   },
   generateNowBtn: {
@@ -316,13 +316,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.xs,
     backgroundColor: colors.primary,
-    paddingVertical: 8,
-    borderRadius: radius.md,
-    marginTop: 4
+    paddingVertical: 10,
+    borderRadius: radius.full,
+    marginTop: 6
   },
   generateNowBtnText: {
     color: colors.onPrimary,
-    fontWeight: "700"
+    fontWeight: "600",
+    fontSize: 14
   },
   headerRow: {
     flexDirection: "row",
@@ -332,14 +333,14 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: spacing.xs + 2
   },
   dateBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     backgroundColor: "#E0F2FE",
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: radius.full
   },
@@ -349,14 +350,14 @@ const styles = StyleSheet.create({
     fontSize: 11
   },
   section: {
-    gap: 4
+    gap: 6
   },
   sectionHeading: {
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     color: colors.inkMuted,
-    fontSize: 10
+    fontSize: 10.5
   },
   sparseText: {
     fontStyle: "italic",
@@ -368,11 +369,14 @@ const styles = StyleSheet.create({
   priorityRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: spacing.xs + 2,
+    backgroundColor: colors.canvasSoft,
+    padding: spacing.xs,
+    borderRadius: radius.md
   },
   priorityRankBadge: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderRadius: radius.full,
     backgroundColor: colors.primary,
     alignItems: "center",
@@ -381,7 +385,7 @@ const styles = StyleSheet.create({
   priorityRankNum: {
     color: colors.onPrimary,
     fontWeight: "700",
-    fontSize: 10
+    fontSize: 11
   },
   priorityTitle: {
     fontWeight: "600",
@@ -395,9 +399,11 @@ const styles = StyleSheet.create({
   subCard: {
     flex: 1,
     backgroundColor: colors.canvasSoft,
-    borderRadius: radius.sm,
-    padding: spacing.xs,
-    gap: 4
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing.xs + 2,
+    gap: 6
   },
   itemsList: {
     gap: 4
@@ -405,10 +411,12 @@ const styles = StyleSheet.create({
   itemLine: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4
+    gap: 6
   },
   timeTag: {
-    fontSize: 10,
-    fontFamily: "monospace"
+    fontSize: 10.5,
+    fontFamily: "monospace",
+    color: colors.inkMuted
   }
 });
+

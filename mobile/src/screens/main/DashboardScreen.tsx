@@ -7,8 +7,8 @@ import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { Card } from "../../components/ui/Card";
 import { ProgressBar } from "../../components/ui/ProgressBar";
-import { SyncStatusIndicator } from "../../components/ui/SyncStatusIndicator";
 import { DailySummaryCard } from "../../components/ai/DailySummaryCard";
+
 import { aiChatService, type DailySummaryResponse } from "../../services/aiChatService";
 import { eventRepo } from "../../db/repositories/eventRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
@@ -98,16 +98,15 @@ export function DashboardScreen({ navigation }: any) {
 
   return (
     <ScreenContainer scrollable>
-      {/* Header */}
+      {/* Greeting Header */}
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View>
-            <ThemedText variant="heading2">Welcome back, {user?.name?.split(" ")[0] || "there"}</ThemedText>
-            <ThemedText variant="bodySm" color={colors.inkMuted}>
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-            </ThemedText>
-          </View>
-          <SyncStatusIndicator />
+        <View style={styles.greetingLeft}>
+          <ThemedText variant="heading2" style={styles.greetingTitle}>
+            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, {user?.name?.split(" ")[0] || "there"}
+          </ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.dateSubtitle}>
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+          </ThemedText>
         </View>
       </View>
 
@@ -137,9 +136,9 @@ export function DashboardScreen({ navigation }: any) {
               <View style={[styles.iconWrap, { backgroundColor: "#E0F2FE" }]}>
                 <Sparkles size={16} color={colors.primary} />
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <ThemedText variant="heading3">Ask LifeOS AI</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted}>
+                <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1}>
                   Live assistant with connected tools & insights
                 </ThemedText>
               </View>
@@ -159,7 +158,7 @@ export function DashboardScreen({ navigation }: any) {
           <Card style={styles.moduleCard}>
             <View style={styles.cardHeader}>
               <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: colors.accentSky }]}>
+                <View style={[styles.iconWrap, { backgroundColor: colors.accentSky + "30" }]}>
                   <Calendar size={16} color={colors.primary} />
                 </View>
                 <ThemedText variant="heading3">Today's Schedule</ThemedText>
@@ -195,7 +194,7 @@ export function DashboardScreen({ navigation }: any) {
             <View style={styles.cardHeader}>
               <View style={styles.iconTitleRow}>
                 <View style={[styles.iconWrap, { backgroundColor: "#D1FAE5" }]}>
-                  <CheckSquare size={16} color={colors.success} />
+                  <CheckSquare size={16} color={colors.accentGreen} />
                 </View>
                 <ThemedText variant="heading3">Habits Daily Progress</ThemedText>
               </View>
@@ -203,17 +202,17 @@ export function DashboardScreen({ navigation }: any) {
             </View>
 
             <View style={styles.habitProgressRow}>
-              <ThemedText variant="bodySm">
-                {todayCheckInsCount} of {habits.length} habits completed today
+              <ThemedText variant="bodySm" color={colors.inkSecondary}>
+                {todayCheckInsCount} of {habits.length} completed
               </ThemedText>
-              <ThemedText variant="bodySm" style={{ fontWeight: "700" }}>
+              <ThemedText variant="bodySm" style={{ fontWeight: "700", color: colors.ink }}>
                 {habits.length > 0 ? Math.round((todayCheckInsCount / habits.length) * 100) : 0}%
               </ThemedText>
             </View>
             <ProgressBar
               progress={habits.length > 0 ? (todayCheckInsCount / habits.length) * 100 : 0}
               height={6}
-              style={{ marginTop: 6 }}
+              style={{ marginTop: 8 }}
             />
           </Card>
         </TouchableOpacity>
@@ -240,16 +239,16 @@ export function DashboardScreen({ navigation }: any) {
               </ThemedText>
             ) : (
               activeGoals.slice(0, 2).map((g) => (
-                <View key={g.id} style={{ marginTop: 6 }}>
+                <View key={g.id} style={{ marginTop: 8 }}>
                   <View style={styles.itemRow}>
                     <ThemedText variant="bodySm" numberOfLines={1} style={{ flex: 1 }}>
                       {g.title}
                     </ThemedText>
-                    <ThemedText variant="caption" style={{ fontWeight: "600" }}>
+                    <ThemedText variant="caption" style={{ fontWeight: "700", color: colors.ink }}>
                       {Math.round(g.progressPercent)}%
                     </ThemedText>
                   </View>
-                  <ProgressBar progress={g.progressPercent} height={4} style={{ marginTop: 2 }} />
+                  <ProgressBar progress={g.progressPercent} height={5} style={{ marginTop: 4 }} />
                 </View>
               ))
             )}
@@ -264,8 +263,8 @@ export function DashboardScreen({ navigation }: any) {
           <Card style={styles.moduleCard}>
             <View style={styles.cardHeader}>
               <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: colors.accentOrange }]}>
-                  <DollarSign size={16} color={colors.accentOrangeDeep} />
+                <View style={[styles.iconWrap, { backgroundColor: "#FFEDD5" }]}>
+                  <DollarSign size={16} color={colors.accentOrange} />
                 </View>
                 <ThemedText variant="heading3">Monthly Finances</ThemedText>
               </View>
@@ -275,13 +274,13 @@ export function DashboardScreen({ navigation }: any) {
             <View style={styles.financeRow}>
               <View>
                 <ThemedText variant="caption" color={colors.inkMuted}>Total Spent</ThemedText>
-                <ThemedText variant="heading3" color={colors.error}>
+                <ThemedText variant="heading3" color={colors.error} style={{ marginTop: 2 }}>
                   ${Math.round(financeSummary.totalExpense)}
                 </ThemedText>
               </View>
               <View style={{ alignItems: "flex-end" }}>
                 <ThemedText variant="caption" color={colors.inkMuted}>Total Income</ThemedText>
-                <ThemedText variant="heading3" color={colors.success}>
+                <ThemedText variant="heading3" color={colors.accentGreen} style={{ marginTop: 2 }}>
                   +${Math.round(financeSummary.totalIncome)}
                 </ThemedText>
               </View>
@@ -298,10 +297,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     marginTop: spacing.xs
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
+  greetingLeft: {
+    gap: 2
+  },
+  greetingTitle: {
+    letterSpacing: -0.6
+  },
+  dateSubtitle: {
+    fontWeight: "500"
   },
   overviewGrid: {
     gap: spacing.sm,
@@ -311,7 +314,6 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   aiAssistantLauncher: {
-    borderWidth: 1.5,
     borderColor: "#BAE6FD",
     backgroundColor: "#F0F9FF"
   },
@@ -324,11 +326,15 @@ const styles = StyleSheet.create({
   iconTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: spacing.xs + 2,
+    flex: 1
   },
   iconWrap: {
-    padding: 6,
-    borderRadius: radius.full
+    width: 30,
+    height: 30,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center"
   },
   emptyText: {
     paddingVertical: spacing.xs
@@ -337,13 +343,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 3
+    paddingVertical: 4
   },
   habitProgressRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4
+    marginTop: 6
   },
   financeRow: {
     flexDirection: "row",
@@ -352,3 +358,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   }
 });
+

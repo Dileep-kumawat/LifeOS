@@ -59,34 +59,39 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm
   },
   label: {
-    marginBottom: spacing.xxs,
+    marginBottom: spacing.xxs + 1,
     color: colors.inkSecondary,
-    fontWeight: "500"
+    fontWeight: "600",
+    fontSize: 13
   },
   input: {
     backgroundColor: colors.surface,
-    borderColor: colors.inputBorder,
+    borderColor: colors.hairline,
     borderWidth: 1,
-    borderRadius: radius.xs, // 4px per DESIGN.md
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    borderRadius: radius.md, // 8px for modern clean inputs
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
     fontSize: 15,
     color: colors.ink,
-    minHeight: 42
+    minHeight: 44
   },
   inputFocused: {
     borderColor: colors.primary,
-    shadowColor: "#000",
+    borderWidth: 1.5,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
     elevation: 2
   },
   inputError: {
-    borderColor: colors.error
+    borderColor: colors.error,
+    borderWidth: 1.5
   },
   errorText: {
     marginTop: spacing.xxs,
-    color: colors.error
+    color: colors.error,
+    fontSize: 12
   }
 });
+

@@ -16,6 +16,7 @@ export interface ScreenContainerProps {
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
+  edges?: ("top" | "left" | "right" | "bottom")[];
 }
 
 export function ScreenContainer({
@@ -23,10 +24,11 @@ export function ScreenContainer({
   scrollable = false,
   style,
   contentContainerStyle,
-  backgroundColor = colors.canvasSoft
+  backgroundColor = colors.canvasSoft,
+  edges = ["left", "right"]
 }: ScreenContainerProps) {
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }, style]} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor }, style]} edges={edges}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.keyboardAvoid}
@@ -46,6 +48,7 @@ export function ScreenContainer({
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: {

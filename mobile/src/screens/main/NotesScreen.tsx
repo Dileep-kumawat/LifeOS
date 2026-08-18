@@ -269,7 +269,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.hairline
+    borderColor: colors.hairline,
+    height: 38,
+    width: 38,
+    alignItems: "center",
+    justifyContent: "center"
   },
   addBtn: {
     height: 38,
@@ -282,11 +286,12 @@ const styles = StyleSheet.create({
   searchIcon: {
     position: "absolute",
     left: 12,
-    top: 14,
+    top: 13,
     zIndex: 1
   },
   searchInput: {
-    paddingLeft: 36
+    paddingLeft: 38,
+    borderRadius: radius.full
   },
   filterStrip: {
     marginBottom: spacing.sm
@@ -296,7 +301,7 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -319,3 +324,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   }
 });
+

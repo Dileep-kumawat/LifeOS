@@ -1,12 +1,14 @@
 import React from "react";
 import {
   Pressable,
+  View,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
   StyleProp,
   StyleSheet
 } from "react-native";
+
 import { colors, spacing, radius } from "../../theme";
 import { ThemedText } from "./ThemedText";
 
@@ -43,6 +45,7 @@ export function Button({
   const isOutline = variant === "outline";
 
   const getBackgroundColor = (pressed: boolean) => {
+    if (disabled) return isPrimary ? "#88b7e8" : colors.canvasSoft;
     if (isPrimary) return pressed ? colors.primaryActive : colors.primary;
     if (isSecondary) return pressed ? colors.canvasSoft : colors.surface;
     if (isUtility) return pressed ? colors.canvasSoft : colors.surface;
@@ -52,6 +55,7 @@ export function Button({
   };
 
   const getTextColor = () => {
+    if (disabled) return isPrimary ? colors.onPrimary : colors.inkFaint;
     if (isPrimary || isDanger) return colors.onPrimary;
     if (isGhost) return colors.primary;
     if (isOutline) return colors.primary;
@@ -84,7 +88,7 @@ export function Button({
         {
           backgroundColor: getBackgroundColor(pressed),
           borderColor: getBorderColor(),
-          opacity: disabled ? 0.5 : pressed ? 0.9 : 1
+          transform: [{ scale: pressed && !disabled && !loading ? 0.98 : 1 }]
         },
         style
       ]}
@@ -93,11 +97,15 @@ export function Button({
         <ActivityIndicator color={getTextColor()} size="small" />
       ) : (
         <>
-          {icon ? <>{icon}</> : null}
+          {icon ? <View style={{ marginRight: 6 }}>{icon}</View> : null}
           <ThemedText
             variant={size === "sm" ? "caption" : "button"}
             style={[
-              { color: getTextColor(), fontWeight: isUtility ? "600" : "500", marginLeft: icon ? 6 : 0 },
+              {
+                color: getTextColor(),
+                fontWeight: isPrimary || isDanger ? "600" : isUtility ? "600" : "500",
+                letterSpacing: -0.1
+              },
               textStyle
             ]}
           >
@@ -127,7 +135,7 @@ const styles = StyleSheet.create({
     borderWidth: 0
   },
   sizeSm: {
-    paddingVertical: spacing.xxs,
+    paddingVertical: spacing.xxs + 1,
     paddingHorizontal: spacing.sm,
     minHeight: 32
   },
@@ -137,7 +145,7 @@ const styles = StyleSheet.create({
     minHeight: 44
   },
   sizeLg: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,
     minHeight: 50
   },
@@ -145,3 +153,4 @@ const styles = StyleSheet.create({
     width: "100%"
   }
 });
+

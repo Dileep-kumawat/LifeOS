@@ -46,11 +46,16 @@ export function Modal({
         </TouchableWithoutFeedback>
 
         <View style={styles.sheetContainer}>
+          {/* Sheet Handle Bar */}
+          <View style={styles.handleContainer}>
+            <View style={styles.handleBar} />
+          </View>
+
           <View style={styles.header}>
             <View style={styles.headerTextContainer}>
               <ThemedText variant="heading3">{title}</ThemedText>
               {subtitle && (
-                <ThemedText variant="caption" color={colors.inkMuted}>
+                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: 2 }}>
                   {subtitle}
                 </ThemedText>
               )}
@@ -60,7 +65,7 @@ export function Modal({
               style={styles.closeButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <X size={20} color={colors.inkMuted} />
+              <X size={18} color={colors.inkSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -85,7 +90,7 @@ export function Modal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "flex-end"
   },
   overlayTouch: {
@@ -93,19 +98,30 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     maxHeight: "90%",
     width: "100%",
     ...shadows.overlay
+  },
+  handleContainer: {
+    alignItems: "center",
+    paddingTop: spacing.xs + 2,
+    paddingBottom: spacing.xxs
+  },
+  handleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.hairline
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline
   },
@@ -119,9 +135,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.canvasSoft
   },
   contentScroll: {
-    maxHeight: 550
+    maxHeight: 560
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl
   }
 });
+

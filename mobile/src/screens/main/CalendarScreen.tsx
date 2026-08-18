@@ -196,15 +196,15 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm
+    gap: spacing.xs + 2
   },
   todayButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: colors.accentSky,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "#E0F2FE",
     borderRadius: radius.full
   },
   addButton: {
@@ -213,16 +213,18 @@ const styles = StyleSheet.create({
   },
   viewModeSegment: {
     flexDirection: "row",
-    backgroundColor: colors.canvasSoft,
+    backgroundColor: colors.surface,
     padding: 3,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     marginBottom: spacing.sm
   },
   segmentButton: {
     flex: 1,
     paddingVertical: 6,
     alignItems: "center",
-    borderRadius: radius.sm
+    borderRadius: radius.full
   },
   segmentButtonSelected: {
     backgroundColor: colors.primary
@@ -231,3 +233,4 @@ const styles = StyleSheet.create({
     flex: 1
   }
 });
+

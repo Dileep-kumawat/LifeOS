@@ -111,6 +111,7 @@ export function CalendarMonthView({
         {allCalendarDays.map((item, idx) => {
           const itemDateStr = item.date.toISOString().split("T")[0];
           const isSelected = itemDateStr === selectedDateStr;
+          const isToday = itemDateStr === new Date().toISOString().split("T")[0];
           const hasEvents = events.some((ev) => ev.startTime.startsWith(itemDateStr));
 
           return (
@@ -118,33 +119,40 @@ export function CalendarMonthView({
               key={idx}
               activeOpacity={0.7}
               onPress={() => onSelectDate(item.date)}
-              style={[
-                styles.gridCell,
-                isSelected && styles.selectedCell,
-                !item.isCurrentMonth && styles.otherMonthCell
-              ]}
+              style={styles.gridCell}
             >
-              <ThemedText
-                variant="bodySm"
-                color={
-                  isSelected
-                    ? colors.onPrimary
-                    : item.isCurrentMonth
-                      ? colors.ink
-                      : colors.inkFaint
-                }
-                style={[styles.dayText, isSelected && { fontWeight: "700" }]}
+              <View
+                style={[
+                  styles.cellInner,
+                  isSelected && styles.selectedCell,
+                  !isSelected && isToday && styles.todayCell,
+                  !item.isCurrentMonth && styles.otherMonthCell
+                ]}
               >
-                {item.day}
-              </ThemedText>
-              {hasEvents && (
-                <View
-                  style={[
-                    styles.eventDot,
-                    { backgroundColor: isSelected ? colors.onPrimary : colors.primary }
-                  ]}
-                />
-              )}
+                <ThemedText
+                  variant="bodySm"
+                  color={
+                    isSelected
+                      ? colors.onPrimary
+                      : isToday
+                        ? colors.primary
+                        : item.isCurrentMonth
+                          ? colors.ink
+                          : colors.inkFaint
+                  }
+                  style={[styles.dayText, (isSelected || isToday) && { fontWeight: "700" }]}
+                >
+                  {item.day}
+                </ThemedText>
+                {hasEvents && (
+                  <View
+                    style={[
+                      styles.eventDot,
+                      { backgroundColor: isSelected ? colors.onPrimary : colors.primary }
+                    ]}
+                  />
+                )}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -229,7 +237,8 @@ const styles = StyleSheet.create({
   weekDayLabel: {
     width: `${100 / 7}%`,
     textAlign: "center",
-    fontWeight: "600"
+    fontWeight: "600",
+    fontSize: 11
   },
   grid: {
     flexDirection: "row",
@@ -245,14 +254,24 @@ const styles = StyleSheet.create({
     width: `${100 / 7}%`,
     height: 44,
     alignItems: "center",
+    justifyContent: "center"
+  },
+  cellInner: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
     justifyContent: "center",
-    borderRadius: radius.md
+    borderRadius: radius.full
   },
   selectedCell: {
     backgroundColor: colors.primary
   },
+  todayCell: {
+    borderWidth: 1.5,
+    borderColor: colors.primary
+  },
   otherMonthCell: {
-    opacity: 0.5
+    opacity: 0.4
   },
   dayText: {
     fontSize: 13
@@ -261,13 +280,14 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    marginTop: 2
+    marginTop: 1
   },
   selectedEventsSection: {
     marginTop: spacing.lg
   },
   agendaTitle: {
-    marginBottom: spacing.sm
+    marginBottom: spacing.sm,
+    letterSpacing: -0.25
   },
   emptyCard: {
     padding: spacing.lg
@@ -289,3 +309,4 @@ const styles = StyleSheet.create({
     marginTop: 4
   }
 });
+

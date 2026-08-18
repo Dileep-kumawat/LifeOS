@@ -57,13 +57,27 @@ function AuthNavigator() {
 
 function MainTabNavigator() {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.canvasSoft }}>
       <ConflictNoticeBanner />
       <Tab.Navigator
         screenOptions={{
           headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTitleStyle: { color: colors.ink, fontWeight: "600" },
+          headerStyle: {
+            backgroundColor: colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.hairline,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.03,
+            shadowRadius: 2,
+            elevation: 1
+          },
+          headerTitleStyle: {
+            color: colors.ink,
+            fontWeight: "700",
+            fontSize: 18,
+            letterSpacing: -0.3
+          },
           headerShadowVisible: false,
           headerRight: () => (
             <View style={{ marginRight: 16 }}>
@@ -74,67 +88,78 @@ function MainTabNavigator() {
             backgroundColor: colors.surface,
             borderTopColor: colors.hairline,
             borderTopWidth: 1,
-            height: 60,
+            height: 62,
             paddingBottom: 8,
-            paddingTop: 6
+            paddingTop: 6,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: -1 },
+            shadowOpacity: 0.03,
+            shadowRadius: 2,
+            elevation: 2
+          },
+          tabBarLabelStyle: {
+            fontSize: 10.5,
+            fontWeight: "600",
+            marginTop: -2
           },
           tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.inkFaint
+          tabBarInactiveTintColor: colors.inkMuted
         }}
       >
         <Tab.Screen
           name="Dashboard"
           component={DashboardScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} />
+            tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Calendar"
           component={CalendarScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />
+            tabBarIcon: ({ color }) => <Calendar color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Habits & Goals"
           component={HabitsGoalsScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size} />
+            tabBarIcon: ({ color }) => <CheckSquare color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Notes"
           component={NotesScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />
+            tabBarIcon: ({ color }) => <FileText color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Finance"
           component={FinanceScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size} />
+            tabBarIcon: ({ color }) => <DollarSign color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Assistant"
           component={ChatScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />
+            tabBarIcon: ({ color }) => <Sparkles color={color} size={20} />
           }}
         />
         <Tab.Screen
           name="Settings"
           component={SettingsScreen}
           options={{
-            tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />
+            tabBarIcon: ({ color }) => <Settings color={color} size={20} />
           }}
         />
       </Tab.Navigator>
     </View>
   );
 }
+
 
 function AuthenticatedNavigator() {
   return (

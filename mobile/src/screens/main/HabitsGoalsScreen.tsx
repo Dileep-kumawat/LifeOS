@@ -344,27 +344,33 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    padding: spacing.xs,
-    alignItems: "center"
+    padding: spacing.xs + 2,
+    alignItems: "center",
+    gap: 2
   },
   metricIconWrap: {
-    padding: 6,
+    width: 28,
+    height: 28,
     borderRadius: radius.full,
     backgroundColor: "#D1FAE5",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 2
   },
   tabSegment: {
     flexDirection: "row",
-    backgroundColor: colors.canvasSoft,
-    padding: 4,
-    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    padding: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     marginBottom: spacing.sm
   },
   segmentBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 7,
     alignItems: "center",
-    borderRadius: radius.md
+    borderRadius: radius.full
   },
   segmentBtnActive: {
     backgroundColor: colors.primary
@@ -377,3 +383,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   }
 });
+

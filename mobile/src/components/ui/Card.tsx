@@ -18,7 +18,8 @@ export function Card({
       style={[
         styles.card,
         variant === "canvasSoft" ? styles.canvasSoft : styles.surface,
-        elevated ? shadows.raised : styles.flatBorder,
+        styles.border,
+        elevated && shadows.raised,
         style
       ]}
       {...props}
@@ -39,8 +40,9 @@ const styles = StyleSheet.create({
   canvasSoft: {
     backgroundColor: colors.canvasSoft
   },
-  flatBorder: {
+  border: {
     borderWidth: 1,
     borderColor: colors.hairline
   }
 });
+

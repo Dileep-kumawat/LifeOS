@@ -394,8 +394,9 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    padding: spacing.xs,
-    justifyContent: "center"
+    padding: spacing.xs + 2,
+    justifyContent: "center",
+    gap: 2
   },
   summaryHeader: {
     flexDirection: "row",
@@ -405,16 +406,18 @@ const styles = StyleSheet.create({
   },
   tabSegment: {
     flexDirection: "row",
-    backgroundColor: colors.canvasSoft,
+    backgroundColor: colors.surface,
     padding: 3,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     marginBottom: spacing.sm
   },
   segmentBtn: {
     flex: 1,
-    paddingVertical: 6,
+    paddingVertical: 7,
     alignItems: "center",
-    borderRadius: radius.sm
+    borderRadius: radius.full
   },
   segmentBtnActive: {
     backgroundColor: colors.primary
@@ -495,3 +498,4 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg
   }
 });
+
