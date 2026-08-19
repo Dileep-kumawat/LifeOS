@@ -7,18 +7,73 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from "react-native";
-import { Send, Plus, History, WifiOff, Sparkles } from "lucide-react-native";
-import { ScreenContainer } from "../../components/ui/ScreenContainer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  ArrowUp,
+  Plus,
+  History,
+  WifiOff,
+  Sparkles,
+  SquarePen,
+  ChevronDown,
+  Calendar,
+  Target,
+  DollarSign,
+  FileText,
+  Mic,
+  Square
+} from "lucide-react-native";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { ChatMessage } from "../../components/ai/ChatMessage";
 import { ToolConfirmationModal } from "../../components/ai/ToolConfirmationModal";
 import { ConversationHistoryModal } from "../../components/ai/ConversationHistoryModal";
 import { useSocketChat } from "../../services/useSocketChat";
-import { colors, radius, spacing } from "../../theme";
+import { colors, radius, spacing, shadows } from "../../theme";
+
+interface PromptSuggestion {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  prompt: string;
+}
+
+const SUGGESTIONS: PromptSuggestion[] = [
+  {
+    id: "schedule",
+    icon: <Calendar size={18} color={colors.primary} />,
+    title: "Review today's schedule",
+    subtitle: "Check events, tasks & upcoming meetings",
+    prompt: "What are my scheduled events and meetings for today?"
+  },
+  {
+    id: "habits",
+    icon: <Target size={18} color={colors.accentGreen} />,
+    title: "Check habit streaks",
+    subtitle: "See daily goals and progress",
+    prompt: "Show my habit streaks and what goals are pending today."
+  },
+  {
+    id: "finance",
+    icon: <DollarSign size={18} color={colors.accentOrange} />,
+    title: "Analyze monthly budget",
+    subtitle: "Overview of spending and balance",
+    prompt: "Give me an overview of my recent transactions and monthly budget."
+  },
+  {
+    id: "note",
+    icon: <FileText size={18} color={colors.accentPurple} />,
+    title: "Draft a reflection note",
+    subtitle: "Capture thoughts & summaries",
+    prompt: "Help me write a daily reflection note in my notebook."
+  }
+];
 
 export function ChatScreen() {
+  const insets = useSafeAreaInsets();
   const {
     isOnline,
     conversations,
@@ -40,6 +95,7 @@ export function ChatScreen() {
 
   const [input, setInput] = useState("");
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [showQuickPrompts, setShowQuickPrompts] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   // Auto-scroll to end on new messages or streaming chunks
@@ -51,85 +107,118 @@ export function ChatScreen() {
     }
   }, [messages.length, messages[messages.length - 1]?.content]);
 
-  const handleSend = () => {
-    if (!input.trim() || !isOnline || isStreaming) return;
-    sendMessage(input);
-    setInput("");
+  const handleSend = (text?: string) => {
+    const textToSend = text || input;
+    if (!textToSend.trim() || !isOnline || isStreaming) return;
+    sendMessage(textToSend);
+    if (!text) setInput("");
+  };
+
+  const handleSuggestionPress = (prompt: string) => {
+    if (!isOnline || isStreaming) return;
+    handleSend(prompt);
   };
 
   const activeConv = conversations.find((c) => c.id === activeConversationId);
-  const convTitle = activeConv ? activeConv.title : "New Conversation";
+  const convTitle = activeConv ? activeConv.title : "LifeOS AI";
 
   return (
-    <ScreenContainer scrollable={false}>
-      {/* Header Toolbar */}
-      <View style={styles.header}>
-        <View style={styles.headerTitleWrap}>
-          <ThemedText variant="heading3" numberOfLines={1} style={styles.headerTitle}>
-            {convTitle}
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) }]}>
+      {/* Top Header - ChatGPT Mobile Style */}
+      <View style={styles.topHeader}>
+        {/* Left: History / Drawer Button */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setIsHistoryModalOpen(true)}
+          style={styles.headerIconButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <History size={20} color={colors.ink} />
+        </TouchableOpacity>
+
+        {/* Center: Model Selector Pill */}
+        <View style={styles.modelPill}>
+          <ThemedText variant="bodySm" style={styles.modelPillText} numberOfLines={1}>
+            {activeConversationId ? convTitle : "LifeOS Assistant"}
           </ThemedText>
+          <ChevronDown size={14} color={colors.inkMuted} />
         </View>
 
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setIsHistoryModalOpen(true)}
-            style={styles.headerBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <History size={18} color={colors.ink} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={newChat}
-            style={[styles.headerBtn, styles.newChatHeaderBtn]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Plus size={18} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        {/* Right: New Chat Button */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={newChat}
+          style={styles.headerIconButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <SquarePen size={20} color={colors.ink} />
+        </TouchableOpacity>
       </View>
 
-      {/* Offline Notice Banner (Connected-only rule) */}
+      {/* Offline Notice Banner */}
       {!isOnline && (
         <View style={styles.offlineBanner}>
-          <WifiOff size={16} color={colors.error} />
+          <WifiOff size={15} color={colors.error} />
           <ThemedText variant="caption" color={colors.error} style={{ flex: 1 }}>
-            AI Assistant requires an active internet connection. Chat is connected-only.
+            AI Assistant is connected-only. Please connect to the internet.
           </ThemedText>
         </View>
       )}
 
-      {/* Messages List / Loading / Empty */}
+      {/* Main Chat Area */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         {isLoadingHistory ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
             <ThemedText variant="caption" color={colors.inkMuted}>
-              Loading conversation history...
+              Loading conversation...
             </ThemedText>
           </View>
         ) : messages.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrap}>
-              <Sparkles size={36} color={colors.primary} />
+          /* ChatGPT Mobile Style Start Screen */
+          <ScrollView
+            contentContainerStyle={styles.startScreenContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.startHero}>
+              <View style={styles.aiOrbContainer}>
+                <Sparkles size={32} color="#FFFFFF" />
+              </View>
+              <ThemedText variant="heading2" style={styles.startHeroTitle}>
+                What can I help with today?
+              </ThemedText>
+              <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.startHeroSubtitle}>
+                Ask about your schedule, habits, finance, and notes — or automate your day.
+              </ThemedText>
             </View>
-            <ThemedText variant="heading2" style={{ textAlign: "center" }}>
-              How can I help you today?
-            </ThemedText>
-            <ThemedText
-              variant="bodySm"
-              color={colors.inkMuted}
-              style={{ textAlign: "center", maxWidth: 280 }}
-            >
-              Ask about your schedule, habits, notes, or financial trends — or ask me to schedule an event or habit for you.
-            </ThemedText>
-          </View>
+
+            {/* Curated Suggestion Prompt Cards */}
+            <View style={styles.suggestionsGrid}>
+              {SUGGESTIONS.map((sug) => (
+                <TouchableOpacity
+                  key={sug.id}
+                  activeOpacity={0.7}
+                  onPress={() => handleSuggestionPress(sug.prompt)}
+                  style={styles.suggestionCard}
+                >
+                  <View style={styles.suggestionIconWrap}>{sug.icon}</View>
+                  <View style={styles.suggestionTextWrap}>
+                    <ThemedText variant="bodySm" style={styles.suggestionTitle}>
+                      {sug.title}
+                    </ThemedText>
+                    <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1}>
+                      {sug.subtitle}
+                    </ThemedText>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         ) : (
           <FlatList
             ref={flatListRef}
@@ -148,38 +237,79 @@ export function ChatScreen() {
           />
         )}
 
-        {/* Input Bar */}
-        <View style={styles.inputBar}>
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            placeholder={
-              !isOnline
-                ? "Connect to internet to chat..."
-                : "Ask LifeOS AI anything..."
-            }
-            placeholderTextColor={colors.inkMuted}
-            editable={isOnline && !isStreaming}
-            style={styles.textInput}
-            multiline
-            maxLength={2000}
-          />
+        {/* Quick Suggestion Chips Bar when in chat */}
+        {showQuickPrompts && (
+          <View style={styles.quickPromptsBar}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptsContent}>
+              {SUGGESTIONS.map((sug) => (
+                <TouchableOpacity
+                  key={sug.id}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    handleSuggestionPress(sug.prompt);
+                    setShowQuickPrompts(false);
+                  }}
+                  style={styles.quickPromptChip}
+                >
+                  <ThemedText variant="caption" style={styles.quickPromptText}>
+                    {sug.title}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleSend}
-            disabled={!input.trim() || !isOnline || isStreaming}
-            style={[
-              styles.sendBtn,
-              (!input.trim() || !isOnline || isStreaming) && styles.sendBtnDisabled
-            ]}
-          >
+        {/* Signature ChatGPT Bottom Capsule Bar */}
+        <View style={[styles.bottomBarContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+          <View style={styles.inputCapsule}>
+            {/* Plus / Quick Actions Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setShowQuickPrompts(!showQuickPrompts)}
+              style={styles.plusActionButton}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Plus size={18} color={showQuickPrompts ? colors.primary : colors.inkSecondary} />
+            </TouchableOpacity>
+
+            {/* Dynamic Multiline Text Input */}
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder={!isOnline ? "Connect to internet to chat..." : "Message LifeOS AI..."}
+              placeholderTextColor={colors.inkMuted}
+              editable={isOnline && !isStreaming}
+              style={styles.capsuleInput}
+              multiline
+              maxLength={2000}
+            />
+
+            {/* Right Action: Send Button (ArrowUp) / Stop Button / Mic Icon */}
             {isStreaming ? (
-              <ActivityIndicator size="small" color={colors.onPrimary} />
+              <View style={[styles.capsuleActionBtn, styles.stopBtn]}>
+                <Square size={12} color="#FFFFFF" fill="#FFFFFF" />
+              </View>
+            ) : input.trim().length > 0 ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSend()}
+                disabled={!isOnline}
+                style={[styles.capsuleActionBtn, styles.sendActiveBtn]}
+              >
+                <ArrowUp size={18} color="#FFFFFF" strokeWidth={2.6} />
+              </TouchableOpacity>
             ) : (
-              <Send size={16} color={colors.onPrimary} />
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowQuickPrompts(!showQuickPrompts)}
+                style={styles.capsuleActionBtn}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Mic size={19} color={colors.inkMuted} />
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -200,7 +330,7 @@ export function ChatScreen() {
         isExecuting={isExecutingTool}
       />
 
-      {/* Conversation History Modal */}
+      {/* Conversation History Modal / Drawer */}
       <ConversationHistoryModal
         visible={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}
@@ -210,48 +340,59 @@ export function ChatScreen() {
         onNewChat={newChat}
         onDelete={(id) => deleteConversation(id)}
       />
-    </ScreenContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: colors.canvasSoft
+  },
+  topHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairline
-  },
-  headerTitleWrap: {
-    flex: 1,
-    marginRight: spacing.sm
-  },
-  headerTitle: {
-    color: colors.ink
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs
-  },
-  headerBtn: {
-    padding: spacing.xs,
-    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
     backgroundColor: colors.canvasSoft
   },
-  newChatHeaderBtn: {
-    backgroundColor: "#E0F2FE"
+  headerIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    ...shadows.card
+  },
+  modelPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: colors.surface,
+    borderRadius: radius.full,
+    maxWidth: "60%",
+    ...shadows.card
+  },
+  modelPillText: {
+    fontWeight: "700",
+    color: colors.ink,
+    fontSize: 14,
+    letterSpacing: -0.2
   },
   offlineBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
     backgroundColor: "#FEE2E2",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-    marginVertical: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    marginHorizontal: spacing.md,
+    marginBottom: 6,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: "#FECACA"
   },
@@ -261,57 +402,149 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.xs
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
+  startScreenContainer: {
+    flexGrow: 1,
     justifyContent: "center",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl
   },
-  emptyIconWrap: {
-    width: 64,
-    height: 64,
+  startHero: {
+    alignItems: "center",
+    marginBottom: spacing.xl
+  },
+  aiOrbContainer: {
+    width: 58,
+    height: 58,
     borderRadius: radius.full,
-    backgroundColor: "#E0F2FE",
+    backgroundColor: "#0F172A",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.xs
+    marginBottom: spacing.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4
+  },
+  startHeroTitle: {
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.ink,
+    marginBottom: 6,
+    letterSpacing: -0.4
+  },
+  startHeroSubtitle: {
+    textAlign: "center",
+    fontSize: 14,
+    maxWidth: 290,
+    lineHeight: 20
+  },
+  suggestionsGrid: {
+    gap: 10
+  },
+  suggestionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: radius.lg,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    ...shadows.card
+  },
+  suggestionIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.canvasSoft,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  suggestionTextWrap: {
+    flex: 1
+  },
+  suggestionTitle: {
+    fontWeight: "600",
+    color: colors.ink,
+    fontSize: 14,
+    marginBottom: 2
   },
   messagesList: {
     paddingVertical: spacing.sm
   },
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.hairline,
-    backgroundColor: colors.surface
+  quickPromptsBar: {
+    paddingVertical: 6,
+    backgroundColor: colors.canvasSoft
   },
-  textInput: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
-    backgroundColor: colors.canvasSoft,
-    borderRadius: radius.lg,
+  quickPromptsContent: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: colors.ink,
-    borderWidth: 1,
-    borderColor: colors.hairline
+    gap: 8
   },
-  sendBtn: {
-    width: 40,
-    height: 40,
+  quickPromptChip: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center"
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    ...shadows.card
   },
-  sendBtnDisabled: {
-    opacity: 0.4
+  quickPromptText: {
+    color: colors.inkSecondary,
+    fontWeight: "600",
+    fontSize: 12
+  },
+  bottomBarContainer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    backgroundColor: colors.canvasSoft
+  },
+  inputCapsule: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 26,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    ...shadows.raised
+  },
+  plusActionButton: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.full,
+    backgroundColor: colors.canvasSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6
+  },
+  capsuleInput: {
+    flex: 1,
+    minHeight: 38,
+    maxHeight: 120,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    fontSize: 15,
+    color: colors.ink,
+    lineHeight: 20
+  },
+  capsuleActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4
+  },
+  sendActiveBtn: {
+    backgroundColor: "#0F172A" // ChatGPT-style solid dark circular send button
+  },
+  stopBtn: {
+    backgroundColor: "#0F172A"
   }
 });

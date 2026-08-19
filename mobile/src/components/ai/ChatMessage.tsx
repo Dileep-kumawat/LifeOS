@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   Sparkles,
@@ -6,13 +6,19 @@ import {
   Wrench,
   CheckCircle2,
   XCircle,
-  Cpu
+  Cpu,
+  Copy,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  Calendar,
+  Target,
+  FileText
 } from "lucide-react-native";
 import type { ChatMessage as ChatMessageType } from "../../services/aiChatService";
 import { ThemedText } from "../ui/ThemedText";
 import { MarkdownText } from "./MarkdownText";
 import { colors, radius, spacing, shadows } from "../../theme";
-
 
 export interface ChatMessageProps {
   message: ChatMessageType;
@@ -27,6 +33,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 }) => {
   const { role, content, toolCallData, isStreaming, createdAt } = message;
   const isUser = role === "user";
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const isUncertainty =
     !isUser &&
@@ -49,12 +62,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     ? new Date(createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : "";
 
+  const getToolIcon = (toolName: string) => {
+    if (toolName.includes("calendar")) return <Calendar size={15} color={colors.primary} />;
+    if (toolName.includes("habit")) return <Target size={15} color={colors.accentGreen} />;
+    if (toolName.includes("note")) return <FileText size={15} color={colors.accentPurple} />;
+    return <Wrench size={15} color={colors.primary} />;
+  };
+
   return (
     <View style={styles.assistantContainer}>
       {/* Retrying with Backup Model Notification */}
       {backupModelStatus && (
         <View style={styles.backupModelBadge}>
-          <Cpu size={14} color={colors.warning} />
+          <Cpu size={13} color={colors.warning} />
           <ThemedText variant="caption" color={colors.warning} style={styles.backupModelText}>
             {backupModelStatus}
           </ThemedText>
@@ -62,9 +82,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       )}
 
       <View style={styles.assistantRow}>
-        {/* Sparkles Avatar */}
+        {/* Sleek Minimalist AI Avatar */}
         <View style={styles.assistantAvatar}>
-          <Sparkles size={16} color={colors.onPrimary} />
+          <Sparkles size={15} color="#FFFFFF" />
         </View>
 
         {/* Message Content Container */}
@@ -74,16 +94,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               LifeOS AI
             </ThemedText>
             {timeString ? (
-              <ThemedText variant="caption" color={colors.inkMuted}>
+              <ThemedText variant="caption" color={colors.inkMuted} style={styles.timeText}>
                 {timeString}
               </ThemedText>
             ) : null}
           </View>
 
-          {/* Uncertainty Callout (FR-2.6) */}
+          {/* Uncertainty Callout */}
           {isUncertainty ? (
             <View style={styles.uncertaintyCard}>
-              <AlertCircle size={18} color="#D97706" style={styles.alertIcon} />
+              <AlertCircle size={17} color="#D97706" style={styles.alertIcon} />
               <View style={{ flex: 1 }}>
                 <ThemedText variant="bodySm" style={styles.uncertaintyText}>
                   {content}
@@ -99,7 +119,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )
           )}
 
-          {/* Tool Call Cards */}
+          {/* Tool Call Cards - ChatGPT Canvas Style */}
           {toolCallData && (
             <View style={styles.toolCardContainer}>
               {/* 1. Pending Confirmation */}
@@ -107,14 +127,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <View style={styles.toolPendingCard}>
                   <View style={styles.toolPendingHeader}>
                     <View style={styles.toolIconWrap}>
-                      <Wrench size={18} color={colors.primary} />
+                      {getToolIcon(toolCallData.toolName)}
                     </View>
                     <View style={styles.toolPendingInfo}>
                       <ThemedText variant="caption" style={styles.toolProposedTitle}>
-                        Proposed Action
+                        Action Proposed
                       </ThemedText>
-                      <ThemedText variant="caption" color={colors.inkSecondary} numberOfLines={1}>
-                        Tool: <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
+                      <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1}>
+                        <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
                       </ThemedText>
                     </View>
                   </View>
@@ -125,7 +145,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     style={styles.reviewActionBtn}
                   >
                     <ThemedText variant="caption" style={styles.reviewActionBtnText}>
-                      Review Action
+                      Review & Approve Action
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -134,10 +154,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {/* 2. Executed */}
               {toolCallData.status === "executed" && (
                 <View style={styles.toolExecutedCard}>
-                  <CheckCircle2 size={16} color={colors.success} style={{ marginTop: 2 }} />
+                  <CheckCircle2 size={16} color="#059669" style={{ marginTop: 2 }} />
                   <View style={{ flex: 1 }}>
                     <ThemedText variant="bodySm" style={{ fontWeight: "700", color: "#065F46" }}>
-                      Action Executed: <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
+                      Executed: <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
                     </ThemedText>
                     {toolCallData.result?.message && (
                       <ThemedText variant="caption" color="#047857" style={{ marginTop: 2 }}>
@@ -151,9 +171,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {/* 3. Cancelled */}
               {toolCallData.status === "cancelled" && (
                 <View style={styles.toolCancelledCard}>
-                  <XCircle size={16} color={colors.inkMuted} />
+                  <XCircle size={15} color={colors.inkMuted} />
                   <ThemedText variant="caption" color={colors.inkMuted} style={{ flex: 1 }}>
-                    Action cancelled by user ({toolCallData.toolName})
+                    Action cancelled ({toolCallData.toolName})
                   </ThemedText>
                 </View>
               )}
@@ -161,12 +181,54 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {/* 4. Failed */}
               {toolCallData.status === "failed" && (
                 <View style={styles.toolFailedCard}>
-                  <AlertCircle size={16} color={colors.error} />
+                  <AlertCircle size={15} color={colors.error} />
                   <ThemedText variant="caption" color={colors.error} style={{ flex: 1 }}>
                     {toolCallData.error || "Action execution failed."}
                   </ThemedText>
                 </View>
               )}
+            </View>
+          )}
+
+          {/* ChatGPT-style Message Action Bar */}
+          {!isStreaming && content && (
+            <View style={styles.messageActionsRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleCopy}
+                style={styles.actionIconBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {copied ? (
+                  <Check size={14} color={colors.success} />
+                ) : (
+                  <Copy size={14} color={colors.inkMuted} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setFeedback(feedback === "up" ? null : "up")}
+                style={styles.actionIconBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <ThumbsUp
+                  size={14}
+                  color={feedback === "up" ? colors.primary : colors.inkMuted}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setFeedback(feedback === "down" ? null : "down")}
+                style={styles.actionIconBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <ThumbsDown
+                  size={14}
+                  color={feedback === "down" ? colors.error : colors.inkMuted}
+                />
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -179,54 +241,55 @@ const styles = StyleSheet.create({
   userRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginVertical: spacing.xs,
+    marginVertical: 6,
     paddingHorizontal: spacing.md
   },
   userBubble: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderTopRightRadius: radius.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    maxWidth: "85%",
-    borderWidth: 1,
-    borderColor: colors.hairline,
+    backgroundColor: "#1E293B", // ChatGPT-style sleek dark container
+    borderRadius: 20,
+    borderBottomRightRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    maxWidth: "82%",
     ...shadows.card
   },
   userText: {
-    color: colors.ink,
-    lineHeight: 20
+    color: "#FFFFFF",
+    lineHeight: 21,
+    fontSize: 15,
+    fontWeight: "400"
   },
   assistantContainer: {
-    marginVertical: spacing.xs,
+    marginVertical: 6,
     paddingHorizontal: spacing.md
   },
   backupModelBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: 6,
     backgroundColor: "#FEF3C7",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.full,
     marginBottom: spacing.xs,
     alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: "#FDE68A"
   },
   backupModelText: {
-    fontWeight: "600"
+    fontWeight: "600",
+    fontSize: 12
   },
   assistantRow: {
     flexDirection: "row",
-    gap: spacing.sm,
+    gap: 10,
     alignItems: "flex-start"
   },
   assistantAvatar: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: radius.full,
-    backgroundColor: colors.secondary, // Deep indigo per DESIGN.md
+    backgroundColor: "#0F172A",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2
@@ -243,27 +306,30 @@ const styles = StyleSheet.create({
   agentName: {
     fontWeight: "700",
     color: colors.ink,
-    letterSpacing: -0.1
+    fontSize: 13,
+    letterSpacing: -0.2
+  },
+  timeText: {
+    fontSize: 11
   },
   contentWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "flex-end"
   },
-
   streamingCursor: {
     width: 6,
     height: 16,
     backgroundColor: colors.primary,
     marginLeft: 4,
-    marginBottom: 2,
+    marginBottom: 3,
     borderRadius: 2
   },
   uncertaintyCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.xs,
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "#FFFBEB",
     padding: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1,
@@ -278,25 +344,29 @@ const styles = StyleSheet.create({
     fontWeight: "500"
   },
   toolCardContainer: {
-    marginTop: spacing.xs
+    marginTop: 8
   },
   toolPendingCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.sm,
+    borderRadius: radius.lg,
+    padding: 12,
     borderWidth: 1.5,
-    borderColor: colors.primary,
-    gap: spacing.xs
+    borderColor: "#93C5FD",
+    gap: 8,
+    ...shadows.card
   },
   toolPendingHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: 8
   },
   toolIconWrap: {
-    padding: 6,
+    width: 30,
+    height: 30,
+    borderRadius: radius.md,
     backgroundColor: colors.canvasSoft,
-    borderRadius: radius.sm
+    alignItems: "center",
+    justifyContent: "center"
   },
   toolPendingInfo: {
     flex: 1
@@ -304,32 +374,35 @@ const styles = StyleSheet.create({
   toolProposedTitle: {
     fontWeight: "700",
     color: colors.ink,
-    textTransform: "uppercase"
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.2
   },
   toolNameTag: {
     fontFamily: "monospace",
     backgroundColor: colors.canvasSoft,
     paddingHorizontal: 4,
     borderRadius: radius.xs,
-    fontWeight: "600"
+    fontWeight: "600",
+    fontSize: 11
   },
   reviewActionBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 8,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    marginTop: 2
+    borderRadius: radius.full,
+    alignItems: "center"
   },
   reviewActionBtnText: {
     color: colors.onPrimary,
-    fontWeight: "700"
+    fontWeight: "700",
+    fontSize: 12
   },
   toolExecutedCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.xs,
     backgroundColor: "#ECFDF5",
-    padding: spacing.sm,
+    padding: 10,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: "#A7F3D0"
@@ -339,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xs,
     backgroundColor: colors.canvasSoft,
-    padding: spacing.sm,
+    padding: 10,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.hairline
@@ -349,9 +422,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xs,
     backgroundColor: "#FEE2E2",
-    padding: spacing.sm,
+    padding: 10,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: "#FECACA"
+  },
+  messageActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 6,
+    paddingTop: 2
+  },
+  actionIconBtn: {
+    padding: 4,
+    borderRadius: radius.xs
   }
 });

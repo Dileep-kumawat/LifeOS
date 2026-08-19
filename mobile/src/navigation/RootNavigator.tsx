@@ -145,6 +145,7 @@ function MainTabNavigator() {
           name="Assistant"
           component={ChatScreen}
           options={{
+            headerShown: false,
             tabBarIcon: ({ color }) => <Sparkles color={color} size={20} />
           }}
         />
