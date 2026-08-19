@@ -50,9 +50,12 @@ export function FolderManagerModal({
             placeholder="New folder name..."
             value={newFolderName}
             onChangeText={setNewFolderName}
-            style={{ flex: 1 }}
+            containerStyle={styles.createInputContainer}
+            onSubmitEditing={handleCreate}
+            returnKeyType="done"
           />
           <TouchableOpacity
+            activeOpacity={0.8}
             onPress={handleCreate}
             disabled={isSubmitting || !newFolderName.trim()}
             style={[styles.addBtn, !newFolderName.trim() && styles.btnDisabled]}
@@ -95,14 +98,25 @@ const styles = StyleSheet.create({
   createRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: spacing.xs,
+    width: "100%"
+  },
+  createInputContainer: {
+    flex: 1,
+    marginBottom: 0
   },
   addBtn: {
     backgroundColor: colors.primary,
-    padding: spacing.sm,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2
   },
   btnDisabled: {
     opacity: 0.5

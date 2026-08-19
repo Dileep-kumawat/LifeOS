@@ -184,10 +184,12 @@ export const financeRepo = {
   ): Promise<FinanceSummaryData> {
     const allTxs = await this.listTransactions(userId);
 
-    const startOfMonth = `${targetMonthStr}-01`;
-    const endOfMonth = `${targetMonthStr}-31T23:59:59`;
+    const [targetYear, targetMonth] = (targetMonthStr || new Date().toISOString().substring(0, 7))
+      .split("-")
+      .map(Number);
+    const curMonthPrefix = `${targetYear}-${String(targetMonth).padStart(2, "0")}`;
 
-    const monthTxs = allTxs.filter((t) => t.date >= startOfMonth && t.date <= endOfMonth);
+    const monthTxs = allTxs.filter((t) => t.date && t.date.startsWith(curMonthPrefix));
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -215,17 +217,16 @@ export const financeRepo = {
       }))
       .sort((a, b) => b.amount - a.amount);
 
-    // Compute past 6 months trend
+    // Compute past 6 months trend using UTC date math
     const monthlyTrends: MonthlyTrendPoint[] = [];
-    const now = new Date();
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const mStr = d.toISOString().substring(0, 7);
-      const mLabel = d.toLocaleString("default", { month: "short" });
+      const d = new Date(Date.UTC(targetYear, targetMonth - 1 - i, 1, 12, 0, 0));
+      const year = d.getUTCFullYear();
+      const monthNum = d.getUTCMonth() + 1;
+      const mStr = `${year}-${String(monthNum).padStart(2, "0")}`;
+      const mLabel = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 
-      const mStart = `${mStr}-01`;
-      const mEnd = `${mStr}-31T23:59:59`;
-      const curTxs = allTxs.filter((t) => t.date >= mStart && t.date <= mEnd);
+      const curTxs = allTxs.filter((t) => t.date && t.date.startsWith(mStr));
 
       let inc = 0;
       let exp = 0;

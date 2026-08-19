@@ -189,25 +189,44 @@ export function GoalFormModal({
             Milestones ({milestones.length})
           </ThemedText>
 
-          {milestones.map((m) => (
-            <View key={m.id} style={styles.milestoneItem}>
-              <ThemedText variant="bodySm" numberOfLines={1} style={{ flex: 1 }}>
-                {m.title}
-              </ThemedText>
-              <TouchableOpacity onPress={() => handleRemoveMilestone(m.id)}>
-                <Trash2 size={16} color={colors.error} />
-              </TouchableOpacity>
+          {milestones.length > 0 && (
+            <View style={styles.milestonesList}>
+              {milestones.map((m, index) => (
+                <View key={m.id} style={styles.milestoneItem}>
+                  <View style={styles.milestoneIndexBadge}>
+                    <ThemedText variant="caption" style={styles.milestoneIndexText}>
+                      {index + 1}
+                    </ThemedText>
+                  </View>
+                  <ThemedText variant="bodySm" numberOfLines={2} style={styles.milestoneTitle}>
+                    {m.title}
+                  </ThemedText>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveMilestone(m.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.deleteMilestoneBtn}
+                  >
+                    <Trash2 size={15} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
-          ))}
+          )}
 
           <View style={styles.addMilestoneRow}>
             <TextInput
               placeholder="Add next milestone..."
               value={newMilestoneTitle}
               onChangeText={setNewMilestoneTitle}
-              style={{ flex: 1 }}
+              containerStyle={styles.addMilestoneInputContainer}
+              onSubmitEditing={handleAddMilestone}
+              returnKeyType="done"
             />
-            <TouchableOpacity onPress={handleAddMilestone} style={styles.addBtn}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleAddMilestone}
+              style={styles.addBtn}
+            >
               <Plus size={18} color={colors.onPrimary} />
             </TouchableOpacity>
           </View>
@@ -268,27 +287,67 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary
   },
+  milestonesList: {
+    marginBottom: spacing.xs
+  },
   milestoneItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs + 2,
     backgroundColor: colors.canvasSoft,
-    borderRadius: radius.sm,
-    marginBottom: 4
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.md,
+    marginBottom: 6,
+    gap: spacing.xs
+  },
+  milestoneIndexBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  milestoneIndexText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.inkMuted
+  },
+  milestoneTitle: {
+    flex: 1,
+    color: colors.ink,
+    fontSize: 13.5
+  },
+  deleteMilestoneBtn: {
+    padding: 4
   },
   addMilestoneRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
-    marginTop: 4
+    width: "100%"
+  },
+  addMilestoneInputContainer: {
+    flex: 1,
+    marginBottom: 0
   },
   addBtn: {
     backgroundColor: colors.primary,
-    padding: spacing.sm,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2
   },
   buttonContainer: {
     marginTop: spacing.md,

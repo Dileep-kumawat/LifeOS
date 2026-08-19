@@ -69,13 +69,16 @@ export function HabitCard({
             {/* Streak Badge */}
             <View style={[styles.streakBadge, habit.currentStreak > 0 && styles.streakBadgeActive]}>
               <Flame
-                size={13}
-                color={habit.currentStreak > 0 ? colors.accentOrangeDeep : colors.inkMuted}
+                size={12}
+                color={habit.currentStreak > 0 ? "#EA580C" : colors.inkMuted}
+                fill={habit.currentStreak > 0 ? "#EA580C" : "none"}
               />
               <ThemedText
                 variant="caption"
-                color={habit.currentStreak > 0 ? colors.accentOrangeDeep : colors.inkMuted}
-                style={{ fontWeight: "700", fontSize: 12 }}
+                style={[
+                  styles.streakBadgeText,
+                  habit.currentStreak > 0 && styles.streakBadgeTextActive
+                ]}
               >
                 {habit.currentStreak} {habit.currentStreak === 1 ? "day" : "days"}
               </ThemedText>
@@ -87,10 +90,11 @@ export function HabitCard({
       {/* 1-Tap Check-In Button (UC-4 Fast Tap) */}
       <TouchableOpacity
         activeOpacity={0.8}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         onPress={() => onToggleCheckIn(habit.id)}
         style={[styles.checkButton, isCheckedToday && styles.checkButtonActive]}
       >
-        {isCheckedToday && <Check size={20} color={colors.onPrimary} strokeWidth={3} />}
+        {isCheckedToday && <Check size={16} color={colors.onPrimary} strokeWidth={3} />}
       </TouchableOpacity>
     </Card>
   );
@@ -147,25 +151,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: colors.canvasSoft,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: radius.full
   },
   streakBadgeActive: {
-    backgroundColor: colors.accentOrange
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FED7AA"
+  },
+  streakBadgeText: {
+    fontWeight: "600",
+    fontSize: 11.5,
+    color: colors.inkMuted
+  },
+  streakBadgeTextActive: {
+    color: "#C2410C"
   },
   checkButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    borderWidth: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderWidth: 1.5,
     borderColor: colors.hairline,
     backgroundColor: colors.canvasSoft,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1
   },
   checkButtonActive: {
     backgroundColor: colors.success,
-    borderColor: colors.success
+    borderColor: colors.success,
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2
   }
 });

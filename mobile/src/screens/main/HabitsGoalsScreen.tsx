@@ -213,8 +213,8 @@ export function HabitsGoalsScreen() {
         </Card>
 
         <Card style={styles.metricCard}>
-          <View style={[styles.metricIconWrap, { backgroundColor: colors.accentOrange }]}>
-            <Flame size={16} color={colors.accentOrangeDeep} />
+          <View style={[styles.metricIconWrap, styles.bestStreakIconWrap]}>
+            <Flame size={16} color="#EA580C" fill="#EA580C" />
           </View>
           <ThemedText variant="heading3">{bestStreak}d</ThemedText>
           <ThemedText variant="caption" color={colors.inkMuted}>Best Streak</ThemedText>
@@ -356,6 +356,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 2
+  },
+  bestStreakIconWrap: {
+    backgroundColor: "#FFEDD5"
   },
   tabSegment: {
     flexDirection: "row",

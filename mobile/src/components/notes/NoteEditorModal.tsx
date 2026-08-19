@@ -288,10 +288,16 @@ export function NoteEditorModal({
               placeholder="Add tag..."
               value={newTagInput}
               onChangeText={setNewTagInput}
-              style={{ flex: 1 }}
+              containerStyle={styles.addTagInputContainer}
+              onSubmitEditing={handleAddTag}
+              returnKeyType="done"
             />
-            <TouchableOpacity onPress={handleAddTag} style={styles.addTagBtn}>
-              <Plus size={16} color={colors.onPrimary} />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleAddTag}
+              style={styles.addTagBtn}
+            >
+              <Plus size={18} color={colors.onPrimary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -434,14 +440,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    width: "100%",
     marginTop: 4
+  },
+  addTagInputContainer: {
+    flex: 1,
+    marginBottom: 0
   },
   addTagBtn: {
     backgroundColor: colors.primary,
-    padding: spacing.sm,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2
   },
   buttonContainer: {
     marginTop: spacing.md,

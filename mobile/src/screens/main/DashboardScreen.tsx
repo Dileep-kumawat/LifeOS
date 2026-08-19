@@ -927,9 +927,9 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   streakDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7
+    width: 11,
+    height: 11,
+    borderRadius: 3.5
   },
 
   // Finance Snapshot

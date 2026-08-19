@@ -119,12 +119,12 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
     return null;
   }
 
-  const width = 310;
-  const height = 160;
-  const padLeft = 35;
-  const padRight = 15;
-  const padTop = 15;
-  const padBottom = 25;
+  const width = 330;
+  const height = 170;
+  const padLeft = 46;
+  const padRight = 14;
+  const padTop = 16;
+  const padBottom = 26;
 
   const chartWidth = width - padLeft - padRight;
   const chartHeight = height - padTop - padBottom;
@@ -133,6 +133,16 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
     ...data.map((d) => Math.max(d.income, d.expense)),
     100
   );
+
+  const formatDollarLabel = (val: number) => {
+    if (val >= 1000000) {
+      return `$${(val / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
+    }
+    if (val >= 1000) {
+      return `$${(val / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+    }
+    return `$${Math.round(val)}`;
+  };
 
   const getX = (idx: number) => {
     if (data.length === 1) return padLeft + chartWidth / 2;
@@ -155,25 +165,27 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
   return (
     <Card style={styles.card}>
       <View style={styles.trendHeader}>
-        <ThemedText variant="heading3">Income & Spend Trend</ThemedText>
+        <ThemedText variant="heading3" style={styles.trendTitle}>
+          Income & Spend Trend
+        </ThemedText>
         <View style={styles.trendLegend}>
           <View style={styles.legendChip}>
             <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-            <ThemedText variant="caption">Income</ThemedText>
+            <ThemedText variant="caption" style={styles.legendText}>Income</ThemedText>
           </View>
           <View style={styles.legendChip}>
-            <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
-            <ThemedText variant="caption">Expense</ThemedText>
+            <View style={[styles.legendDot, { backgroundColor: "#EA580C" }]} />
+            <ThemedText variant="caption" style={styles.legendText}>Expense</ThemedText>
           </View>
         </View>
       </View>
 
       <View style={styles.chartWrapper}>
-        <Svg width={width} height={height}>
+        <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
           {/* Grid lines */}
           {[0, 0.5, 1].map((pct) => {
             const y = padTop + chartHeight * (1 - pct);
-            const valLabel = Math.round(maxVal * pct);
+            const valLabel = maxVal * pct;
             return (
               <G key={pct}>
                 <Line
@@ -186,13 +198,14 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
                   strokeDasharray="4 4"
                 />
                 <SvgText
-                  x={padLeft - 5}
-                  y={y + 3}
-                  fontSize="9"
+                  x={padLeft - 6}
+                  y={y + 3.5}
+                  fontSize="9.5"
+                  fontWeight="500"
                   fill={colors.inkFaint}
                   textAnchor="end"
                 >
-                  ${valLabel}
+                  {formatDollarLabel(valLabel)}
                 </SvgText>
               </G>
             );
@@ -205,15 +218,17 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
             stroke={colors.success}
             strokeWidth="2.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
           {/* Expense Line */}
           <Path
             d={expensePath}
             fill="none"
-            stroke={colors.error}
+            stroke="#EA580C"
             strokeWidth="2.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
           {/* Data points & X-axis month labels */}
@@ -221,12 +236,13 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
             const x = getX(idx);
             return (
               <G key={d.month}>
-                <Circle cx={x} cy={getY(d.income)} r="3.5" fill={colors.success} />
-                <Circle cx={x} cy={getY(d.expense)} r="3.5" fill={colors.error} />
+                <Circle cx={x} cy={getY(d.income)} r="4" fill={colors.success} />
+                <Circle cx={x} cy={getY(d.expense)} r="4" fill="#EA580C" />
                 <SvgText
                   x={x}
-                  y={height - 5}
+                  y={height - 6}
                   fontSize="10"
+                  fontWeight="600"
                   fill={colors.inkMuted}
                   textAnchor="middle"
                 >
@@ -288,18 +304,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.xs
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: spacing.sm
+  },
+  trendTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.ink
   },
   trendLegend: {
     flexDirection: "row",
-    gap: spacing.xs
+    alignItems: "center",
+    gap: spacing.sm
   },
   legendChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4
   },
+  legendText: {
+    fontWeight: "600",
+    fontSize: 11.5,
+    color: colors.inkSecondary
+  },
   chartWrapper: {
-    alignItems: "center"
+    alignItems: "center",
+    width: "100%"
   }
 });
