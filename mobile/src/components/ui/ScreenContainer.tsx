@@ -17,6 +17,7 @@ export interface ScreenContainerProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
   edges?: ("top" | "left" | "right" | "bottom")[];
+  refreshControl?: React.ReactElement;
 }
 
 export function ScreenContainer({
@@ -25,7 +26,8 @@ export function ScreenContainer({
   style,
   contentContainerStyle,
   backgroundColor = colors.canvasSoft,
-  edges = ["left", "right"]
+  edges = ["left", "right"],
+  refreshControl
 }: ScreenContainerProps) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }, style]} edges={edges}>
@@ -38,6 +40,7 @@ export function ScreenContainer({
             contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
           >
             {children}
           </ScrollView>

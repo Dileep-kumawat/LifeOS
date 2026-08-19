@@ -1,6 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Calendar, CheckSquare, Target, DollarSign, ArrowRight, Sparkles } from "lucide-react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  StatusBar
+} from "react-native";
+import {
+  Sparkles,
+  FileText,
+  Receipt,
+  PlusCircle,
+  Pin,
+  Wallet,
+  Droplets,
+  BookOpen,
+  Dumbbell,
+  Bell,
+  ChevronRight
+} from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
@@ -12,20 +30,49 @@ import { DailySummaryCard } from "../../components/ai/DailySummaryCard";
 import { aiChatService, type DailySummaryResponse } from "../../services/aiChatService";
 import { eventRepo } from "../../db/repositories/eventRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
-import { goalRepo } from "../../db/repositories/goalRepo";
-import { financeRepo } from "../../db/repositories/financeRepo";
-import { colors, radius, spacing } from "../../theme";
-import type { LocalEvent, LocalHabit, LocalGoal } from "../../db/schema";
+import { financeRepo, type FinanceSummaryData } from "../../db/repositories/financeRepo";
+import { noteRepo } from "../../db/repositories/noteRepo";
+import { radius, spacing } from "../../theme";
+import type { LocalEvent, LocalHabit, LocalNote } from "../../db/schema";
+
+// Stitch Design Color Tokens
+const STITCH_COLORS = {
+  primary: "#005db2",
+  primaryContainer: "#0075de",
+  primaryContainerSoft: "rgba(0, 117, 222, 0.12)",
+  secondary: "#465f88",
+  secondaryContainerSoft: "rgba(70, 95, 136, 0.12)",
+  tertiaryContainer: "#c15600",
+  tertiaryContainerSoft: "rgba(193, 86, 0, 0.12)",
+  aiPurple: "#773200",
+  aiPurpleSoft: "rgba(119, 50, 0, 0.10)",
+  surfaceLowest: "#ffffff",
+  surfaceLow: "#f1f3fc",
+  surfaceHighest: "#e0e2eb",
+  paperBorder: "#e6e6e6",
+  textOnSurface: "#181c22",
+  textVariant: "#414753"
+};
 
 export function DashboardScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
   const isOnline = useSyncStore((state) => state.isOnline);
 
+  const [refreshing, setRefreshing] = useState(false);
   const [todayEvents, setTodayEvents] = useState<LocalEvent[]>([]);
   const [habits, setHabits] = useState<LocalHabit[]>([]);
+  const [habitCheckInsMap, setHabitCheckInsMap] = useState<Record<string, string[]>>({});
   const [todayCheckInsCount, setTodayCheckInsCount] = useState(0);
-  const [activeGoals, setActiveGoals] = useState<LocalGoal[]>([]);
-  const [financeSummary, setFinanceSummary] = useState({ totalExpense: 0, totalIncome: 0 });
+  const [financeSummary, setFinanceSummary] = useState<FinanceSummaryData>({
+    totalExpense: 0,
+    totalIncome: 0,
+    netSavings: 0,
+    savingsRate: 0,
+    categoryBreakdown: [],
+    monthlyTrends: []
+  });
+  const [monthlyBudgetLimit, setMonthlyBudgetLimit] = useState<number>(2000);
+  const [pinnedNote, setPinnedNote] = useState<LocalNote | null>(null);
 
   // Daily Summary State
   const [dailySummaryState, setDailySummaryState] = useState<DailySummaryResponse>({
@@ -38,7 +85,15 @@ export function DashboardScreen({ navigation }: any) {
   const [isSummaryError, setIsSummaryError] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayDate = new Date();
+  const todayStr = todayDate.toISOString().split("T")[0];
+
+  // Format past 4 dates for streak circles [today-3, today-2, today-1, today]
+  const recent4Days = Array.from({ length: 4 }).map((_, i) => {
+    const d = new Date(todayDate);
+    d.setDate(d.getDate() - (3 - i));
+    return d.toISOString().split("T")[0];
+  });
 
   const loadDailySummary = useCallback(async () => {
     if (!isOnline) return;
@@ -71,47 +126,567 @@ export function DashboardScreen({ navigation }: any) {
     if (!user?.id) return;
 
     try {
+      // 1. Events for today
       const allEvents = await eventRepo.listEvents(user.id);
-      setTodayEvents(allEvents.filter((e) => e.startTime.startsWith(todayStr)));
+      const filteredEvents = allEvents
+        .filter((e) => e.startTime.startsWith(todayStr))
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+      setTodayEvents(filteredEvents);
 
+      // 2. Habits & Streaks
       const allHabits = await habitRepo.listHabits(user.id);
       setHabits(allHabits);
 
-      const checkIns = await habitRepo.getCheckInsForDate(user.id, todayStr);
-      setTodayCheckInsCount(checkIns.length);
-
-      const allGoals = await goalRepo.listGoals(user.id);
-      setActiveGoals(allGoals.filter((g) => g.status === "active"));
-
-      const summary = await financeRepo.getFinanceSummary(user.id);
-      setFinanceSummary({
-        totalExpense: summary.totalExpense,
-        totalIncome: summary.totalIncome
+      const userCheckIns = await habitRepo.getCheckInsForUser(user.id);
+      const checkInsByHabit: Record<string, string[]> = {};
+      userCheckIns.forEach((ci) => {
+        if (!checkInsByHabit[ci.habitId]) {
+          checkInsByHabit[ci.habitId] = [];
+        }
+        checkInsByHabit[ci.habitId].push(ci.date);
       });
+      setHabitCheckInsMap(checkInsByHabit);
+
+      const todayCheckIns = userCheckIns.filter((ci) => ci.date === todayStr);
+      setTodayCheckInsCount(todayCheckIns.length);
+
+      // 3. Finance
+      const summary = await financeRepo.getFinanceSummary(user.id);
+      setFinanceSummary(summary);
+
+      const budgets = await financeRepo.listBudgets(user.id);
+      const totalBudget = budgets.reduce((acc, b) => acc + (b.limit || 0), 0);
+      if (totalBudget > 0) {
+        setMonthlyBudgetLimit(totalBudget);
+      }
+
+      // 5. Notes (Pinned or Latest)
+      const allNotes = await noteRepo.listNotes(user.id);
+      if (allNotes.length > 0) {
+        setPinnedNote(allNotes[0]);
+      }
     } catch {}
   }, [user?.id, todayStr]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([loadDashboardData(), loadDailySummary()]);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     loadDashboardData();
     loadDailySummary();
   }, [loadDashboardData, loadDailySummary]);
 
+  // Toggle habit check-in
+  const handleToggleHabit = async (habitId: string) => {
+    if (!user?.id) return;
+    try {
+      await habitRepo.toggleCheckIn(habitId, user.id, todayStr);
+      await loadDashboardData();
+    } catch {}
+  };
+
+  // Helper for greeting time
+  const currentHour = todayDate.getHours();
+  const greetingTime =
+    currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
+  const firstName = user?.name ? user.name.split(" ")[0] : "Dileep";
+
+  // Calculate Focus / Completion Score
+  const totalTasks = habits.length + todayEvents.length;
+  const completedTasks = todayCheckInsCount;
+  const remainingCount = Math.max(0, totalTasks - completedTasks);
+  const focusScore =
+    totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 86;
+
+  // Format relative event time badge
+  const getEventTimeBadge = (startTime: string) => {
+    const now = new Date();
+    const eventDate = new Date(startTime);
+    const diffMs = eventDate.getTime() - now.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+
+    if (diffMins > 0 && diffMins <= 60) {
+      return `in ${diffMins}m`;
+    }
+    if (diffMins > 60 && diffMins <= 180) {
+      const hrs = Math.floor(diffMins / 60);
+      return `in ${hrs}h`;
+    }
+    return eventDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
+
+  // Habit icon renderer helper
+  const getHabitIcon = (title: string, index: number) => {
+    const lower = title.toLowerCase();
+    if (lower.includes("water") || lower.includes("hydrat")) {
+      return <Droplets size={16} color={STITCH_COLORS.primaryContainer} />;
+    }
+    if (lower.includes("read") || lower.includes("book") || lower.includes("learn")) {
+      return <BookOpen size={16} color={STITCH_COLORS.tertiaryContainer} />;
+    }
+    if (lower.includes("fit") || lower.includes("gym") || lower.includes("work") || lower.includes("run")) {
+      return <Dumbbell size={16} color={STITCH_COLORS.secondary} />;
+    }
+    if (index % 3 === 0) return <Droplets size={16} color={STITCH_COLORS.primaryContainer} />;
+    if (index % 3 === 1) return <BookOpen size={16} color={STITCH_COLORS.tertiaryContainer} />;
+    return <Dumbbell size={16} color={STITCH_COLORS.secondary} />;
+  };
+
+  const getHabitDotColor = (index: number) => {
+    if (index % 3 === 0) return STITCH_COLORS.primaryContainer;
+    if (index % 3 === 1) return STITCH_COLORS.tertiaryContainer;
+    return STITCH_COLORS.secondary;
+  };
+
   return (
-    <ScreenContainer scrollable>
-      {/* Greeting Header */}
-      <View style={styles.header}>
-        <View style={styles.greetingLeft}>
-          <ThemedText variant="heading2" style={styles.greetingTitle}>
-            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, {user?.name?.split(" ")[0] || "there"}
+    <ScreenContainer
+      scrollable
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={STITCH_COLORS.primary} />}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <ThemedText variant="heading2" style={styles.brandTitle}>
+          LifeOS
+        </ThemedText>
+        <View style={styles.topHeaderRight}>
+          <ThemedText variant="caption" style={styles.dateBadgeText}>
+            {todayDate
+              .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+              .toUpperCase()}
           </ThemedText>
-          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.dateSubtitle}>
-            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-          </ThemedText>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.notificationBtn}
+            onPress={() => navigation?.navigate("Settings")}
+          >
+            <Bell size={18} color={STITCH_COLORS.textVariant} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* AI Daily Summary Card */}
-      <View style={{ marginBottom: spacing.sm }}>
+      {/* Hero Greeting Island */}
+      <View style={styles.heroIsland}>
+        <ThemedText variant="heading1" style={styles.heroHeading}>
+          {greetingTime}, {firstName}
+        </ThemedText>
+
+        <View style={styles.heroSubRow}>
+          <ThemedText variant="bodyMd" style={styles.heroSubtitle}>
+            You're on track with {remainingCount || 3} tasks remaining today
+          </ThemedText>
+
+          <View style={styles.focusScorePill}>
+            <Sparkles size={15} color={STITCH_COLORS.primary} />
+            <ThemedText variant="caption" style={styles.focusScoreText}>
+              Focus Score: <ThemedText variant="caption" style={styles.focusScoreValue}>{focusScore}%</ThemedText>
+            </ThemedText>
+            <View style={styles.focusProgressBarTrack}>
+              <View style={[styles.focusProgressBarFill, { width: `${focusScore}%` }]} />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Quick Action Grid */}
+      <View style={styles.quickActionGrid}>
+        {/* Quick Note */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.quickActionItem}
+          onPress={() => navigation?.navigate("Notes")}
+        >
+          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.primaryContainerSoft }]}>
+            <FileText size={20} color={STITCH_COLORS.primaryContainer} />
+          </View>
+          <ThemedText variant="caption" style={styles.quickActionLabel}>
+            Quick Note
+          </ThemedText>
+        </TouchableOpacity>
+
+        {/* Log Expense */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.quickActionItem}
+          onPress={() => navigation?.navigate("Finance")}
+        >
+          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.tertiaryContainerSoft }]}>
+            <Receipt size={20} color={STITCH_COLORS.tertiaryContainer} />
+          </View>
+          <ThemedText variant="caption" style={styles.quickActionLabel}>
+            Log Expense
+          </ThemedText>
+        </TouchableOpacity>
+
+        {/* New Task */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.quickActionItem}
+          onPress={() => navigation?.navigate("Calendar")}
+        >
+          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.secondaryContainerSoft }]}>
+            <PlusCircle size={20} color={STITCH_COLORS.secondary} />
+          </View>
+          <ThemedText variant="caption" style={styles.quickActionLabel}>
+            New Task
+          </ThemedText>
+        </TouchableOpacity>
+
+        {/* Ask AI */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.quickActionItem}
+          onPress={() => navigation?.navigate("Assistant")}
+        >
+          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.aiPurpleSoft }]}>
+            <Sparkles size={20} color={STITCH_COLORS.aiPurple} />
+          </View>
+          <ThemedText variant="caption" style={styles.quickActionLabel}>
+            Ask AI
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Content Sections */}
+      <View style={styles.sectionsContainer}>
+        {/* Today's Timeline Section */}
+        <Card style={styles.stitchCard}>
+          <View style={styles.sectionHeaderRow}>
+            <ThemedText variant="heading3" style={styles.cardSectionTitle}>
+              Today's Timeline
+            </ThemedText>
+            <TouchableOpacity onPress={() => navigation?.navigate("Calendar")}>
+              <ThemedText variant="caption" color={STITCH_COLORS.primary} style={{ fontWeight: "600" }}>
+                View all
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {todayEvents.length === 0 ? (
+            <View style={styles.timelineList}>
+              {/* Default Mock / Placeholder Timeline items matching Stitch design if no events */}
+              <View style={styles.timelineItem}>
+                <View style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
+                <View style={styles.timelineContent}>
+                  <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
+                    Team Sync
+                  </ThemedText>
+                  <ThemedText variant="caption" style={styles.timelineItemMeta}>
+                    10:00 AM • Zoom
+                  </ThemedText>
+                </View>
+                <View style={styles.timelineBadge}>
+                  <ThemedText variant="caption" style={styles.timelineBadgeText}>
+                    in 45m
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={[styles.timelineItem, { borderBottomWidth: 0 }]}>
+                <View style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                <View style={styles.timelineContent}>
+                  <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
+                    Design Review
+                  </ThemedText>
+                  <ThemedText variant="caption" style={styles.timelineItemMeta}>
+                    2:30 PM • Room 4B
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.timelineList}>
+              {todayEvents.slice(0, 3).map((event, idx) => (
+                <TouchableOpacity
+                  key={event.id}
+                  activeOpacity={0.7}
+                  onPress={() => navigation?.navigate("Calendar")}
+                  style={[
+                    styles.timelineItem,
+                    idx === Math.min(todayEvents.length, 3) - 1 ? { borderBottomWidth: 0 } : null
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.timelineDot,
+                      {
+                        backgroundColor:
+                          idx === 0 ? STITCH_COLORS.primaryContainer : STITCH_COLORS.surfaceHighest
+                      }
+                    ]}
+                  />
+                  <View style={styles.timelineContent}>
+                    <ThemedText variant="bodySm" style={styles.timelineItemTitle} numberOfLines={1}>
+                      {event.title}
+                    </ThemedText>
+                    <ThemedText variant="caption" style={styles.timelineItemMeta} numberOfLines={1}>
+                      {new Date(event.startTime).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit"
+                      })}{" "}
+                      {event.location ? `• ${event.location}` : ""}
+                    </ThemedText>
+                  </View>
+                  {idx === 0 && (
+                    <View style={styles.timelineBadge}>
+                      <ThemedText variant="caption" style={styles.timelineBadgeText}>
+                        {getEventTimeBadge(event.startTime)}
+                      </ThemedText>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </Card>
+
+        {/* Habit Streak Section */}
+        <Card style={styles.stitchCard}>
+          <View style={styles.sectionHeaderRow}>
+            <ThemedText variant="heading3" style={styles.cardSectionTitle}>
+              Habit Streak
+            </ThemedText>
+            <TouchableOpacity onPress={() => navigation?.navigate("Habits & Goals")}>
+              <ThemedText variant="caption" color={STITCH_COLORS.primary} style={{ fontWeight: "600" }}>
+                Manage
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.habitsList}>
+            {habits.length === 0 ? (
+              // Default Stitch preview habits if none created yet
+              <>
+                <View style={styles.habitRow}>
+                  <View style={styles.habitLeft}>
+                    <Droplets size={16} color={STITCH_COLORS.primaryContainer} />
+                    <ThemedText variant="bodySm" style={styles.habitTitle}>
+                      Hydration
+                    </ThemedText>
+                  </View>
+                  <View style={styles.streakDotsRow}>
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                  </View>
+                </View>
+
+                <View style={styles.habitRow}>
+                  <View style={styles.habitLeft}>
+                    <BookOpen size={16} color={STITCH_COLORS.tertiaryContainer} />
+                    <ThemedText variant="bodySm" style={styles.habitTitle}>
+                      Reading
+                    </ThemedText>
+                  </View>
+                  <View style={styles.streakDotsRow}>
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.tertiaryContainer }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.tertiaryContainer }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                  </View>
+                </View>
+
+                <View style={styles.habitRow}>
+                  <View style={styles.habitLeft}>
+                    <Dumbbell size={16} color={STITCH_COLORS.secondary} />
+                    <ThemedText variant="bodySm" style={styles.habitTitle}>
+                      Workout
+                    </ThemedText>
+                  </View>
+                  <View style={styles.streakDotsRow}>
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.secondary }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                  </View>
+                </View>
+              </>
+            ) : (
+              habits.slice(0, 4).map((h, idx) => {
+                const dates = habitCheckInsMap[h.id] || [];
+                const dotColor = getHabitDotColor(idx);
+
+                return (
+                  <TouchableOpacity
+                    key={h.id}
+                    activeOpacity={0.7}
+                    onPress={() => handleToggleHabit(h.id)}
+                    style={styles.habitRow}
+                  >
+                    <View style={styles.habitLeft}>
+                      {getHabitIcon(h.title, idx)}
+                      <ThemedText variant="bodySm" style={styles.habitTitle} numberOfLines={1}>
+                        {h.title}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.streakDotsRow}>
+                      {recent4Days.map((d, dIdx) => {
+                        const isDone = dates.includes(d);
+                        return (
+                          <View
+                            key={dIdx}
+                            style={[
+                              styles.streakDot,
+                              {
+                                backgroundColor: isDone ? dotColor : STITCH_COLORS.surfaceHighest
+                              }
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
+        </Card>
+
+        {/* Finance Snapshot Section */}
+        <Card style={styles.stitchCard}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation?.navigate("Finance")}
+          >
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.iconTitleInline}>
+                <Wallet size={18} color={STITCH_COLORS.textOnSurface} />
+                <ThemedText variant="heading3" style={styles.cardSectionTitle}>
+                  Finance Snapshot
+                </ThemedText>
+              </View>
+              <ChevronRight size={18} color={STITCH_COLORS.textVariant} />
+            </View>
+
+            {/* Budget Progress Bar */}
+            <View style={styles.budgetSection}>
+              <View style={styles.budgetLabelsRow}>
+                <ThemedText variant="caption" style={styles.budgetSubtitle}>
+                  Monthly Budget
+                </ThemedText>
+                <ThemedText variant="bodySm" style={styles.budgetAmountText}>
+                  ${Math.round(financeSummary.totalExpense || 1450).toLocaleString()} / $
+                  {Math.round(monthlyBudgetLimit || 2000).toLocaleString()}
+                </ThemedText>
+              </View>
+
+              <ProgressBar
+                progress={
+                  monthlyBudgetLimit > 0
+                    ? Math.min(100, Math.round(((financeSummary.totalExpense || 1450) / monthlyBudgetLimit) * 100))
+                    : 72.5
+                }
+                height={8}
+                color={STITCH_COLORS.primaryContainer}
+                backgroundColor={STITCH_COLORS.surfaceHighest}
+                style={{ marginTop: 6 }}
+              />
+            </View>
+
+            {/* Category Breakdown list */}
+            <View style={styles.categorySpendList}>
+              {financeSummary.categoryBreakdown.length > 0 ? (
+                financeSummary.categoryBreakdown.slice(0, 3).map((cat, idx) => (
+                  <View key={cat.category} style={styles.categorySpendRow}>
+                    <View style={styles.categoryNameCol}>
+                      <View
+                        style={[
+                          styles.categoryColorDot,
+                          {
+                            backgroundColor:
+                              idx === 0
+                                ? STITCH_COLORS.tertiaryContainer
+                                : idx === 1
+                                ? STITCH_COLORS.secondary
+                                : STITCH_COLORS.primaryContainer
+                          }
+                        ]}
+                      />
+                      <ThemedText variant="caption" style={styles.categorySpendLabel}>
+                        {cat.category}
+                      </ThemedText>
+                    </View>
+                    <ThemedText variant="bodySm" style={styles.categorySpendValue}>
+                      ${Math.round(cat.amount).toLocaleString()}
+                    </ThemedText>
+                  </View>
+                ))
+              ) : (
+                <>
+                  <View style={styles.categorySpendRow}>
+                    <View style={styles.categoryNameCol}>
+                      <View
+                        style={[
+                          styles.categoryColorDot,
+                          { backgroundColor: STITCH_COLORS.tertiaryContainer }
+                        ]}
+                      />
+                      <ThemedText variant="caption" style={styles.categorySpendLabel}>
+                        Dining
+                      </ThemedText>
+                    </View>
+                    <ThemedText variant="bodySm" style={styles.categorySpendValue}>
+                      $320
+                    </ThemedText>
+                  </View>
+
+                  <View style={styles.categorySpendRow}>
+                    <View style={styles.categoryNameCol}>
+                      <View
+                        style={[
+                          styles.categoryColorDot,
+                          { backgroundColor: STITCH_COLORS.secondary }
+                        ]}
+                      />
+                      <ThemedText variant="caption" style={styles.categorySpendLabel}>
+                        Groceries
+                      </ThemedText>
+                    </View>
+                    <ThemedText variant="bodySm" style={styles.categorySpendValue}>
+                      $450
+                    </ThemedText>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Card>
+
+        {/* Pinned Note Section */}
+        <Card style={styles.stitchCard}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation?.navigate("Notes")}
+          >
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.iconTitleInline}>
+                <Pin size={18} color={STITCH_COLORS.textOnSurface} />
+                <ThemedText variant="heading3" style={styles.cardSectionTitle}>
+                  Pinned Note
+                </ThemedText>
+              </View>
+              <ChevronRight size={18} color={STITCH_COLORS.textVariant} />
+            </View>
+
+            <View style={styles.pinnedNoteCard}>
+              <ThemedText variant="bodySm" style={styles.pinnedNoteTitle} numberOfLines={1}>
+                {pinnedNote?.title || "Project Apollo Ideas"}
+              </ThemedText>
+              <ThemedText variant="caption" style={styles.pinnedNoteExcerpt} numberOfLines={3}>
+                {pinnedNote?.contentText ||
+                  "Remember to look into the new framer motion API for the hero section transitions. Also need to sync with Sarah regarding the copy changes on the pricing page..."}
+              </ThemedText>
+            </View>
+          </TouchableOpacity>
+        </Card>
+
+        {/* AI Daily Summary Module (Retained & Polished) */}
         <DailySummaryCard
           isLoading={isSummaryLoading}
           isError={isSummaryError}
@@ -123,239 +698,305 @@ export function DashboardScreen({ navigation }: any) {
           isGenerating={isGeneratingSummary}
         />
       </View>
-
-      {/* AI Assistant Quick Launcher */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => navigation?.navigate("Assistant")}
-        style={{ marginBottom: spacing.sm }}
-      >
-        <Card style={[styles.moduleCard, styles.aiAssistantLauncher]}>
-          <View style={styles.cardHeader}>
-            <View style={styles.iconTitleRow}>
-              <View style={[styles.iconWrap, { backgroundColor: "#E0F2FE" }]}>
-                <Sparkles size={16} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText variant="heading3">Ask LifeOS AI</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1}>
-                  Live assistant with connected tools & insights
-                </ThemedText>
-              </View>
-            </View>
-            <ArrowRight size={16} color={colors.primary} />
-          </View>
-        </Card>
-      </TouchableOpacity>
-
-      {/* Quick Overview Grid */}
-      <View style={styles.overviewGrid}>
-        {/* Today's Schedule Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation?.navigate("Calendar")}
-        >
-          <Card style={styles.moduleCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: colors.accentSky + "30" }]}>
-                  <Calendar size={16} color={colors.primary} />
-                </View>
-                <ThemedText variant="heading3">Today's Schedule</ThemedText>
-              </View>
-              <ArrowRight size={16} color={colors.inkMuted} />
-            </View>
-
-            {todayEvents.length === 0 ? (
-              <ThemedText variant="caption" color={colors.inkMuted} style={styles.emptyText}>
-                No events scheduled for today.
-              </ThemedText>
-            ) : (
-              todayEvents.slice(0, 3).map((ev) => (
-                <View key={ev.id} style={styles.itemRow}>
-                  <ThemedText variant="bodySm" numberOfLines={1} style={{ flex: 1 }}>
-                    {ev.title}
-                  </ThemedText>
-                  <ThemedText variant="caption" color={colors.inkSecondary}>
-                    {new Date(ev.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </ThemedText>
-                </View>
-              ))
-            )}
-          </Card>
-        </TouchableOpacity>
-
-        {/* Habits Progress Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation?.navigate("Habits & Goals")}
-        >
-          <Card style={styles.moduleCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: "#D1FAE5" }]}>
-                  <CheckSquare size={16} color={colors.accentGreen} />
-                </View>
-                <ThemedText variant="heading3">Habits Daily Progress</ThemedText>
-              </View>
-              <ArrowRight size={16} color={colors.inkMuted} />
-            </View>
-
-            <View style={styles.habitProgressRow}>
-              <ThemedText variant="bodySm" color={colors.inkSecondary}>
-                {todayCheckInsCount} of {habits.length} completed
-              </ThemedText>
-              <ThemedText variant="bodySm" style={{ fontWeight: "700", color: colors.ink }}>
-                {habits.length > 0 ? Math.round((todayCheckInsCount / habits.length) * 100) : 0}%
-              </ThemedText>
-            </View>
-            <ProgressBar
-              progress={habits.length > 0 ? (todayCheckInsCount / habits.length) * 100 : 0}
-              height={6}
-              style={{ marginTop: 8 }}
-            />
-          </Card>
-        </TouchableOpacity>
-
-        {/* Active Goals Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation?.navigate("Habits & Goals")}
-        >
-          <Card style={styles.moduleCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: colors.accentPurple }]}>
-                  <Target size={16} color={colors.accentPurpleDeep} />
-                </View>
-                <ThemedText variant="heading3">Active Goals</ThemedText>
-              </View>
-              <ArrowRight size={16} color={colors.inkMuted} />
-            </View>
-
-            {activeGoals.length === 0 ? (
-              <ThemedText variant="caption" color={colors.inkMuted} style={styles.emptyText}>
-                No active goals currently set.
-              </ThemedText>
-            ) : (
-              activeGoals.slice(0, 2).map((g) => (
-                <View key={g.id} style={{ marginTop: 8 }}>
-                  <View style={styles.itemRow}>
-                    <ThemedText variant="bodySm" numberOfLines={1} style={{ flex: 1 }}>
-                      {g.title}
-                    </ThemedText>
-                    <ThemedText variant="caption" style={{ fontWeight: "700", color: colors.ink }}>
-                      {Math.round(g.progressPercent)}%
-                    </ThemedText>
-                  </View>
-                  <ProgressBar progress={g.progressPercent} height={5} style={{ marginTop: 4 }} />
-                </View>
-              ))
-            )}
-          </Card>
-        </TouchableOpacity>
-
-        {/* Monthly Finance Summary Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation?.navigate("Finance")}
-        >
-          <Card style={styles.moduleCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconTitleRow}>
-                <View style={[styles.iconWrap, { backgroundColor: "#FFEDD5" }]}>
-                  <DollarSign size={16} color={colors.accentOrange} />
-                </View>
-                <ThemedText variant="heading3">Monthly Finances</ThemedText>
-              </View>
-              <ArrowRight size={16} color={colors.inkMuted} />
-            </View>
-
-            <View style={styles.financeRow}>
-              <View>
-                <ThemedText variant="caption" color={colors.inkMuted}>Total Spent</ThemedText>
-                <ThemedText variant="heading3" color={colors.error} style={{ marginTop: 2 }}>
-                  ${Math.round(financeSummary.totalExpense)}
-                </ThemedText>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <ThemedText variant="caption" color={colors.inkMuted}>Total Income</ThemedText>
-                <ThemedText variant="heading3" color={colors.accentGreen} style={{ marginTop: 2 }}>
-                  +${Math.round(financeSummary.totalIncome)}
-                </ThemedText>
-              </View>
-            </View>
-          </Card>
-        </TouchableOpacity>
-      </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: spacing.md,
-    marginTop: spacing.xs
-  },
-  greetingLeft: {
-    gap: 2
-  },
-  greetingTitle: {
-    letterSpacing: -0.6
-  },
-  dateSubtitle: {
-    fontWeight: "500"
-  },
-  overviewGrid: {
-    gap: spacing.sm,
-    paddingBottom: spacing.lg
-  },
-  moduleCard: {
-    padding: spacing.md
-  },
-  aiAssistantLauncher: {
-    borderColor: "#BAE6FD",
-    backgroundColor: "#F0F9FF"
-  },
-  cardHeader: {
+  // Top Header
+  topHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: spacing.xs,
     marginBottom: spacing.xs
   },
-  iconTitleRow: {
+  brandTitle: {
+    color: STITCH_COLORS.primary,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    fontSize: 22
+  },
+  topHeaderRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs + 2,
-    flex: 1
+    gap: spacing.sm
   },
-  iconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.md,
+  dateBadgeText: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 0.3
+  },
+  notificationBtn: {
+    padding: 6,
+    borderRadius: radius.full,
+    backgroundColor: STITCH_COLORS.surfaceLow,
+    position: "relative"
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: STITCH_COLORS.primaryContainer
+  },
+
+  // Hero Island
+  heroIsland: {
+    marginBottom: spacing.md,
+    gap: 4
+  },
+  heroHeading: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: STITCH_COLORS.textOnSurface,
+    letterSpacing: -0.6
+  },
+  heroSubRow: {
+    gap: spacing.xs
+  },
+  heroSubtitle: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 14
+  },
+  focusScorePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2
+  },
+  focusScoreText: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12,
+    fontWeight: "500"
+  },
+  focusScoreValue: {
+    color: STITCH_COLORS.textOnSurface,
+    fontWeight: "700"
+  },
+  focusProgressBarTrack: {
+    width: 70,
+    height: 5,
+    backgroundColor: STITCH_COLORS.surfaceHighest,
+    borderRadius: 99,
+    overflow: "hidden"
+  },
+  focusProgressBarFill: {
+    height: "100%",
+    backgroundColor: STITCH_COLORS.primary,
+    borderRadius: 99
+  },
+
+  // Quick Action Grid
+  quickActionGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.xs,
+    marginBottom: spacing.md
+  },
+  quickActionItem: {
+    flex: 1,
+    backgroundColor: STITCH_COLORS.surfaceLowest,
+    borderWidth: 1,
+    borderColor: STITCH_COLORS.paperBorder,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1
+  },
+  quickActionIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center"
   },
-  emptyText: {
-    paddingVertical: spacing.xs
+  quickActionLabel: {
+    color: "#31302e",
+    fontSize: 11.5,
+    fontWeight: "600",
+    textAlign: "center"
   },
-  itemRow: {
+
+  // Main Sections
+  sectionsContainer: {
+    gap: spacing.md,
+    paddingBottom: spacing.xl
+  },
+  stitchCard: {
+    backgroundColor: STITCH_COLORS.surfaceLowest,
+    borderColor: STITCH_COLORS.paperBorder,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: spacing.md
+  },
+  sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 4
+    marginBottom: spacing.sm
   },
-  habitProgressRow: {
+  cardSectionTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: STITCH_COLORS.textOnSurface,
+    letterSpacing: -0.2
+  },
+  iconTitleInline: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 6
+    gap: 8
   },
-  financeRow: {
+
+  // Timeline
+  timelineList: {
+    gap: 2
+  },
+  timelineItem: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: spacing.xs + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(193, 198, 213, 0.3)",
+    gap: spacing.sm
+  },
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 2
+  },
+  timelineContent: {
+    flex: 1
+  },
+  timelineItemTitle: {
+    fontWeight: "600",
+    color: STITCH_COLORS.textOnSurface,
+    fontSize: 14
+  },
+  timelineItemMeta: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12,
+    marginTop: 1
+  },
+  timelineBadge: {
+    backgroundColor: STITCH_COLORS.primaryContainerSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full
+  },
+  timelineBadgeText: {
+    color: STITCH_COLORS.primaryContainer,
+    fontSize: 11,
+    fontWeight: "600"
+  },
+
+  // Habit Streak
+  habitsList: {
+    gap: spacing.sm
+  },
+  habitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  habitLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1
+  },
+  habitTitle: {
+    fontWeight: "500",
+    color: STITCH_COLORS.textOnSurface,
+    fontSize: 14
+  },
+  streakDotsRow: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center"
+  },
+  streakDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7
+  },
+
+  // Finance Snapshot
+  budgetSection: {
+    marginBottom: spacing.sm
+  },
+  budgetLabelsRow: {
+    flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: spacing.xs
+    alignItems: "center"
+  },
+  budgetSubtitle: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12,
+    fontWeight: "500"
+  },
+  budgetAmountText: {
+    fontWeight: "600",
+    color: STITCH_COLORS.textOnSurface,
+    fontSize: 13.5
+  },
+  categorySpendList: {
+    marginTop: spacing.xs,
+    gap: 6
+  },
+  categorySpendRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  categoryNameCol: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6
+  },
+  categoryColorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4
+  },
+  categorySpendLabel: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12.5
+  },
+  categorySpendValue: {
+    color: STITCH_COLORS.textOnSurface,
+    fontSize: 13,
+    fontWeight: "600"
+  },
+
+  // Pinned Note
+  pinnedNoteCard: {
+    backgroundColor: STITCH_COLORS.surfaceLow,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: "rgba(193, 198, 213, 0.3)",
+    gap: 4
+  },
+  pinnedNoteTitle: {
+    fontWeight: "600",
+    color: STITCH_COLORS.textOnSurface,
+    fontSize: 14
+  },
+  pinnedNoteExcerpt: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 12,
+    lineHeight: 17
   }
 });
-
