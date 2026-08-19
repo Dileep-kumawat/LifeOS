@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, TextInput, Switch } from "react-native";
-import { RefreshCw, LogOut, Sparkles, Check } from "lucide-react-native";
+import { RefreshCw, LogOut, Sparkles, Check, Bell } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { authApi } from "../../services/apiClient";
 import { aiChatService } from "../../services/aiChatService";
 import { tokenStorage } from "../../services/tokenStorage";
 import { notificationService } from "../../services/notificationService";
+import { notificationApiService } from "../../services/notificationApiService";
 import { syncEngine } from "../../services/syncEngine";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { NotificationModal } from "../../components/notifications/NotificationModal";
 import { colors, radius, spacing } from "../../theme";
 
-export function SettingsScreen() {
+export function SettingsScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
   const isOnline = useSyncStore((state) => state.isOnline);
   const syncStatus = useSyncStore((state) => state.status);
@@ -22,8 +24,10 @@ export function SettingsScreen() {
 
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [scheduledCount, setScheduledCount] = useState<number>(0);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
 
   // Daily Summary Preferences State
   const [deliveryTime, setDeliveryTime] = useState("07:00");
@@ -42,6 +46,13 @@ export function SettingsScreen() {
       setScheduledCount(scheduled.length);
 
       if (isOnline) {
+        try {
+          const unread = await notificationApiService.getUnreadCount();
+          setUnreadCount(unread);
+        } catch {
+          /* ignore unread fetch error */
+        }
+
         try {
           const { preferences } = await aiChatService.getNotificationPreferences();
           if (preferences?.dailySummary) {
@@ -96,7 +107,7 @@ export function SettingsScreen() {
   const handleRegisterFcm = async () => {
     const token = await notificationService.registerDeviceToken();
     setFcmToken(token);
-    Alert.alert("FCM Registered", `Device token successfully synced with backend for push notifications.`);
+    Alert.alert("Push Token Registered", `Device token successfully synced with backend for push notifications.`);
   };
 
   const handleLogout = async () => {
@@ -108,6 +119,12 @@ export function SettingsScreen() {
       console.warn("Logout error:", err);
     } finally {
       setLoggingOut(false);
+    }
+  };
+
+  const handleNotificationNavigation = (screenName: string, params?: Record<string, any>) => {
+    if (navigation?.navigate) {
+      navigation.navigate(screenName, params);
     }
   };
 
@@ -136,27 +153,46 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Network Connection:</ThemedText>
-          <ThemedText variant="bodySm" color={isOnline ? colors.success : colors.error} style={styles.infoValue}>
-            {isOnline ? "Online" : "Offline (Airplane Mode)"}
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Network Connection:
+          </ThemedText>
+          <ThemedText
+            variant="bodySm"
+            color={isOnline ? colors.success : colors.error}
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {isOnline ? "Online" : "Offline Mode"}
           </ThemedText>
         </View>
 
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Sync Engine State:</ThemedText>
-          <ThemedText variant="bodySm" style={[styles.infoValue, { textTransform: "capitalize" }]}>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Sync Engine State:
+          </ThemedText>
+          <ThemedText
+            variant="bodySm"
+            style={[styles.infoValue, { textTransform: "capitalize" }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {syncStatus}
           </ThemedText>
         </View>
 
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Pending Local Mutations:</ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Pending Local Mutations:
+          </ThemedText>
           <ThemedText
             variant="bodySm"
             color={pendingCount > 0 ? colors.warning : colors.success}
             style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
-            {pendingCount} records
+            {pendingCount} record{pendingCount === 1 ? "" : "s"}
           </ThemedText>
         </View>
 
@@ -170,33 +206,75 @@ export function SettingsScreen() {
         />
       </Card>
 
-      {/* Notifications Card (FR-13.5) */}
+      {/* Notifications Card */}
       <Card style={styles.card}>
-        <ThemedText variant="title" style={styles.sectionTitle}>
-          Mobile Notifications (FR-13.5)
-        </ThemedText>
+        <View style={styles.cardHeader}>
+          <ThemedText variant="title" style={styles.sectionTitle} numberOfLines={1}>
+            Notifications
+          </ThemedText>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.inboxTriggerBtn}
+            onPress={() => setNotificationModalVisible(true)}
+          >
+            <Bell size={13} color={colors.primary} />
+            <ThemedText variant="caption" color={colors.primary} style={styles.inboxBadgeText}>
+              {unreadCount > 0 ? `Inbox (${unreadCount})` : "Inbox"}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>FCM Server Push:</ThemedText>
-          <ThemedText variant="bodySm" color={fcmToken ? colors.success : colors.warning} style={styles.infoValue}>
-            {fcmToken ? "Registered (Active)" : "Not Registered"}
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Push Notifications:
+          </ThemedText>
+          <ThemedText
+            variant="bodySm"
+            color={fcmToken ? colors.success : colors.warning}
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {fcmToken ? "Registered (Active)" : "Not Configured"}
           </ThemedText>
         </View>
 
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Notifee Local Triggers:</ThemedText>
-          <ThemedText variant="bodySm" color={colors.success} style={styles.infoValue}>
-            {scheduledCount} active offline reminders
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Scheduled Reminders:
+          </ThemedText>
+          <ThemedText
+            variant="bodySm"
+            color={colors.success}
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {scheduledCount} active offline
           </ThemedText>
         </View>
 
-        <Button
-          title="Refresh FCM Device Token"
-          variant="outline"
-          size="sm"
-          onPress={handleRegisterFcm}
-          style={{ marginTop: spacing.sm }}
-        />
+        {/* Clean, Full-Width Action Button */}
+        <View style={styles.notificationActions}>
+          <Button
+            title={unreadCount > 0 ? `Open Notifications (${unreadCount})` : "Open Notifications"}
+            variant="primary"
+            size="md"
+            fullWidth
+            onPress={() => setNotificationModalVisible(true)}
+            icon={<Bell size={16} color="#ffffff" />}
+          />
+          <TouchableOpacity
+            activeOpacity={0.6}
+            onPress={handleRegisterFcm}
+            style={styles.syncTokenBtn}
+          >
+            <RefreshCw size={12} color={colors.inkMuted} />
+            <ThemedText variant="caption" color={colors.inkMuted} style={styles.syncTokenText}>
+              Sync Push Device Token
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </Card>
 
       {/* AI Daily Summary Preferences Card */}
@@ -216,7 +294,9 @@ export function SettingsScreen() {
 
         {/* Delivery Time Input */}
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Delivery Time (HH:MM):</ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Delivery Time (HH:MM):
+          </ThemedText>
           <TextInput
             value={deliveryTime}
             onChangeText={setDeliveryTime}
@@ -224,15 +304,22 @@ export function SettingsScreen() {
             placeholderTextColor={colors.inkMuted}
             style={styles.timeInput}
             maxLength={5}
+            multiline={false}
+            numberOfLines={1}
+            scrollEnabled={false}
+            keyboardType="numbers-and-punctuation"
+            returnKeyType="done"
           />
         </View>
 
         {/* Channels toggles */}
         <View style={styles.toggleRow}>
-          <View>
-            <ThemedText variant="bodySm">Push Notification (FCM)</ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted}>
-              Direct to this mobile device
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              Push Notification
+            </ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
+              Direct to this device
             </ThemedText>
           </View>
           <Switch
@@ -243,10 +330,12 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.toggleRow}>
-          <View>
-            <ThemedText variant="bodySm">In-App Notification</ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted}>
-              Notification inbox bell
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              In-App Notification
+            </ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
+              Notification modal & bell
             </ThemedText>
           </View>
           <Switch
@@ -257,9 +346,11 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.toggleRow}>
-          <View>
-            <ThemedText variant="bodySm">Email Summary</ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted}>
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              Email Summary
+            </ThemedText>
+            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
               Sent to account email
             </ThemedText>
           </View>
@@ -287,16 +378,28 @@ export function SettingsScreen() {
           Account Profile
         </ThemedText>
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Name:</ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.name || "N/A"}</ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Name:
+          </ThemedText>
+          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+            {user?.name || "N/A"}
+          </ThemedText>
         </View>
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Email:</ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.email || "N/A"}</ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Email:
+          </ThemedText>
+          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+            {user?.email || "N/A"}
+          </ThemedText>
         </View>
         <View style={styles.infoRow}>
-          <ThemedText variant="bodySm" color={colors.inkMuted}>Role:</ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue}>{user?.role?.toUpperCase() || "USER"}</ThemedText>
+          <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
+            Role:
+          </ThemedText>
+          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+            {user?.role?.toUpperCase() || "USER"}
+          </ThemedText>
         </View>
       </Card>
 
@@ -309,6 +412,13 @@ export function SettingsScreen() {
         onPress={handleLogout}
         icon={<LogOut size={16} color={colors.ink} />}
         style={styles.logoutButton}
+      />
+
+      {/* Notification Modal */}
+      <NotificationModal
+        visible={notificationModalVisible}
+        onClose={() => setNotificationModalVisible(false)}
+        onNavigate={handleNotificationNavigation}
       />
     </ScreenContainer>
   );
@@ -327,52 +437,98 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.xs
+    marginBottom: spacing.xs,
+    gap: spacing.xs
   },
   syncIconBtn: {
     padding: spacing.xs,
     backgroundColor: colors.canvasSoft,
     borderRadius: radius.full
   },
+  inboxTriggerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    backgroundColor: "rgba(0, 93, 178, 0.08)",
+    borderRadius: radius.full,
+    flexShrink: 0
+  },
+  inboxBadgeText: {
+    fontWeight: "600",
+    fontSize: 11
+  },
   sectionTitle: {
     color: colors.ink,
-    letterSpacing: -0.2
+    letterSpacing: -0.2,
+    flex: 1,
+    marginRight: spacing.xs
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.hairline
+    borderBottomColor: colors.hairline,
+    gap: spacing.sm
+  },
+  infoLabel: {
+    flexShrink: 1
   },
   infoValue: {
-    fontWeight: "600"
+    fontWeight: "600",
+    maxWidth: "58%",
+    textAlign: "right"
   },
   timeInput: {
-    width: 76,
-    height: 34,
+    width: 82,
+    height: 36,
     backgroundColor: colors.canvasSoft,
     borderWidth: 1,
     borderColor: colors.hairline,
     borderRadius: radius.sm,
     paddingHorizontal: 8,
+    paddingVertical: 0,
     textAlign: "center",
+    textAlignVertical: "center",
+    includeFontPadding: false,
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 14,
     color: colors.ink
   },
   toggleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.hairline
+    borderBottomColor: colors.hairline,
+    gap: spacing.sm
+  },
+  toggleTextContainer: {
+    flex: 1,
+    marginRight: spacing.xs
+  },
+  notificationActions: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+    alignItems: "center"
+  },
+  syncTokenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.xs
+  },
+  syncTokenText: {
+    fontWeight: "500",
+    fontSize: 11.5
   },
   logoutButton: {
     marginTop: spacing.sm,
     marginBottom: spacing.xxl
   }
 });
-

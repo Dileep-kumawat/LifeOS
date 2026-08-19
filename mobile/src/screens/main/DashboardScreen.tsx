@@ -28,6 +28,8 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { DailySummaryCard } from "../../components/ai/DailySummaryCard";
 
 import { aiChatService, type DailySummaryResponse } from "../../services/aiChatService";
+import { notificationApiService } from "../../services/notificationApiService";
+import { NotificationModal } from "../../components/notifications/NotificationModal";
 import { eventRepo } from "../../db/repositories/eventRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
 import { financeRepo, type FinanceSummaryData } from "../../db/repositories/financeRepo";
@@ -168,16 +170,28 @@ export function DashboardScreen({ navigation }: any) {
     } catch {}
   }, [user?.id, todayStr]);
 
+  const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+  const loadUnreadCount = useCallback(async () => {
+    if (!isOnline) return;
+    try {
+      const count = await notificationApiService.getUnreadCount();
+      setUnreadNotificationCount(count);
+    } catch {}
+  }, [isOnline]);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadDashboardData(), loadDailySummary()]);
+    await Promise.all([loadDashboardData(), loadDailySummary(), loadUnreadCount()]);
     setRefreshing(false);
   };
 
   useEffect(() => {
     loadDashboardData();
     loadDailySummary();
-  }, [loadDashboardData, loadDailySummary]);
+    loadUnreadCount();
+  }, [loadDashboardData, loadDailySummary, loadUnreadCount]);
 
   // Toggle habit check-in
   const handleToggleHabit = async (habitId: string) => {
@@ -262,10 +276,16 @@ export function DashboardScreen({ navigation }: any) {
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.notificationBtn}
-            onPress={() => navigation?.navigate("Settings")}
+            onPress={() => setIsNotificationModalVisible(true)}
           >
             <Bell size={18} color={STITCH_COLORS.textVariant} />
-            <View style={styles.notificationBadge} />
+            {unreadNotificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <ThemedText style={styles.badgeText}>
+                  {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                </ThemedText>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -698,6 +718,16 @@ export function DashboardScreen({ navigation }: any) {
           isGenerating={isGeneratingSummary}
         />
       </View>
+
+      {/* Notifications Modal */}
+      <NotificationModal
+        visible={isNotificationModalVisible}
+        onClose={() => {
+          setIsNotificationModalVisible(false);
+          loadUnreadCount();
+        }}
+        onNavigate={(screenName, params) => navigation?.navigate(screenName, params)}
+      />
     </ScreenContainer>
   );
 }
@@ -729,19 +759,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3
   },
   notificationBtn: {
-    padding: 6,
+    padding: 7,
     borderRadius: radius.full,
     backgroundColor: STITCH_COLORS.surfaceLow,
     position: "relative"
   },
   notificationBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: STITCH_COLORS.primaryContainer
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: STITCH_COLORS.primaryContainer,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: "#ffffff"
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "700",
+    lineHeight: 11
   },
 
   // Hero Island
