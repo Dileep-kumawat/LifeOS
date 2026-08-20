@@ -38,7 +38,11 @@ export const eventRepo = {
     );
   },
 
-  async listEventsForRange(userId: string, rangeStart: string, rangeEnd: string): Promise<LocalEvent[]> {
+  async listEventsForRange(
+    userId: string,
+    rangeStart: string,
+    rangeEnd: string
+  ): Promise<LocalEvent[]> {
     const db = await getDatabase();
     // Return both non-recurring events in range and recurring events that start on or before rangeEnd
     return db.getAllAsync<LocalEvent>(
@@ -56,10 +60,7 @@ export const eventRepo = {
     );
   },
 
-  async addException(
-    eventId: string,
-    exception: CalendarExceptionItem
-  ): Promise<boolean> {
+  async addException(eventId: string, exception: CalendarExceptionItem): Promise<boolean> {
     const existing = await this.getEventById(eventId);
     if (!existing) return false;
 

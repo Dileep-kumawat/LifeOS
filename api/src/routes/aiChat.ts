@@ -49,7 +49,7 @@ aiChatRouter.get("/ai/conversations", async (req: Request, res: Response) => {
     }));
 
     return res.status(200).json({ conversations: formatted });
-  } catch (err) {
+  } catch (_err) {
     return res
       .status(500)
       .json({ error: "InternalServerError", message: "Failed to list conversations" });
@@ -135,7 +135,7 @@ aiChatRouter.get("/ai/conversations/:id", async (req: Request, res: Response) =>
       },
       messages: formattedMessages
     });
-  } catch (err) {
+  } catch (_err) {
     return res
       .status(500)
       .json({ error: "InternalServerError", message: "Failed to fetch conversation history" });
@@ -182,7 +182,7 @@ aiChatRouter.delete("/ai/conversations/:id", async (req: Request, res: Response)
     await Message.deleteMany({ conversationId: id });
 
     return res.status(200).json({ message: "Conversation deleted successfully" });
-  } catch (err) {
+  } catch (_err) {
     return res
       .status(500)
       .json({ error: "InternalServerError", message: "Failed to delete conversation" });

@@ -121,7 +121,7 @@ authRouter.post("/auth/register", validate(registerSchema), async (req: Request,
       accessToken,
       refreshToken: rawToken
     });
-  } catch (err) {
+  } catch (_err) {
     return res
       .status(500)
       .json({ error: "InternalServerError", message: "Failed to register user" });
@@ -205,7 +205,7 @@ authRouter.post(
         accessToken,
         refreshToken: rawToken
       });
-    } catch (err) {
+    } catch (_err) {
       return res.status(500).json({ error: "InternalServerError", message: "Failed to log in" });
     }
   }
@@ -253,7 +253,9 @@ authRouter.post(
 authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
   try {
     const rawToken =
-      req.body?.refreshToken || (req.headers["x-refresh-token"] as string) || req.cookies?.refreshToken;
+      req.body?.refreshToken ||
+      (req.headers["x-refresh-token"] as string) ||
+      req.cookies?.refreshToken;
     if (!rawToken) {
       return res.status(401).json({
         error: "Unauthorized",
@@ -311,7 +313,9 @@ authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
  */
 authRouter.post("/auth/logout", async (req: Request, res: Response) => {
   const rawToken =
-    req.body?.refreshToken || (req.headers["x-refresh-token"] as string) || req.cookies?.refreshToken;
+    req.body?.refreshToken ||
+    (req.headers["x-refresh-token"] as string) ||
+    req.cookies?.refreshToken;
   if (rawToken) {
     await revokeRefreshToken(rawToken);
   }

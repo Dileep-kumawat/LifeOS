@@ -2,6 +2,7 @@
   "name": "lifeos",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "workspaces": [
     "api",
     "web",
@@ -13,7 +14,7 @@
     "dev:web": "npm run dev --workspace=web",
     "dev:mobile": "npm run start --workspace=mobile",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=api && npm run build --workspace=web",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "npm run typecheck --workspace=api && npm run typecheck --workspace=web && npm run typecheck --workspace=packages/shared && npm run typecheck --workspace=mobile",
     "test": "npm run test --workspace=api --if-present && npm run test --workspace=web --if-present && npm run test --workspace=mobile --if-present",

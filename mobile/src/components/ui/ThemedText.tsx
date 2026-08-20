@@ -6,20 +6,6 @@ export interface ThemedTextProps extends TextProps {
   color?: string;
 }
 
-export function ThemedText({
-  variant = "bodyMd",
-  color,
-  style,
-  ...props
-}: ThemedTextProps) {
-  return (
-    <Text
-      style={[
-        typography[variant],
-        color ? { color } : undefined,
-        style
-      ]}
-      {...props}
-    />
-  );
+export function ThemedText({ variant = "bodyMd", color, style, ...props }: ThemedTextProps) {
+  return <Text style={[typography[variant], color ? { color } : undefined, style]} {...props} />;
 }

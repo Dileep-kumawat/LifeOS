@@ -164,10 +164,12 @@ export function NotesListPage() {
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         {/* Sidebar (Desktop visible, mobile collapsible) */}
-        <aside className={cn(
-          "w-full shrink-0 lg:w-60 flex-col gap-2",
-          mobileFoldersOpen ? "flex" : "hidden lg:flex"
-        )}>
+        <aside
+          className={cn(
+            "w-full shrink-0 lg:w-60 flex-col gap-2",
+            mobileFoldersOpen ? "flex" : "hidden lg:flex"
+          )}
+        >
           <div className="flex items-center justify-between px-1 pb-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#615d59]">
               Folders
@@ -198,9 +200,7 @@ export function NotesListPage() {
             />
           </div>
 
-          <p className="px-1 text-[11px] leading-relaxed text-[#a39e98]">
-            {total} note(s).
-          </p>
+          <p className="px-1 text-[11px] leading-relaxed text-[#a39e98]">{total} note(s).</p>
         </aside>
 
         {/* Main */}

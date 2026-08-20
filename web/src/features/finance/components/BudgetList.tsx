@@ -21,9 +21,7 @@ export const BudgetList: React.FC<BudgetListProps> = ({
 }) => {
   const [search, setSearch] = useState("");
 
-  const filtered = budgets.filter((b) =>
-    b.category.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = budgets.filter((b) => b.category.toLowerCase().includes(search.toLowerCase()));
 
   // Surface over-budget items first
   const sorted = [...filtered].sort((a, b) => {

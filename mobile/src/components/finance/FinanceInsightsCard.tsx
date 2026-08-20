@@ -120,8 +120,7 @@ export const FinanceInsightsCard: React.FC<FinanceInsightsCardProps> = ({ onFetc
         <View style={styles.insightsResultBox}>
           {data.providerServed && (
             <ThemedText variant="caption" color={colors.inkMuted} style={styles.providerTag}>
-              Served by {data.providerServed}{" "}
-              {data.fallbackOccurred ? "(via backup fallback)" : ""}
+              Served by {data.providerServed} {data.fallbackOccurred ? "(via backup fallback)" : ""}
             </ThemedText>
           )}
           <MarkdownText content={data.insights} />

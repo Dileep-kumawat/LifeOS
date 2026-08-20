@@ -52,7 +52,6 @@ export function ScreenContainer({
   );
 }
 
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1

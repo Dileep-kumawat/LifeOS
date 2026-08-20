@@ -3,12 +3,7 @@ import type { AxiosRequestConfig } from "axios";
 import Constants from "expo-constants";
 import { useAuthStore } from "../store/authStore";
 import { tokenStorage } from "./tokenStorage";
-import type {
-  AuthResponse,
-  LoginInput,
-  RegisterInput,
-  ForgotPasswordInput
-} from "@lifeos/shared";
+import type { AuthResponse, LoginInput, RegisterInput, ForgotPasswordInput } from "@lifeos/shared";
 
 // Determine local dev API base URL depending on environment, USB reverse, or Expo host IP
 export const getDefaultApiUrl = () => {
@@ -91,7 +86,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       }
 
       return accessToken;
-    } catch (error) {
+    } catch (_error) {
       await tokenStorage.clearRefreshToken();
       useAuthStore.getState().clearAuth();
       return null;

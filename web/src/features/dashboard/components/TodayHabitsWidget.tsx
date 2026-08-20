@@ -55,7 +55,8 @@ export function TodayHabitsWidget() {
     onMutate: async ({ habitId, date, completed }) => {
       await queryClient.cancelQueries({ queryKey: ["habits-recent-checkins"] });
 
-      const prevCheckIns = queryClient.getQueryData<any[]>(["habits-recent-checkins", todayDateStr]) || [];
+      const prevCheckIns =
+        queryClient.getQueryData<any[]>(["habits-recent-checkins", todayDateStr]) || [];
 
       const updatedCheckIns = prevCheckIns.filter(
         (c) => !(c.habitId === habitId && c.date === date)
@@ -86,7 +87,8 @@ export function TodayHabitsWidget() {
   };
 
   const completedCount = habits.filter((h) => getIsCompleted(h._id)).length;
-  const progressPercent = habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
+  const progressPercent =
+    habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
 
   return (
     <div className="bg-white rounded-xl border border-[#e6e6e6] p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -145,11 +147,15 @@ export function TodayHabitsWidget() {
                         : "border-[#c1c6d5] hover:border-[#005db2] hover:scale-110 bg-white text-transparent"
                     }`}
                   >
-                    <CheckCircle2 className={`size-4 ${isCompleted ? "opacity-100 scale-100" : "opacity-0 scale-50"} transition-all duration-150`} />
+                    <CheckCircle2
+                      className={`size-4 ${isCompleted ? "opacity-100 scale-100" : "opacity-0 scale-50"} transition-all duration-150`}
+                    />
                   </button>
                   <span
                     className={`text-sm font-medium transition-all duration-150 truncate ${
-                      isCompleted ? "line-through text-[#717784]" : "text-[#1a1c1c] group-hover:text-[#005db2]"
+                      isCompleted
+                        ? "line-through text-[#717784]"
+                        : "text-[#1a1c1c] group-hover:text-[#005db2]"
                     }`}
                   >
                     {habit.title}
@@ -189,4 +195,3 @@ export function TodayHabitsWidget() {
     </div>
   );
 }
-

@@ -116,7 +116,8 @@ export function CategoryManager({
           <div className="flex items-start gap-2.5 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-800 dark:text-amber-300">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
             <span>
-              Deleting a category reassigns its transactions to <strong>"Other"</strong> so your historical financial data is preserved.
+              Deleting a category reassigns its transactions to <strong>"Other"</strong> so your
+              historical financial data is preserved.
             </span>
           </div>
 
@@ -133,7 +134,11 @@ export function CategoryManager({
                 }
               }}
             />
-            <Button size="sm" onClick={() => void handleCreate()} disabled={isSubmitting || !newCategoryName.trim()}>
+            <Button
+              size="sm"
+              onClick={() => void handleCreate()}
+              disabled={isSubmitting || !newCategoryName.trim()}
+            >
               <Plus className="size-4 mr-1" />
               Add
             </Button>

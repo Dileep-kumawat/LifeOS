@@ -180,7 +180,11 @@ export function FinancePage() {
   };
 
   // Budget Handlers
-  const handleSaveBudget = async (values: { category: string; limit: number; period: "monthly" }) => {
+  const handleSaveBudget = async (values: {
+    category: string;
+    limit: number;
+    period: "monthly";
+  }) => {
     setBudgetFormError(null);
     setIsBudgetSubmitting(true);
     try {
@@ -229,7 +233,9 @@ export function FinancePage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">Finance & Budgeting</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">
+            Finance & Budgeting
+          </h1>
           <p className="text-xs sm:text-sm text-neutral-500 mt-1">
             Manage transactions, set category budgets, and analyze spending trends.
           </p>
@@ -293,7 +299,7 @@ export function FinancePage() {
       {activeTab === "transactions" && (
         <div className="flex flex-col gap-6">
           <FinanceSummaryWidget summary={summaryData || null} isLoading={isSummaryLoading} />
-          
+
           <InsightsCard />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -373,7 +379,11 @@ export function FinancePage() {
             categories={categories}
             initialValues={
               editingBudget
-                ? { id: editingBudget.id, category: editingBudget.category, limit: editingBudget.limit }
+                ? {
+                    id: editingBudget.id,
+                    category: editingBudget.category,
+                    limit: editingBudget.limit
+                  }
                 : undefined
             }
             onSubmit={handleSaveBudget}

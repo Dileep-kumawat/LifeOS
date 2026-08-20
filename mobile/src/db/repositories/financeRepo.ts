@@ -108,7 +108,10 @@ export const financeRepo = {
   },
 
   async createOrUpdateBudget(
-    budget: Omit<LocalBudget, "id" | "syncStatus" | "lastModifiedAt" | "createdAt" | "updatedAt"> & {
+    budget: Omit<
+      LocalBudget,
+      "id" | "syncStatus" | "lastModifiedAt" | "createdAt" | "updatedAt"
+    > & {
       id?: string;
     }
   ): Promise<LocalBudget> {
@@ -126,7 +129,10 @@ export const financeRepo = {
         limit: budget.limit,
         period: budget.period || "monthly"
       });
-      result = (await db.getFirstAsync<LocalBudget>("SELECT * FROM budgets WHERE id = ?;", existing.id))!;
+      result = (await db.getFirstAsync<LocalBudget>(
+        "SELECT * FROM budgets WHERE id = ?;",
+        existing.id
+      ))!;
     } else {
       result = (await localRepo.insert("budgets", budget)) as LocalBudget;
     }
@@ -207,7 +213,9 @@ export const financeRepo = {
 
     const netSavings = totalIncome - totalExpense;
     const savingsRate =
-      totalIncome > 0 ? Math.max(0, Math.round(((totalIncome - totalExpense) / totalIncome) * 100)) : 0;
+      totalIncome > 0
+        ? Math.max(0, Math.round(((totalIncome - totalExpense) / totalIncome) * 100))
+        : 0;
 
     const categoryBreakdown: CategorySpendSummary[] = Object.entries(catSpendMap)
       .map(([category, amount]) => ({

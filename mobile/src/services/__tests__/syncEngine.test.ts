@@ -19,7 +19,6 @@ vi.mock("expo-secure-store", () => ({
   deleteItemAsync: vi.fn().mockResolvedValue(undefined)
 }));
 
-
 import { syncEngine } from "../syncEngine";
 import { noteRepo } from "../../db/repositories/noteRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
@@ -180,11 +179,17 @@ describe("Mobile Sync Engine - Push & Pull Lifecycle", () => {
 
     // 4. Verify local habit is now marked "synced"
     const db = await getDatabase();
-    const habitRows = await db.getAllAsync<any>("SELECT * FROM habits WHERE id = ?;", localHabit.id);
+    const habitRows = await db.getAllAsync<any>(
+      "SELECT * FROM habits WHERE id = ?;",
+      localHabit.id
+    );
     expect(habitRows[0].syncStatus).toBe("synced");
 
     // 5. Verify pulled remote note was merged into SQLite with syncStatus="synced"
-    const noteRows = await db.getAllAsync<any>("SELECT * FROM notes WHERE id = ?;", "server-note-456");
+    const noteRows = await db.getAllAsync<any>(
+      "SELECT * FROM notes WHERE id = ?;",
+      "server-note-456"
+    );
     expect(noteRows).toHaveLength(1);
     expect(noteRows[0].title).toBe("Remote Note from Web");
     expect(noteRows[0].syncStatus).toBe("synced");

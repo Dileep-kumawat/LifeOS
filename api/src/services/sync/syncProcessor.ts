@@ -277,7 +277,11 @@ async function processSinglePushItem(
         const habitData = {
           userId: userObjectId,
           title: data.title.trim(),
-          frequency: parseJsonIfString(data.frequency, { type: "daily", daysOfWeek: [], timesPerPeriod: 1 }),
+          frequency: parseJsonIfString(data.frequency, {
+            type: "daily",
+            daysOfWeek: [],
+            timesPerPeriod: 1
+          }),
           reminderTime: data.reminderTime ?? null,
           reminderEnabled: Boolean(data.reminderEnabled),
           currentStreak: Number(data.currentStreak) || 0,
@@ -293,7 +297,12 @@ async function processSinglePushItem(
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
             const fieldsToCheck = ["title", "frequency", "reminderTime", "reminderEnabled"];
             const baseDoc = data.baseRecord || data.base || null;
-            const merge = diffAndMergeFields(toPlainObject(existing), habitData, baseDoc, fieldsToCheck);
+            const merge = diffAndMergeFields(
+              toPlainObject(existing),
+              habitData,
+              baseDoc,
+              fieldsToCheck
+            );
             if (merge.hasConflict) {
               return {
                 id,
@@ -409,7 +418,14 @@ async function processSinglePushItem(
         if (existing && !forceResolution) {
           const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
-            const fieldsToCheck = ["amount", "type", "category", "date", "note", "receiptAttachment"];
+            const fieldsToCheck = [
+              "amount",
+              "type",
+              "category",
+              "date",
+              "note",
+              "receiptAttachment"
+            ];
             const baseDoc = data.baseRecord || data.base || null;
             const merge = diffAndMergeFields(
               toPlainObject(existing),
@@ -508,7 +524,12 @@ async function processSinglePushItem(
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
             const fieldsToCheck = ["limit", "category"];
             const baseDoc = data.baseRecord || data.base || null;
-            const merge = diffAndMergeFields(toPlainObject(existing), budgetData, baseDoc, fieldsToCheck);
+            const merge = diffAndMergeFields(
+              toPlainObject(existing),
+              budgetData,
+              baseDoc,
+              fieldsToCheck
+            );
             if (merge.hasConflict) {
               return {
                 id,
@@ -586,7 +607,12 @@ async function processSinglePushItem(
 
       if (operation === "create" || operation === "update") {
         if (!data.title || !data.startTime || !data.endTime) {
-          return { id, module, status: "error", error: "title, startTime, and endTime are required" };
+          return {
+            id,
+            module,
+            status: "error",
+            error: "title, startTime, and endTime are required"
+          };
         }
 
         const eventData = {
@@ -601,7 +627,10 @@ async function processSinglePushItem(
           recurrenceRule: data.recurrenceRule || null,
           recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
           exceptions: parseJsonIfString(data.exceptions, []),
-          reminderLeadMinutes: data.reminderLeadMinutes !== undefined && data.reminderLeadMinutes !== null ? Number(data.reminderLeadMinutes) : null,
+          reminderLeadMinutes:
+            data.reminderLeadMinutes !== undefined && data.reminderLeadMinutes !== null
+              ? Number(data.reminderLeadMinutes)
+              : null,
           isOverride: Boolean(data.isOverride),
           parentEventId: data.parentEventId ? new Types.ObjectId(data.parentEventId) : null
         };
@@ -614,11 +643,19 @@ async function processSinglePushItem(
           const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
           // Detect if another device updated this event since client last synced
           if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
-            const fieldsToCheck = ["title", "description", "location", "startTime", "endTime", "recurrenceRule"];
+            const fieldsToCheck = [
+              "title",
+              "description",
+              "location",
+              "startTime",
+              "endTime",
+              "recurrenceRule"
+            ];
             const merge = diffAndMergeFields(existing.toObject(), eventData, null, fieldsToCheck);
             if (merge.hasConflict) {
               // Calendar Strategy: Server applies LWW, but flags conflict notice for user
-              conflictNotice = "This event was updated on another device and your local change was overwritten";
+              conflictNotice =
+                "This event was updated on another device and your local change was overwritten";
             }
           }
 
@@ -655,7 +692,10 @@ async function processSinglePushItem(
         }
 
         const milestones = parseJsonIfString(data.milestones, []);
-        let progress = typeof data.progressPercent === "number" ? data.progressPercent : Number(data.progressPercent) || 0;
+        let progress =
+          typeof data.progressPercent === "number"
+            ? data.progressPercent
+            : Number(data.progressPercent) || 0;
         if (Array.isArray(milestones) && milestones.length > 0) {
           const completedCount = milestones.filter((m: any) => m.completed).length;
           progress = Math.round((completedCount / milestones.length) * 100);
@@ -728,12 +768,13 @@ async function processSinglePushItem(
             }).sort({ versionNumber: -1 });
 
             const baseDoc = toPlainObject(baseVersion) || data.baseRecord || data.base || null;
-            const merge = diffAndMergeFields(
-              toPlainObject(existing),
-              incomingNoteData,
-              baseDoc,
-              ["title", "content", "contentText", "folderId", "tags"]
-            );
+            const merge = diffAndMergeFields(toPlainObject(existing), incomingNoteData, baseDoc, [
+              "title",
+              "content",
+              "contentText",
+              "folderId",
+              "tags"
+            ]);
 
             if (merge.hasConflict) {
               // True conflict on the SAME field! Keep both versions in NoteVersion history.
@@ -848,7 +889,10 @@ async function processSinglePushItem(
       if (operation === "delete") {
         const folder = await NoteFolder.findOneAndDelete({ _id: id, userId: userObjectId });
         if (folder) {
-          await Note.updateMany({ folderId: id, userId: userObjectId }, { $set: { folderId: null } });
+          await Note.updateMany(
+            { folderId: id, userId: userObjectId },
+            { $set: { folderId: null } }
+          );
           await NoteFolder.updateMany(
             { parentFolderId: id, userId: userObjectId },
             { $set: { parentFolderId: folder.parentFolderId ?? null } }
@@ -948,9 +992,12 @@ export async function resolveSyncConflict(
   if (resolution === "keep_server") {
     let serverRecord: any = null;
     if (module === "notes") serverRecord = await Note.findOne({ _id: id, userId: userObjectId });
-    else if (module === "transactions") serverRecord = await Transaction.findOne({ _id: id, userId: userObjectId });
-    else if (module === "budgets") serverRecord = await Budget.findOne({ _id: id, userId: userObjectId });
-    else if (module === "habits") serverRecord = await Habit.findOne({ _id: id, userId: userObjectId });
+    else if (module === "transactions")
+      serverRecord = await Transaction.findOne({ _id: id, userId: userObjectId });
+    else if (module === "budgets")
+      serverRecord = await Budget.findOne({ _id: id, userId: userObjectId });
+    else if (module === "habits")
+      serverRecord = await Habit.findOne({ _id: id, userId: userObjectId });
 
     return {
       id,
@@ -961,18 +1008,15 @@ export async function resolveSyncConflict(
   }
 
   // keep_local or manual_merge: apply with forceResolution = true
-  return processSinglePushItem(
-    userId,
-    {
-      id,
-      module,
-      operation: "update",
-      data: resolvedData,
-      lastModifiedAt: Date.now(),
-      forceResolution: true,
-      resolutionSource: resolution
-    }
-  );
+  return processSinglePushItem(userId, {
+    id,
+    module,
+    operation: "update",
+    data: resolvedData,
+    lastModifiedAt: Date.now(),
+    forceResolution: true,
+    resolutionSource: resolution
+  });
 }
 
 /**
@@ -1067,8 +1111,14 @@ export async function processSyncPull(
       deleted: tombstonesByModule.habit_check_ins
     },
     notes: { upserted: serializeDocs(notes), deleted: tombstonesByModule.notes },
-    note_folders: { upserted: serializeDocs(noteFolders), deleted: tombstonesByModule.note_folders },
-    transactions: { upserted: serializeDocs(transactions), deleted: tombstonesByModule.transactions },
+    note_folders: {
+      upserted: serializeDocs(noteFolders),
+      deleted: tombstonesByModule.note_folders
+    },
+    transactions: {
+      upserted: serializeDocs(transactions),
+      deleted: tombstonesByModule.transactions
+    },
     budgets: { upserted: serializeDocs(budgets), deleted: tombstonesByModule.budgets },
     categories: { upserted: serializeDocs(categories), deleted: tombstonesByModule.categories },
     note_versions: {

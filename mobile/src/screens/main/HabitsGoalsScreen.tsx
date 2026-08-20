@@ -65,11 +65,11 @@ export function HabitsGoalsScreen() {
     if (!user?.id) return;
 
     // Execute local-first write
-    const { habit: updatedHabit, isCheckedIn, checkIn } = await habitRepo.toggleCheckIn(
-      habitId,
-      user.id,
-      todayStr
-    );
+    const {
+      habit: updatedHabit,
+      isCheckedIn,
+      checkIn
+    } = await habitRepo.toggleCheckIn(habitId, user.id, todayStr);
 
     // Optimistic UI state update
     if (updatedHabit) {
@@ -208,8 +208,12 @@ export function HabitsGoalsScreen() {
           <View style={styles.metricIconWrap}>
             <CheckSquare size={16} color={colors.success} />
           </View>
-          <ThemedText variant="heading3">{habitsCompletedToday}/{totalHabits}</ThemedText>
-          <ThemedText variant="caption" color={colors.inkMuted}>Today's Habits</ThemedText>
+          <ThemedText variant="heading3">
+            {habitsCompletedToday}/{totalHabits}
+          </ThemedText>
+          <ThemedText variant="caption" color={colors.inkMuted}>
+            Today's Habits
+          </ThemedText>
         </Card>
 
         <Card style={styles.metricCard}>
@@ -217,7 +221,9 @@ export function HabitsGoalsScreen() {
             <Flame size={16} color="#EA580C" fill="#EA580C" />
           </View>
           <ThemedText variant="heading3">{bestStreak}d</ThemedText>
-          <ThemedText variant="caption" color={colors.inkMuted}>Best Streak</ThemedText>
+          <ThemedText variant="caption" color={colors.inkMuted}>
+            Best Streak
+          </ThemedText>
         </Card>
 
         <Card style={styles.metricCard}>
@@ -225,7 +231,9 @@ export function HabitsGoalsScreen() {
             <Target size={16} color={colors.primary} />
           </View>
           <ThemedText variant="heading3">{activeGoalsCount}</ThemedText>
-          <ThemedText variant="caption" color={colors.inkMuted}>Active Goals</ThemedText>
+          <ThemedText variant="caption" color={colors.inkMuted}>
+            Active Goals
+          </ThemedText>
         </Card>
       </View>
 
@@ -386,4 +394,3 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   }
 });
-

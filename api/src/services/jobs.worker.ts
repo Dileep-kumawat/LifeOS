@@ -195,7 +195,10 @@ async function handleBudgetRollover(job: Job<{ refDate?: string }>): Promise<voi
   const { processBudgetRollover } = await import("./budgetService.js");
   const refDate = job.data?.refDate ? new Date(job.data.refDate) : new Date();
   const res = await processBudgetRollover(refDate);
-  logger.info({ jobId: job.id, processed: res.processed }, "budget_rollover completed successfully");
+  logger.info(
+    { jobId: job.id, processed: res.processed },
+    "budget_rollover completed successfully"
+  );
 }
 
 import { processEmbeddingJob } from "./ai/embeddingJob.js";

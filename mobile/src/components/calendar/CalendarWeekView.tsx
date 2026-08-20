@@ -54,10 +54,7 @@ export function CalendarWeekView({
               key={dStr}
               activeOpacity={0.7}
               onPress={() => onSelectDate(d)}
-              style={[
-                styles.dayButton,
-                isSelected && styles.dayButtonSelected
-              ]}
+              style={[styles.dayButton, isSelected && styles.dayButtonSelected]}
             >
               <ThemedText
                 variant="caption"
@@ -89,7 +86,11 @@ export function CalendarWeekView({
       {/* Selected Day Agenda */}
       <View style={styles.agendaSection}>
         <ThemedText variant="heading3" style={styles.agendaHeader}>
-          {selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+          {selectedDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "short",
+            day: "numeric"
+          })}
         </ThemedText>
 
         {selectedDayEvents.length === 0 ? (

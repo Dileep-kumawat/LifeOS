@@ -89,11 +89,7 @@ function getNotificationMeta(type: string) {
   }
 }
 
-export function NotificationModal({
-  visible,
-  onClose,
-  onNavigate
-}: NotificationModalProps) {
+export function NotificationModal({ visible, onClose, onNavigate }: NotificationModalProps) {
   const isOnline = useSyncStore((state) => state.isOnline);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -141,9 +137,7 @@ export function NotificationModal({
     setMarkingAll(true);
     try {
       await notificationApiService.markAllAsRead("unread");
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, readStatus: "read" as const }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, readStatus: "read" as const })));
     } catch (err) {
       console.warn("Failed to mark all as read:", err);
     } finally {
@@ -347,8 +341,13 @@ export function NotificationModal({
                             onPress={() => toggleExpand(item.id)}
                           >
                             <Layers size={13} color={colors.primary} />
-                            <ThemedText variant="caption" color={colors.primary} style={{ fontWeight: "600" }}>
-                              {item.payload.items.length} items batched ({isExpanded ? "Hide" : "Show"})
+                            <ThemedText
+                              variant="caption"
+                              color={colors.primary}
+                              style={{ fontWeight: "600" }}
+                            >
+                              {item.payload.items.length} items batched (
+                              {isExpanded ? "Hide" : "Show"})
                             </ThemedText>
                           </TouchableOpacity>
 
@@ -357,7 +356,11 @@ export function NotificationModal({
                               {item.payload.items.map((sub, idx) => (
                                 <View key={idx} style={styles.batchItem}>
                                   <View style={styles.batchDot} />
-                                  <ThemedText variant="caption" color={colors.ink} style={{ flex: 1 }}>
+                                  <ThemedText
+                                    variant="caption"
+                                    color={colors.ink}
+                                    style={{ flex: 1 }}
+                                  >
                                     {sub.title}
                                     {sub.body ? ` — ${sub.body}` : ""}
                                   </ThemedText>
@@ -372,12 +375,20 @@ export function NotificationModal({
                       <View style={styles.cardFooter}>
                         <View style={styles.timeWrap}>
                           <Clock size={11} color={colors.inkMuted} />
-                          <ThemedText variant="caption" color={colors.inkMuted} style={styles.timeText}>
+                          <ThemedText
+                            variant="caption"
+                            color={colors.inkMuted}
+                            style={styles.timeText}
+                          >
                             {formatRelativeTime(item.createdAt || item.scheduledFor)}
                           </ThemedText>
                         </View>
                         <View style={styles.typeBadge}>
-                          <ThemedText variant="caption" color={colors.inkMuted} style={styles.typeBadgeText}>
+                          <ThemedText
+                            variant="caption"
+                            color={colors.inkMuted}
+                            style={styles.typeBadgeText}
+                          >
                             {meta.label}
                           </ThemedText>
                         </View>

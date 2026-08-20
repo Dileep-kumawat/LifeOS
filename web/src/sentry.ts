@@ -8,7 +8,6 @@ export function initSentry(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
   if (!dsn) {
-    // eslint-disable-next-line no-console
     console.warn("VITE_SENTRY_DSN not set — error tracking disabled (fine for local dev).");
     return;
   }

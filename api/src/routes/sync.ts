@@ -90,9 +90,9 @@ syncRouter.post(
  *     description: |
  *       Accepts a batch of local creations, updates, and deletions across all mirrored LifeOS modules.
  *       Each change runs through full server business logic, validation, streak recalculation, and budget hooks.
- *       
+ *
  *       ### Conflict Resolution & Per-Module Policies:
- *       1. **Notes (`notes`)**: 
+ *       1. **Notes (`notes`)**:
  *          * Field-level 3-way merge against base version in `NoteVersion` history.
  *          * Disjoint field edits auto-merge cleanly with status `applied`.
  *          * True conflicts on same field return status `conflict`, retain current server state in `serverRecord`, preserve client candidate in `conflictData`, create historical `NoteVersion`, and surface resolution UI.
@@ -228,7 +228,7 @@ syncRouter.post(
  *     summary: Pull remote server changes since cursor (POST)
  *     description: |
  *       Returns all documents modified on the server and deletion tombstones since the specified ISO timestamp cursor.
- *       
+ *
  *       ### Cursor Lifecycle:
  *       * **First-Ever Sync**: Send `since: null` (or omit). Server returns all active user records in `changes.<module>.upserted` and empty `deleted` arrays.
  *       * **Incremental Sync**: Send `since: "<cursor_string>"` received from previous sync response. Server queries records with `updatedAt >= since` and tombstones with `deletedAt >= since`.
@@ -420,4 +420,3 @@ syncRouter.get("/sync/pull", async (req: Request, res: Response) => {
  *         resolvedData: { type: object }
  *         deviceId: { type: string }
  */
-

@@ -194,7 +194,9 @@ export const ChatPage: React.FC = () => {
                   <div className="p-2 bg-[#f4f4f4] rounded-xl shrink-0 group-hover:bg-white group-hover:scale-110 transition-all duration-150 shadow-2xs">
                     {card.icon}
                   </div>
-                  <span className="mt-1 leading-snug font-medium group-hover:text-[#005db2] transition-colors duration-150">{card.title}</span>
+                  <span className="mt-1 leading-snug font-medium group-hover:text-[#005db2] transition-colors duration-150">
+                    {card.title}
+                  </span>
                 </button>
               ))}
             </div>

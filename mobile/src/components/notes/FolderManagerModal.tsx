@@ -67,7 +67,11 @@ export function FolderManagerModal({
         {/* Existing Folders List */}
         <View style={styles.folderList}>
           {folders.length === 0 ? (
-            <ThemedText variant="caption" color={colors.inkMuted} style={{ textAlign: "center", paddingVertical: spacing.md }}>
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              style={{ textAlign: "center", paddingVertical: spacing.md }}
+            >
               No folders yet.
             </ThemedText>
           ) : (

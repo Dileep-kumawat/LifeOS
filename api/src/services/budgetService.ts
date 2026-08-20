@@ -8,7 +8,10 @@ import { logger } from "../logger.js";
 /**
  * Returns UTC boundaries (start of month 00:00:00.000, end of month 23:59:59.999) for a date.
  */
-export function getMonthBounds(refDate: Date = new Date()): { startOfMonth: Date; endOfMonth: Date } {
+export function getMonthBounds(refDate: Date = new Date()): {
+  startOfMonth: Date;
+  endOfMonth: Date;
+} {
   const year = refDate.getUTCFullYear();
   const month = refDate.getUTCMonth();
 
@@ -96,7 +99,9 @@ export async function recalculateBudgetSpend(
  * Monthly rollover process for budgets.
  * Snapshots the ending period spend into BudgetHistory and resets currentSpend for the new month.
  */
-export async function processBudgetRollover(refDate: Date = new Date()): Promise<{ processed: number }> {
+export async function processBudgetRollover(
+  refDate: Date = new Date()
+): Promise<{ processed: number }> {
   const budgets = await Budget.find({ period: "monthly" });
   let processed = 0;
 

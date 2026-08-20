@@ -32,7 +32,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       const { accessToken, user } = response.data;
       useAuthStore.getState().setAuth(user, accessToken);
       return accessToken as string;
-    } catch (error) {
+    } catch (_error) {
       useAuthStore.getState().clearAuth();
       return null;
     } finally {

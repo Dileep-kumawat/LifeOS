@@ -52,7 +52,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
     try {
       await onSubmit({ category: category.trim(), limit: numericLimit, period });
-    } catch (err: any) {
+    } catch (_err: any) {
       // Errors handled at caller or passed via props
     }
   };
@@ -60,7 +60,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const activeError = validationError || externalErrorMessage;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-md bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 w-full max-w-md bg-white p-6 rounded-xl border border-neutral-200 shadow-sm"
+    >
       <div className="flex flex-col gap-1 border-b border-neutral-100 pb-3">
         <h3 className="text-lg font-semibold text-neutral-900">
           {isEdit ? `Edit Budget: ${initialValues?.category}` : "Create New Category Budget"}

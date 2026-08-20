@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Sparkles,
-  Calendar,
-  Activity,
-  Target,
-  Wallet,
-  Plus,
-  ArrowUpRight
-} from "lucide-react";
+import { Sparkles, Calendar, Activity, Target, Wallet, Plus, ArrowUpRight } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useTodaySummary } from "../ai/hooks/useDailySummary";
 import { DailySummaryCard } from "../ai/components/DailySummaryCard";
@@ -27,7 +19,12 @@ import { useCalendarEvents } from "../calendar/hooks/useCalendarEvents";
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
-  const { data: summaryData, isLoading: isSummaryLoading, isError: isSummaryError, refetch } = useTodaySummary();
+  const {
+    data: summaryData,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    refetch
+  } = useTodaySummary();
 
   // Determine greeting based on local time
   const [greeting, setGreeting] = useState("Welcome back");
@@ -100,7 +97,9 @@ export function DashboardPage() {
         <div className="max-w-3xl z-10">
           <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-[-1px] sm:tracking-[-1.875px] mb-2 sm:mb-4 text-white">
             {greeting}, {user?.name || "Explorer"}{" "}
-            <span className="inline-block hover:rotate-12 transition-transform cursor-pointer">👋</span>
+            <span className="inline-block hover:rotate-12 transition-transform cursor-pointer">
+              👋
+            </span>
           </h1>
           <p className="text-xs sm:text-base lg:text-lg text-white/80 max-w-2xl leading-relaxed">
             Here is your daily command center across tasks, habits, finances, and goals.
@@ -225,7 +224,8 @@ export function DashboardPage() {
                 <h3 className="text-[20px] font-bold text-[#1a1c1c]">Ask LifeOS AI</h3>
               </div>
               <p className="text-xs text-[#717784] mb-4">
-                Ask your AI copilot to synthesize your schedule, plan goals, or offer habit coaching:
+                Ask your AI copilot to synthesize your schedule, plan goals, or offer habit
+                coaching:
               </p>
               <div className="flex flex-col gap-2">
                 {quickPrompts.map((prompt, idx) => (
@@ -246,5 +246,3 @@ export function DashboardPage() {
     </div>
   );
 }
-
-

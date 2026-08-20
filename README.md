@@ -65,15 +65,18 @@ If running the API on the host instead of in Docker, edit `api/.env` and point `
 2. **Connect Phone to PC:**
    - Connect your phone using a USB cable.
    - Set USB connection mode to **File Transfer / MTP**.
-   - Accept the prompt on your phone: *"Allow USB debugging from this computer"*.
+   - Accept the prompt on your phone: _"Allow USB debugging from this computer"_.
 
 3. **Verify Device Connection:**
+
    ```bash
    adb devices
    ```
-   *(Your device should show with status `device`)*.
+
+   _(Your device should show with status `device`)_.
 
 4. **Port Forwarding (Essential for Bundler & Local API access):**
+
    ```bash
    # Forward Metro bundler port
    adb reverse tcp:8081 tcp:8081
@@ -89,7 +92,7 @@ If running the API on the host instead of in Docker, edit `api/.env` and point `
      cd mobile
      npx expo start --localhost
      ```
-     *(or from workspace root: `npm run dev:mobile`)*
+     _(or from workspace root: `npm run dev:mobile`)_
    - Press **`a`** in your terminal to launch and bundle the app directly onto your phone.
 
 ---

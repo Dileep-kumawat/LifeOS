@@ -20,7 +20,7 @@ export function FinanceSnapshotWidget() {
   const expense = summaryData?.monthlyTotals?.expense ?? 0;
   const transactions: Transaction[] = transactionsData?.data || [];
 
-  const netBalance = (income - expense);
+  const netBalance = income - expense;
   const totalFlow = income + expense;
   const incomePercent = totalFlow > 0 ? Math.round((income / totalFlow) * 100) : 0;
   const expensePercent = totalFlow > 0 ? Math.round((expense / totalFlow) * 100) : 0;
@@ -45,7 +45,11 @@ export function FinanceSnapshotWidget() {
       <div className="mb-6">
         <p className="text-xs text-[#717784] mb-1">{currentMonthName} Net Cashflow</p>
         <p className="text-3xl font-bold tracking-tight text-[#1a1c1c]">
-          ₹{netBalance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          ₹
+          {netBalance.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })}
         </p>
       </div>
 
@@ -59,7 +63,11 @@ export function FinanceSnapshotWidget() {
                 <span className="size-2 rounded-full bg-emerald-500" /> Income
               </span>
               <span className="font-bold text-[#1a1c1c]">
-                ₹{income.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                ₹
+                {income.toLocaleString("en-IN", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                })}
               </span>
             </div>
             <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
@@ -76,7 +84,11 @@ export function FinanceSnapshotWidget() {
                 <span className="size-2 rounded-full bg-rose-500" /> Expenses
               </span>
               <span className="font-bold text-[#1a1c1c]">
-                ₹{expense.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                ₹
+                {expense.toLocaleString("en-IN", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                })}
               </span>
             </div>
             <div className="h-2 w-full bg-[#efeeed] rounded-full overflow-hidden">
@@ -133,7 +145,11 @@ export function FinanceSnapshotWidget() {
                       {tx.note || tx.category || "Transaction"}
                     </p>
                     <p className="text-[10px] text-[#717784]">
-                      {tx.category} • {new Date(tx.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      {tx.category} •{" "}
+                      {new Date(tx.date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric"
+                      })}
                     </p>
                   </div>
                 </div>
@@ -143,7 +159,11 @@ export function FinanceSnapshotWidget() {
                     isIncome ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
-                  {isIncome ? "+" : "-"}₹{Math.abs(tx.amount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {isIncome ? "+" : "-"}₹
+                  {Math.abs(tx.amount).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
                 </span>
               </li>
             );
@@ -153,4 +173,3 @@ export function FinanceSnapshotWidget() {
     </div>
   );
 }
-

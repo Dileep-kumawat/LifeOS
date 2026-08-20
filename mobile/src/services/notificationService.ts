@@ -67,7 +67,8 @@ export const notificationService = {
 
       await tokenStorage.setItem(FCM_TOKEN_STORAGE_KEY, token);
 
-      const deviceType = Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web";
+      const deviceType =
+        Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web";
       const deviceName = `${Platform.OS.toUpperCase()} Device (${Platform.Version})`;
 
       await apiClient.post("/notifications/fcm-token", {
@@ -77,7 +78,7 @@ export const notificationService = {
       });
 
       return token;
-    } catch (err) {
+    } catch (_err) {
       // Network or API error — will retry on next online sync
       return null;
     }
@@ -120,10 +121,7 @@ export const notificationService = {
     }
 
     tokenStorage
-      .setItem(
-        DELIVERED_NOTIFICATION_IDS_KEY,
-        JSON.stringify(Array.from(deliveredNotificationIds))
-      )
+      .setItem(DELIVERED_NOTIFICATION_IDS_KEY, JSON.stringify(Array.from(deliveredNotificationIds)))
       .catch(() => {});
 
     return true;

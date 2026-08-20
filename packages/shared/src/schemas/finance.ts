@@ -116,4 +116,3 @@ export const budgetParamsSchema = z.object({
 });
 
 export type BudgetParams = z.infer<typeof budgetParamsSchema>;
-

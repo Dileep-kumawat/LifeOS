@@ -617,21 +617,17 @@ notificationsRouter.post(
  *       401:
  *         description: Authentication required
  */
-notificationsRouter.delete(
-  "/notifications/fcm-token",
-  async (req: Request, res: Response) => {
-    const userId = req.user!._id;
-    const { token } = req.body as { token: string };
-    if (!token) {
-      return res.status(400).json({ error: "ValidationError", message: "Token is required" });
-    }
-
-    const endpoint = `fcm:${token}`;
-    const result = await PushSubscription.deleteOne({ userId, endpoint });
-    return res.json({ deleted: result.deletedCount ?? 0 });
+notificationsRouter.delete("/notifications/fcm-token", async (req: Request, res: Response) => {
+  const userId = req.user!._id;
+  const { token } = req.body as { token: string };
+  if (!token) {
+    return res.status(400).json({ error: "ValidationError", message: "Token is required" });
   }
-);
 
+  const endpoint = `fcm:${token}`;
+  const result = await PushSubscription.deleteOne({ userId, endpoint });
+  return res.json({ deleted: result.deletedCount ?? 0 });
+});
 
 /**
  * @openapi

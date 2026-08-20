@@ -15,7 +15,7 @@ const COLORS = [
   "#d6b6f6", // Purple
   "#62aef0", // Sky
   "#1aae39", // Green
-  "#523410"  // Brown
+  "#523410" // Brown
 ];
 
 export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
@@ -81,12 +81,18 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
             </Pie>
             <Tooltip
               formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, "Amount"]}
-              contentStyle={{ backgroundColor: "#ffffff", borderRadius: "8px", borderColor: "#e6e6e6" }}
+              contentStyle={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                borderColor: "#e6e6e6"
+              }}
             />
             <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={(value: any) => <span className="text-xs text-[#31302e] font-medium">{value}</span>}
+              formatter={(value: any) => (
+                <span className="text-xs text-[#31302e] font-medium">{value}</span>
+              )}
             />
           </PieChart>
         </ResponsiveContainer>

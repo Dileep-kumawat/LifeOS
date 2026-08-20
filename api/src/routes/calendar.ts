@@ -227,7 +227,7 @@ calendarRouter.post(
       await enqueueEmbeddingJob("event", doc._id, userId);
 
       return res.status(201).json({ event: formatEventDetail(doc) });
-    } catch (err) {
+    } catch (_err) {
       return res
         .status(500)
         .json({ error: "InternalServerError", message: "Failed to create event" });

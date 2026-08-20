@@ -177,7 +177,10 @@ export function TransactionForm({
 
           {/* Amount Input */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="amount" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Label
+              htmlFor="amount"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+            >
               Amount (₹)
             </Label>
             <div className="relative">
@@ -202,7 +205,10 @@ export function TransactionForm({
           {/* Category Select + Inline Add */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="category" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <Label
+                htmlFor="category"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
                 Category
               </Label>
               {!isAddingInlineCategory && (
@@ -267,7 +273,10 @@ export function TransactionForm({
 
           {/* Date Input */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="date" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Label
+              htmlFor="date"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+            >
               Date
             </Label>
             <Input
@@ -283,7 +292,10 @@ export function TransactionForm({
 
           {/* Note Input */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="note" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Label
+              htmlFor="note"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+            >
               Note (Optional)
             </Label>
             <Input id="note" placeholder="Add a description or note..." {...register("note")} />
@@ -297,7 +309,11 @@ export function TransactionForm({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : initialData ? "Update Transaction" : "Create Transaction"}
+              {isSubmitting
+                ? "Saving..."
+                : initialData
+                  ? "Update Transaction"
+                  : "Create Transaction"}
             </Button>
           </div>
         </form>

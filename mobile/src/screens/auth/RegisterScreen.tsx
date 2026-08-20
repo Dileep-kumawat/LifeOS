@@ -13,7 +13,12 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -34,8 +39,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
     try {
       await authApi.register({ name, email, password });
     } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Failed to register account.";
+      const message = err?.response?.data?.message || err?.message || "Failed to register account.";
       setErrors({ general: message });
     } finally {
       setLoading(false);

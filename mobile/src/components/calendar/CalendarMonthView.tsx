@@ -100,7 +100,12 @@ export function CalendarMonthView({
       {/* Weekday headers */}
       <View style={styles.weekHeader}>
         {weekDayLabels.map((lbl) => (
-          <ThemedText key={lbl} variant="caption" color={colors.inkMuted} style={styles.weekDayLabel}>
+          <ThemedText
+            key={lbl}
+            variant="caption"
+            color={colors.inkMuted}
+            style={styles.weekDayLabel}
+          >
             {lbl}
           </ThemedText>
         ))}
@@ -161,7 +166,11 @@ export function CalendarMonthView({
       {/* Events for selected date */}
       <View style={styles.selectedEventsSection}>
         <ThemedText variant="heading3" style={styles.agendaTitle}>
-          {selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+          {selectedDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "short",
+            day: "numeric"
+          })}
         </ThemedText>
 
         {selectedDayEvents.length === 0 ? (
@@ -309,4 +318,3 @@ const styles = StyleSheet.create({
     marginTop: 4
   }
 });
-

@@ -39,7 +39,10 @@ export async function sendPushNotification(
   // Handle FCM Mobile Device Token
   if (subscription.endpoint.startsWith("fcm:") || !subscription.keys?.p256dh) {
     const fcmToken = subscription.endpoint.replace(/^fcm:/, "");
-    logger.info({ fcmToken, subscriptionId: subscription.id }, "Delivering mobile push via FCM token");
+    logger.info(
+      { fcmToken, subscriptionId: subscription.id },
+      "Delivering mobile push via FCM token"
+    );
     // In production, this forwards payload to firebase-admin messaging
     return { status: "ok", subscriptionId: subscription.id };
   }

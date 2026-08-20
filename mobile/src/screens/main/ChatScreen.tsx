@@ -240,7 +240,11 @@ export function ChatScreen() {
         {/* Quick Suggestion Chips Bar when in chat */}
         {showQuickPrompts && (
           <View style={styles.quickPromptsBar}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptsContent}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickPromptsContent}
+            >
               {SUGGESTIONS.map((sug) => (
                 <TouchableOpacity
                   key={sug.id}

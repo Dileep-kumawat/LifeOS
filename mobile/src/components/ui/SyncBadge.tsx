@@ -11,12 +11,7 @@ interface SyncBadgeProps {
   style?: ViewStyle;
 }
 
-export function SyncBadge({
-  status,
-  size = "sm",
-  showLabel = false,
-  style
-}: SyncBadgeProps) {
+export function SyncBadge({ status, size = "sm", showLabel = false, style }: SyncBadgeProps) {
   if (status === "synced" && !showLabel) {
     return null;
   }

@@ -31,12 +31,7 @@ export function Modal({
   scrollable = true
 }: ModalProps) {
   return (
-    <RNModal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <RNModal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.backdrop}
@@ -142,4 +137,3 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl
   }
 });
-

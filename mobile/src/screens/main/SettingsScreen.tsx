@@ -107,7 +107,10 @@ export function SettingsScreen({ navigation }: any) {
   const handleRegisterFcm = async () => {
     const token = await notificationService.registerDeviceToken();
     setFcmToken(token);
-    Alert.alert("Push Token Registered", `Device token successfully synced with backend for push notifications.`);
+    Alert.alert(
+      "Push Token Registered",
+      `Device token successfully synced with backend for push notifications.`
+    );
   };
 
   const handleLogout = async () => {
@@ -318,7 +321,12 @@ export function SettingsScreen({ navigation }: any) {
             <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
               Push Notification
             </ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Direct to this device
             </ThemedText>
           </View>
@@ -334,7 +342,12 @@ export function SettingsScreen({ navigation }: any) {
             <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
               In-App Notification
             </ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Notification modal & bell
             </ThemedText>
           </View>
@@ -350,7 +363,12 @@ export function SettingsScreen({ navigation }: any) {
             <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
               Email Summary
             </ThemedText>
-            <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1} ellipsizeMode="tail">
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               Sent to account email
             </ThemedText>
           </View>
@@ -362,7 +380,13 @@ export function SettingsScreen({ navigation }: any) {
         </View>
 
         <Button
-          title={savingPrefs ? "Saving..." : savedSuccess ? "Preferences Saved!" : "Save Delivery Preferences"}
+          title={
+            savingPrefs
+              ? "Saving..."
+              : savedSuccess
+                ? "Preferences Saved!"
+                : "Save Delivery Preferences"
+          }
           variant={savedSuccess ? "secondary" : "primary"}
           size="sm"
           onPress={handleSaveSummaryPrefs}
@@ -381,7 +405,12 @@ export function SettingsScreen({ navigation }: any) {
           <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
             Name:
           </ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+          <ThemedText
+            variant="bodySm"
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {user?.name || "N/A"}
           </ThemedText>
         </View>
@@ -389,7 +418,12 @@ export function SettingsScreen({ navigation }: any) {
           <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
             Email:
           </ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+          <ThemedText
+            variant="bodySm"
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {user?.email || "N/A"}
           </ThemedText>
         </View>
@@ -397,7 +431,12 @@ export function SettingsScreen({ navigation }: any) {
           <ThemedText variant="bodySm" color={colors.inkMuted} style={styles.infoLabel}>
             Role:
           </ThemedText>
-          <ThemedText variant="bodySm" style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+          <ThemedText
+            variant="bodySm"
+            style={styles.infoValue}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {user?.role?.toUpperCase() || "USER"}
           </ThemedText>
         </View>

@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Types } from "mongoose";
-import {
-  processSyncPush,
-  resolveSyncConflict
-} from "../syncProcessor.js";
+import { processSyncPush, resolveSyncConflict } from "../syncProcessor.js";
 import { Habit } from "../../../models/Habit.js";
 import { HabitCheckIn } from "../../../models/HabitCheckIn.js";
 import { Transaction } from "../../../models/Transaction.js";
@@ -214,17 +211,11 @@ describe("Per-Module Sync Conflict Resolution Strategies", () => {
       } as any);
       const versionCreateSpy = vi.spyOn(NoteVersion, "create").mockResolvedValue({} as any);
 
-      const resolvedResult = await resolveSyncConflict(
-        userId,
-        noteId,
-        "notes",
-        "manual_merge",
-        {
-          title: "Merged Title",
-          contentText: "Merged Content from both devices",
-          content: { type: "doc", content: [] }
-        }
-      );
+      const resolvedResult = await resolveSyncConflict(userId, noteId, "notes", "manual_merge", {
+        title: "Merged Title",
+        contentText: "Merged Content from both devices",
+        content: { type: "doc", content: [] }
+      });
 
       expect(resolvedResult.status).toBe("applied");
       expect(mockNote.title).toBe("Merged Title");
@@ -360,7 +351,9 @@ describe("Per-Module Sync Conflict Resolution Strategies", () => {
 
       vi.spyOn(Category, "findOneAndUpdate").mockResolvedValue({} as any);
       vi.spyOn(Transaction, "findOne").mockResolvedValue(existingServerTx as any);
-      const updateHookSpy = vi.spyOn(financeHooks, "onTransactionUpdated").mockResolvedValue({} as any);
+      const updateHookSpy = vi
+        .spyOn(financeHooks, "onTransactionUpdated")
+        .mockResolvedValue({} as any);
 
       // Device A changed note to "Lunch with team" while keeping base category General
       const pushChanges: any[] = [

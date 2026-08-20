@@ -70,7 +70,7 @@ export const tokenStorage = {
         return inMemoryFallbackStore.get(key) ?? null;
       }
       const val = await SecureStore.getItemAsync(key);
-      return val ?? (inMemoryFallbackStore.get(key) ?? null);
+      return val ?? inMemoryFallbackStore.get(key) ?? null;
     } catch (error) {
       console.warn(`SecureStore getItem error for key ${key}:`, error);
       return inMemoryFallbackStore.get(key) ?? null;

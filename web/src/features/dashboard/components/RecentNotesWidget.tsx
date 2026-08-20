@@ -6,7 +6,11 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import type { NoteSummary } from "../../notes/types";
 
 export function RecentNotesWidget() {
-  const { data: notesData, isLoading, isError } = useQuery({
+  const {
+    data: notesData,
+    isLoading,
+    isError
+  } = useQuery({
     queryKey: ["notes", { limit: 4 }],
     queryFn: () => notesApi.list({ limit: 4 })
   });
@@ -69,7 +73,9 @@ export function RecentNotesWidget() {
                   <span className="text-[13px] font-semibold text-[#1a1c1c] truncate group-hover:text-[#005db2] transition-colors">
                     {note.title || "Untitled Note"}
                   </span>
-                  <span className={`text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded shrink-0 ${tagColor}`}>
+                  <span
+                    className={`text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded shrink-0 ${tagColor}`}
+                  >
                     {tagLabel}
                   </span>
                 </div>
@@ -84,4 +90,3 @@ export function RecentNotesWidget() {
     </div>
   );
 }
-

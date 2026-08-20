@@ -90,7 +90,9 @@ export function CalendarPage() {
               <ChevronRight className="size-4" />
             </Button>
           </div>
-          <h1 className="text-base sm:text-xl font-bold text-[#000000] ml-1">{viewLabel(view, cursor)}</h1>
+          <h1 className="text-base sm:text-xl font-bold text-[#000000] ml-1">
+            {viewLabel(view, cursor)}
+          </h1>
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">

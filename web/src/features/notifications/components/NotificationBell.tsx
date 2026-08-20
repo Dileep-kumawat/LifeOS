@@ -20,10 +20,7 @@ interface NotificationBellProps {
  * labelled — the count is announced via both the button's accessible name and
  * a polite live region, not just the visual badge.
  */
-export function NotificationBell({
-  className,
-  align = "start"
-}: NotificationBellProps) {
+export function NotificationBell({ className, align = "start" }: NotificationBellProps) {
   const { data: unread = 0 } = useUnreadCount();
   const [open, setOpen] = useState(false);
 

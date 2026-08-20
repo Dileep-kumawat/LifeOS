@@ -12,11 +12,7 @@ interface CalendarDayViewProps {
   onSelectEvent: (event: LocalEvent) => void;
 }
 
-export function CalendarDayView({
-  selectedDate,
-  events,
-  onSelectEvent
-}: CalendarDayViewProps) {
+export function CalendarDayView({ selectedDate, events, onSelectEvent }: CalendarDayViewProps) {
   const dateStr = selectedDate.toISOString().split("T")[0];
 
   const dayEvents = events.filter((ev) => {
@@ -42,11 +38,7 @@ export function CalendarDayView({
             const timeRange = `${start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
             return (
-              <TouchableOpacity
-                key={ev.id}
-                activeOpacity={0.7}
-                onPress={() => onSelectEvent(ev)}
-              >
+              <TouchableOpacity key={ev.id} activeOpacity={0.7} onPress={() => onSelectEvent(ev)}>
                 <Card style={styles.eventCard}>
                   <View style={styles.eventCardHeader}>
                     <ThemedText variant="heading3" numberOfLines={1} style={styles.eventTitle}>
@@ -73,7 +65,11 @@ export function CalendarDayView({
 
                   {Boolean(ev.recurrenceRule) && (
                     <View style={styles.recurringTag}>
-                      <ThemedText variant="caption" color={colors.accentPurple} style={{ fontSize: 11 }}>
+                      <ThemedText
+                        variant="caption"
+                        color={colors.accentPurple}
+                        style={{ fontSize: 11 }}
+                      >
                         Repeating Event
                       </ThemedText>
                     </View>

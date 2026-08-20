@@ -161,7 +161,6 @@ function MainTabNavigator() {
   );
 }
 
-
 function AuthenticatedNavigator() {
   return (
     <AppStack.Navigator screenOptions={{ headerShown: false }}>

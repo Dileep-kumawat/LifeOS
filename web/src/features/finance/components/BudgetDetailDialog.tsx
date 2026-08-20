@@ -65,7 +65,10 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
           ) : (
             <div className="max-h-60 overflow-y-auto flex flex-col divide-y divide-neutral-100 border border-neutral-200 rounded-lg">
               {budget.recentTransactions.map((tx) => (
-                <div key={tx.id} className="p-3 flex items-center justify-between hover:bg-neutral-50">
+                <div
+                  key={tx.id}
+                  className="p-3 flex items-center justify-between hover:bg-neutral-50"
+                >
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-neutral-900">
                       {tx.note || tx.category}

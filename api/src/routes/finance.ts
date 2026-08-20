@@ -613,7 +613,9 @@ financeRouter.post(
 
       const categoryDoc = await Category.findOne({ userId, name: normalizedName, type });
 
-      return res.status(201).json(categoryDoc ? formatCategory(categoryDoc) : { name: normalizedName, type });
+      return res
+        .status(201)
+        .json(categoryDoc ? formatCategory(categoryDoc) : { name: normalizedName, type });
     } catch (err: any) {
       return res.status(500).json({
         error: "InternalServerError",
@@ -742,7 +744,11 @@ financeRouter.delete("/finance/categories/:id", async (req: Request, res: Respon
     }
 
     // Reassign transactions to "Other" before deleting
-    const reassignedCount = await reassignCategoryTransactions(userId, category.name, category.type as any);
+    const reassignedCount = await reassignCategoryTransactions(
+      userId,
+      category.name,
+      category.type as any
+    );
 
     await Category.deleteOne({ _id: id });
 
@@ -868,7 +874,9 @@ financeRouter.get(
 
       // 2. Aggregation for multi-month trend
       const trendNumMonths = Number(months);
-      const startOfTrend = new Date(Date.UTC(targetYear, targetMonth - (trendNumMonths - 1), 1, 0, 0, 0, 0));
+      const startOfTrend = new Date(
+        Date.UTC(targetYear, targetMonth - (trendNumMonths - 1), 1, 0, 0, 0, 0)
+      );
 
       const trendAggregation = await Transaction.aggregate([
         {
@@ -1407,7 +1415,13 @@ financeRouter.post("/finance/insights", async (req: Request, res: Response) => {
     // 1. Gather category breakdown for current month
     const categoryAggregation = await Transaction.aggregate([
       { $match: { userId: userObjId, date: { $gte: startOfMonth, $lte: endOfMonth } } },
-      { $group: { _id: { category: "$category", type: "$type" }, totalAmount: { $sum: "$amount" }, count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: { category: "$category", type: "$type" },
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      },
       { $sort: { totalAmount: -1 } }
     ]);
 
@@ -1432,7 +1446,11 @@ financeRouter.post("/finance/insights", async (req: Request, res: Response) => {
       const currentSpend = b.currentSpend;
       const percentUsed = limit > 0 ? Math.round((currentSpend / limit) * 100) : 0;
       const isOverBudget = currentSpend > limit;
-      const status = isOverBudget ? "over_budget" : percentUsed >= 80 ? "approaching_limit" : "under_budget";
+      const status = isOverBudget
+        ? "over_budget"
+        : percentUsed >= 80
+          ? "approaching_limit"
+          : "under_budget";
       return { category: b.category, limit, currentSpend, percentUsed, status };
     });
 
@@ -1440,12 +1458,21 @@ financeRouter.post("/finance/insights", async (req: Request, res: Response) => {
     const startOfTrend = new Date(Date.UTC(targetYear, targetMonth - 2, 1, 0, 0, 0, 0));
     const trendAggregation = await Transaction.aggregate([
       { $match: { userId: userObjId, date: { $gte: startOfTrend, $lte: endOfMonth } } },
-      { $group: { _id: { monthKey: { $dateToString: { format: "%Y-%m", date: "$date" } }, type: "$type" }, totalAmount: { $sum: "$amount" } } }
+      {
+        $group: {
+          _id: { monthKey: { $dateToString: { format: "%Y-%m", date: "$date" } }, type: "$type" },
+          totalAmount: { $sum: "$amount" }
+        }
+      }
     ]);
 
     const contextSummary = {
       month: monthKeyStr,
-      monthlyTotals: { income: monthlyIncome, expense: monthlyExpense, net: monthlyIncome - monthlyExpense },
+      monthlyTotals: {
+        income: monthlyIncome,
+        expense: monthlyExpense,
+        net: monthlyIncome - monthlyExpense
+      },
       categoryBreakdown,
       budgetStatuses,
       trendAggregation
@@ -1466,7 +1493,12 @@ ${JSON.stringify(contextSummary, null, 2)}`;
     const aiResult = await callAI(
       [
         { role: "system", content: systemPrompt },
-        { role: "user", content: focusArea ? `Give me financial insights focused on: ${focusArea}` : "Analyze my finances and give me actionable insights based on my data." }
+        {
+          role: "user",
+          content: focusArea
+            ? `Give me financial insights focused on: ${focusArea}`
+            : "Analyze my finances and give me actionable insights based on my data."
+        }
       ],
       { userId: userIdStr, requestType: "finance_insights" }
     );
@@ -1475,7 +1507,10 @@ ${JSON.stringify(contextSummary, null, 2)}`;
       if (aiResult.isRateLimited) {
         return res.status(429).json({ error: "RateLimitExceeded", message: aiResult.error });
       }
-      return res.status(500).json({ error: "InternalServerError", message: aiResult.error || "Failed to generate financial insights" });
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: aiResult.error || "Failed to generate financial insights"
+      });
     }
 
     return res.status(200).json({

@@ -1,10 +1,4 @@
-import {
-  Sparkles,
-  CheckCircle2,
-  Clock,
-  RefreshCw,
-  AlertCircle
-} from "lucide-react";
+import { Sparkles, CheckCircle2, Clock, RefreshCw, AlertCircle } from "lucide-react";
 import type { DailySummary } from "@lifeos/shared";
 import { Skeleton } from "../../../components/ui/Skeleton";
 
@@ -215,4 +209,3 @@ export function DailySummaryCard({
     </div>
   );
 }
-

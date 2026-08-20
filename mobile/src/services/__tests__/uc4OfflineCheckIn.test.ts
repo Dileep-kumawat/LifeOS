@@ -91,11 +91,11 @@ describe("UC-4 End-to-End Test Case: Offline Habit Check-In & Sync Resolution", 
     expect(useSyncStore.getState().isOnline).toBe(false);
 
     // Step 2: Mark habit complete offline (fast 1-tap check-in)
-    const { habit: updatedHabit, isCheckedIn, checkIn } = await habitRepo.toggleCheckIn(
-      testHabitId,
-      testUserId,
-      todayStr
-    );
+    const {
+      habit: updatedHabit,
+      isCheckedIn,
+      checkIn
+    } = await habitRepo.toggleCheckIn(testHabitId, testUserId, todayStr);
 
     // Step 3: Verify local optimistic state
     expect(isCheckedIn).toBe(true);

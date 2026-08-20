@@ -43,7 +43,9 @@ export function EventFormModal({
   const [startTimeStr, setStartTimeStr] = useState("09:00");
   const [endTimeStr, setEndTimeStr] = useState("10:00");
   const [isAllDay, setIsAllDay] = useState(false);
-  const [repeatFrequency, setRepeatFrequency] = useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [repeatFrequency, setRepeatFrequency] = useState<"none" | "daily" | "weekly" | "monthly">(
+    "none"
+  );
   const [reminderMinutes, setReminderMinutes] = useState<number | null>(15);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

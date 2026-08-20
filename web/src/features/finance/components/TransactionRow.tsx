@@ -30,11 +30,19 @@ export function getCategoryIcon(categoryName: string) {
   const normalized = categoryName.toLowerCase();
   if (normalized.includes("food") || normalized.includes("grocer") || normalized.includes("dine"))
     return Utensils;
-  if (normalized.includes("transport") || normalized.includes("commute") || normalized.includes("fuel"))
+  if (
+    normalized.includes("transport") ||
+    normalized.includes("commute") ||
+    normalized.includes("fuel")
+  )
     return Car;
   if (normalized.includes("hous") || normalized.includes("rent") || normalized.includes("mortgage"))
     return Home;
-  if (normalized.includes("entertain") || normalized.includes("movie") || normalized.includes("game"))
+  if (
+    normalized.includes("entertain") ||
+    normalized.includes("movie") ||
+    normalized.includes("game")
+  )
     return Film;
   if (normalized.includes("utilit") || normalized.includes("bill") || normalized.includes("power"))
     return Zap;
@@ -53,13 +61,20 @@ export function getCategoryBadgeColor(categoryName: string, type: "income" | "ex
     return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
   }
   const normalized = categoryName.toLowerCase();
-  if (normalized.includes("food")) return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
-  if (normalized.includes("transport")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
-  if (normalized.includes("hous")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
-  if (normalized.includes("entertain")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
-  if (normalized.includes("utilit")) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20";
-  if (normalized.includes("shop")) return "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20";
-  if (normalized.includes("health")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
+  if (normalized.includes("food"))
+    return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
+  if (normalized.includes("transport"))
+    return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+  if (normalized.includes("hous"))
+    return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+  if (normalized.includes("entertain"))
+    return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+  if (normalized.includes("utilit"))
+    return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20";
+  if (normalized.includes("shop"))
+    return "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20";
+  if (normalized.includes("health"))
+    return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
   return "bg-secondary text-secondary-foreground border-border";
 }
 

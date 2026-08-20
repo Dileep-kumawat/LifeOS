@@ -34,7 +34,9 @@ export function LoginScreen({ navigation }: { navigation: any }) {
       await authApi.login({ email, password });
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || "Failed to log in. Please check your credentials.";
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to log in. Please check your credentials.";
       setErrors({ general: message });
     } finally {
       setLoading(false);

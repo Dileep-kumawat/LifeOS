@@ -6,7 +6,11 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 
 export function TodayScheduleWidget() {
   const todayRange = dayRange(new Date());
-  const { data: events = [], isLoading, isError } = useCalendarEvents(todayRange.start, todayRange.end, "day");
+  const {
+    data: events = [],
+    isLoading,
+    isError
+  } = useCalendarEvents(todayRange.start, todayRange.end, "day");
 
   return (
     <div className="bg-white rounded-xl border border-[#e6e6e6] p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -69,13 +73,9 @@ export function TodayScheduleWidget() {
                 />
                 <div className="flex justify-between items-start gap-3">
                   <div>
-                    <p className="text-sm font-bold text-[#1a1c1c] truncate">
-                      {evt.title}
-                    </p>
+                    <p className="text-sm font-bold text-[#1a1c1c] truncate">{evt.title}</p>
                     {evt.description && (
-                      <p className="text-xs text-[#414753] mt-0.5 truncate">
-                        {evt.description}
-                      </p>
+                      <p className="text-xs text-[#414753] mt-0.5 truncate">{evt.description}</p>
                     )}
                   </div>
                   <span className="font-mono text-xs bg-[#efeeed] px-2 py-1 rounded text-[#414753] shrink-0 font-medium">
@@ -90,5 +90,3 @@ export function TodayScheduleWidget() {
     </div>
   );
 }
-
-

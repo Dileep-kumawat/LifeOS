@@ -42,7 +42,11 @@ export function GoalCard({
   }
 
   const targetDateLabel = goal.targetDate
-    ? new Date(goal.targetDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(goal.targetDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      })
     : null;
 
   return (
@@ -55,7 +59,10 @@ export function GoalCard({
             </ThemedText>
             <View style={styles.tagRow}>
               <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
-                <ThemedText variant="caption" style={{ color: statusFg, fontWeight: "600", textTransform: "capitalize" }}>
+                <ThemedText
+                  variant="caption"
+                  style={{ color: statusFg, fontWeight: "600", textTransform: "capitalize" }}
+                >
                   {goal.status}
                 </ThemedText>
               </View>
@@ -73,7 +80,12 @@ export function GoalCard({
         </View>
 
         {Boolean(goal.description) && (
-          <ThemedText variant="bodySm" color={colors.inkSecondary} numberOfLines={2} style={styles.description}>
+          <ThemedText
+            variant="bodySm"
+            color={colors.inkSecondary}
+            numberOfLines={2}
+            style={styles.description}
+          >
             {goal.description}
           </ThemedText>
         )}
@@ -101,7 +113,11 @@ export function GoalCard({
           <ThemedText variant="caption" color={colors.inkMuted} style={{ fontWeight: "600" }}>
             Milestones ({completedCount}/{milestones.length})
           </ThemedText>
-          {expanded ? <ChevronUp size={16} color={colors.inkMuted} /> : <ChevronDown size={16} color={colors.inkMuted} />}
+          {expanded ? (
+            <ChevronUp size={16} color={colors.inkMuted} />
+          ) : (
+            <ChevronDown size={16} color={colors.inkMuted} />
+          )}
         </TouchableOpacity>
       )}
 

@@ -7,12 +7,7 @@ import { useSyncStore } from "../store/syncStore";
 import { getDatabase } from "../db/database";
 import { tokenStorage } from "./tokenStorage";
 import type { LocalSyncConflict } from "../db/schema";
-import type {
-  SyncModule,
-  SyncPushItem,
-  SyncPushResponse,
-  SyncPullResponse
-} from "@lifeos/shared";
+import type { SyncModule, SyncPushItem, SyncPushResponse, SyncPullResponse } from "@lifeos/shared";
 
 const SYNC_TABLES: Array<{ tableName: string; module: SyncModule }> = [
   { tableName: "note_folders", module: "note_folders" },
@@ -80,7 +75,9 @@ export const syncEngine = {
     const db = await getDatabase();
     let total = 0;
     for (const { tableName } of SYNC_TABLES) {
-      const rows = await db.getAllAsync(`SELECT id FROM ${tableName} WHERE syncStatus = 'pending';`);
+      const rows = await db.getAllAsync(
+        `SELECT id FROM ${tableName} WHERE syncStatus = 'pending';`
+      );
       total += rows.length;
     }
     useSyncStore.getState().setPendingCount(total);
@@ -136,7 +133,14 @@ export const syncEngine = {
           `SELECT * FROM ${tableName} WHERE syncStatus = 'pending';`
         );
         for (const row of rows) {
-          const { id, syncStatus, lastModifiedAt, createdAt, updatedAt, ...rawFields } = row;
+          const {
+            id,
+            syncStatus: _syncStatus,
+            lastModifiedAt,
+            createdAt: _createdAt,
+            updatedAt: _updatedAt,
+            ...rawFields
+          } = row;
 
           // Safely deserialize any JSON string fields before sending over HTTP
           const data: Record<string, any> = {};
@@ -204,7 +208,9 @@ export const syncEngine = {
               entityId: result.id,
               module: result.module,
               localData: JSON.stringify(localRecord || {}),
-              remoteData: JSON.stringify(result.serverRecord || result.conflictData?.serverRecord || {}),
+              remoteData: JSON.stringify(
+                result.serverRecord || result.conflictData?.serverRecord || {}
+              ),
               conflictingFields: JSON.stringify(
                 result.conflictingFields || result.conflictData?.conflictingFields || []
               ),
@@ -225,9 +231,14 @@ export const syncEngine = {
             );
 
             useSyncStore.getState().addConflict(conflictObj);
-            useSyncStore.getState().addConflictNotice(`Conflict detected in ${result.module} — tap to resolve.`);
+            useSyncStore
+              .getState()
+              .addConflictNotice(`Conflict detected in ${result.module} — tap to resolve.`);
           } else if (result.status === "error") {
-            console.error(`[SyncEngine] Push error for ${result.module} (${result.id}):`, result.error);
+            console.error(
+              `[SyncEngine] Push error for ${result.module} (${result.id}):`,
+              result.error
+            );
             useSyncStore.getState().setLastError(`Sync error on ${result.module}: ${result.error}`);
           }
         }
@@ -258,7 +269,10 @@ export const syncEngine = {
           );
 
           // If local edit is pending or in conflict, do not silently overwrite
-          if (localRecord && (localRecord.syncStatus === "pending" || localRecord.syncStatus === "conflict")) {
+          if (
+            localRecord &&
+            (localRecord.syncStatus === "pending" || localRecord.syncStatus === "conflict")
+          ) {
             continue;
           }
 
@@ -292,7 +306,10 @@ export const syncEngine = {
             `SELECT syncStatus FROM ${tableName} WHERE id = ?;`,
             deletedId
           );
-          if (!localRecord || (localRecord.syncStatus !== "pending" && localRecord.syncStatus !== "conflict")) {
+          if (
+            !localRecord ||
+            (localRecord.syncStatus !== "pending" && localRecord.syncStatus !== "conflict")
+          ) {
             await db.runAsync(`DELETE FROM ${tableName} WHERE id = ?;`, deletedId);
           }
         }
@@ -377,7 +394,11 @@ export const syncEngine = {
     );
 
     // Remove from local conflicts table
-    await db.runAsync("DELETE FROM sync_conflicts WHERE id = ? OR entityId = ?;", conflictId, conflictId);
+    await db.runAsync(
+      "DELETE FROM sync_conflicts WHERE id = ? OR entityId = ?;",
+      conflictId,
+      conflictId
+    );
     useSyncStore.getState().removeConflict(conflictId);
 
     // Call server conflict resolution endpoint
@@ -411,9 +432,12 @@ export const syncEngine = {
     this.syncNow().catch(() => {});
 
     // Periodic sync every 5 minutes
-    syncIntervalTimer = setInterval(() => {
-      this.syncNow().catch(() => {});
-    }, 5 * 60 * 1000);
+    syncIntervalTimer = setInterval(
+      () => {
+        this.syncNow().catch(() => {});
+      },
+      5 * 60 * 1000
+    );
 
     // App foreground listener
     appStateSubscription = AppState.addEventListener("change", (state: AppStateStatus) => {

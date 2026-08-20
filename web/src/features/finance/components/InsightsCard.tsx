@@ -40,7 +40,9 @@ export const InsightsCard: React.FC<InsightsCardProps> = ({
         setRetrying(true);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || "Failed to generate financial insights.");
+      setError(
+        err?.response?.data?.message || err.message || "Failed to generate financial insights."
+      );
     } finally {
       setLoading(false);
     }
@@ -54,8 +56,12 @@ export const InsightsCard: React.FC<InsightsCardProps> = ({
             <Sparkles className="size-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-[#000000]">Financial Insights & Recommendations</h3>
-            <p className="text-xs text-[#615d59]">AI-driven analysis grounded in your logged transaction and budget data</p>
+            <h3 className="text-lg font-semibold text-[#000000]">
+              Financial Insights & Recommendations
+            </h3>
+            <p className="text-xs text-[#615d59]">
+              AI-driven analysis grounded in your logged transaction and budget data
+            </p>
           </div>
         </div>
 

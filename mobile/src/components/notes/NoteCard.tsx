@@ -37,7 +37,12 @@ export function NoteCard({ note, folder, onPress }: NoteCardProps) {
           <SyncBadge status={note.syncStatus} />
         </View>
 
-        <ThemedText variant="bodySm" color={colors.inkSecondary} numberOfLines={2} style={styles.snippet}>
+        <ThemedText
+          variant="bodySm"
+          color={colors.inkSecondary}
+          numberOfLines={2}
+          style={styles.snippet}
+        >
           {previewSnippet}
         </ThemedText>
 

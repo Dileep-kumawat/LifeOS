@@ -1,6 +1,13 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Sparkles, CheckCircle2, Clock, RefreshCw, AlertCircle, Calendar } from "lucide-react-native";
+import {
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  RefreshCw,
+  AlertCircle,
+  Calendar
+} from "lucide-react-native";
 import type { DailySummary } from "@lifeos/shared";
 import { Card } from "../ui/Card";
 import { ThemedText } from "../ui/ThemedText";
@@ -91,7 +98,8 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
               Your AI Daily Summary will be generated at{" "}
               <ThemedText variant="caption" style={{ fontWeight: "700", color: colors.ink }}>
                 {deliveryTime}
-              </ThemedText>.
+              </ThemedText>
+              .
             </ThemedText>
           </View>
         </View>
@@ -419,4 +427,3 @@ const styles = StyleSheet.create({
     color: colors.inkMuted
   }
 });
-

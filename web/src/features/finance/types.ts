@@ -101,4 +101,3 @@ export interface FinanceInsightsResponse {
   fallbackOccurred?: boolean;
   contextSummary?: any;
 }
-

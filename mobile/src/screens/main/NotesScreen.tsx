@@ -117,10 +117,7 @@ export function NotesScreen() {
       <View style={styles.topBar}>
         <ThemedText variant="heading2">Notes</ThemedText>
         <View style={styles.topBtnRow}>
-          <TouchableOpacity
-            onPress={() => setIsFolderModalVisible(true)}
-            style={styles.folderBtn}
-          >
+          <TouchableOpacity onPress={() => setIsFolderModalVisible(true)} style={styles.folderBtn}>
             <FolderPlus size={18} color={colors.ink} />
           </TouchableOpacity>
           <Button
@@ -324,4 +321,3 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   }
 });
-

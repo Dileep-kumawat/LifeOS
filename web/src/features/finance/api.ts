@@ -24,7 +24,9 @@ export interface ListTransactionsParams {
 
 export const financeApi = {
   async listTransactions(params?: ListTransactionsParams): Promise<TransactionListResponse> {
-    const response = await apiClient.get<TransactionListResponse>("/finance/transactions", { params });
+    const response = await apiClient.get<TransactionListResponse>("/finance/transactions", {
+      params
+    });
     return response.data;
   },
 
@@ -116,7 +118,9 @@ export const financeApi = {
   },
 
   async getInsights(focusArea?: string): Promise<FinanceInsightsResponse> {
-    const response = await apiClient.post<FinanceInsightsResponse>("/finance/insights", { focusArea });
+    const response = await apiClient.post<FinanceInsightsResponse>("/finance/insights", {
+      focusArea
+    });
     return response.data;
   }
 };

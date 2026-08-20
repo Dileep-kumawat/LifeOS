@@ -45,4 +45,3 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline
   }
 });
-

@@ -87,7 +87,10 @@ export function RootLayout() {
             >
               <Menu className="size-5" />
             </button>
-            <NavLink to="/" className="flex items-center gap-2 min-w-0 transition-transform duration-150 active:scale-95">
+            <NavLink
+              to="/"
+              className="flex items-center gap-2 min-w-0 transition-transform duration-150 active:scale-95"
+            >
               <span className="font-bold text-base text-[#005db2] tracking-tight truncate">
                 LifeOS
               </span>
@@ -122,7 +125,9 @@ export function RootLayout() {
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#c1c6d5]/60">
               <div>
-                <h2 className="text-lg font-bold text-[#005db2] tracking-tight">LifeOS Executive</h2>
+                <h2 className="text-lg font-bold text-[#005db2] tracking-tight">
+                  LifeOS Executive
+                </h2>
                 <p className="text-xs text-[#414753] mt-0.5 truncate">
                   {user?.name ? `Hi, ${user.name}` : "Executive Hub"}
                 </p>
@@ -189,8 +194,12 @@ export function RootLayout() {
             {/* Drawer Footer */}
             <div className="pt-3 border-t border-[#c1c6d5]/60 flex items-center justify-between">
               <div className="min-w-0 pr-2">
-                <p className="text-xs font-semibold text-[#1a1c1c] truncate">{user?.email || "User"}</p>
-                <span className="text-[10px] text-[#717784] uppercase">{user?.role || "Member"}</span>
+                <p className="text-xs font-semibold text-[#1a1c1c] truncate">
+                  {user?.email || "User"}
+                </p>
+                <span className="text-[10px] text-[#717784] uppercase">
+                  {user?.role || "Member"}
+                </span>
               </div>
               <button
                 type="button"
@@ -211,10 +220,10 @@ export function RootLayout() {
         {/* App Title Anchor */}
         <div className="px-6 mb-8 flex items-center justify-between">
           <div className="min-w-0 pr-2">
-            <h1 className="text-xl font-bold text-[#005db2] tracking-tight hover:opacity-90 transition-opacity">LifeOS Executive</h1>
-            <p className="text-xs text-[#414753] mt-1">
-              Good morning, {user?.name || "Explorer"}
-            </p>
+            <h1 className="text-xl font-bold text-[#005db2] tracking-tight hover:opacity-90 transition-opacity">
+              LifeOS Executive
+            </h1>
+            <p className="text-xs text-[#414753] mt-1">Good morning, {user?.name || "Explorer"}</p>
           </div>
           <NotificationBell align="start" />
         </div>
@@ -290,7 +299,9 @@ export function RootLayout() {
             end
             className={({ isActive }) =>
               `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
+                isActive
+                  ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
+                  : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -301,7 +312,9 @@ export function RootLayout() {
             to="/calendar"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
+                isActive
+                  ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
+                  : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -312,7 +325,9 @@ export function RootLayout() {
             to="/habits"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
+                isActive
+                  ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
+                  : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -323,7 +338,9 @@ export function RootLayout() {
             to="/notes"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
-                isActive ? "bg-[#0075de] text-white font-bold shadow-xs scale-105" : "text-[#414753] hover:bg-[#e3e2e1]"
+                isActive
+                  ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
+                  : "text-[#414753] hover:bg-[#e3e2e1]"
               }`
             }
           >
@@ -351,12 +368,15 @@ export function RootLayout() {
         )}
       >
         {/* Content Outlet */}
-        <main className={cn("w-full flex-1 flex flex-col min-w-0", isChat ? "h-full min-h-0 overflow-hidden" : "")}>
+        <main
+          className={cn(
+            "w-full flex-1 flex flex-col min-w-0",
+            isChat ? "h-full min-h-0 overflow-hidden" : ""
+          )}
+        >
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
-
-

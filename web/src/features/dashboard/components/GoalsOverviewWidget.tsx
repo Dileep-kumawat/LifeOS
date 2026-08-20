@@ -6,7 +6,11 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import type { GoalItem } from "../../goals/GoalListPage";
 
 export function GoalsOverviewWidget() {
-  const { data: goals = [], isLoading, isError } = useQuery<GoalItem[]>({
+  const {
+    data: goals = [],
+    isLoading,
+    isError
+  } = useQuery<GoalItem[]>({
     queryKey: ["goals"],
     queryFn: async () => {
       const response = await apiClient.get("/goals");
@@ -44,7 +48,6 @@ export function GoalsOverviewWidget() {
         </Link>
       </div>
 
-
       {isLoading ? (
         <div className="flex flex-col gap-3 py-1">
           <Skeleton className="h-14 w-full rounded-xl" />
@@ -68,7 +71,9 @@ export function GoalsOverviewWidget() {
           {activeGoals.slice(0, 4).map((goal) => {
             const completedMilestones = (goal.milestones || []).filter((m) => m.completed).length;
             const totalMilestones = (goal.milestones || []).length;
-            const progress = goal.progressPercent ?? (totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0);
+            const progress =
+              goal.progressPercent ??
+              (totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0);
 
             return (
               <Link
@@ -103,7 +108,11 @@ export function GoalsOverviewWidget() {
 
                   {goal.targetDate && (
                     <span>
-                      Target: {new Date(goal.targetDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      Target:{" "}
+                      {new Date(goal.targetDate).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric"
+                      })}
                     </span>
                   )}
                 </div>

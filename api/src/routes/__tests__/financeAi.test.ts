@@ -10,7 +10,9 @@ vi.mock("../../services/ai/embeddings.js", async (importOriginal) => {
   const actual: any = await importOriginal();
   return {
     ...actual,
-    generateEmbedding: vi.fn().mockImplementation((text: string) => actual.generateMockEmbedding(text))
+    generateEmbedding: vi
+      .fn()
+      .mockImplementation((text: string) => actual.generateMockEmbedding(text))
   };
 });
 
@@ -20,7 +22,8 @@ vi.mock("../../services/ai/callAI.js", async (importOriginal) => {
     ...actual,
     callAI: vi.fn().mockImplementation(async (messages: any[]) => {
       // Find system prompt content to verify grounded numbers in test assertions
-      const sysMsg = messages.find((m) => m.role === "system" || m.type === "system")?.content || "";
+      const sysMsg =
+        messages.find((m) => m.role === "system" || m.type === "system")?.content || "";
       return {
         success: true,
         content: `Based on your logged data in the system, here are recommendations. Context provided: ${sysMsg.slice(0, 300)}...`,
@@ -36,7 +39,10 @@ import { Budget } from "../../models/Budget.js";
 import { Embedding } from "../../models/Embedding.js";
 import { executeQuerySpending, executeToolCall } from "../../services/ai/tools.js";
 import { retrieveContext } from "../../services/ai/retriever.js";
-import { formatTransactionForEmbedding, formatBudgetForEmbedding } from "../../services/ai/ragText.js";
+import {
+  formatTransactionForEmbedding,
+  formatBudgetForEmbedding
+} from "../../services/ai/ragText.js";
 import { deleteEmbedding } from "../../services/ai/embeddingJob.js";
 import { generateMockEmbedding } from "../../services/ai/embeddings.js";
 
@@ -182,7 +188,9 @@ describe("Phase 4 Prompt 3: Finance AI Integration & Insights Tests", () => {
         lean: vi.fn().mockResolvedValue(mockEmbeddings)
       } as any);
 
-      const ragResult = await retrieveContext(userA_id, "Help me get financially better", { topK: 5 });
+      const ragResult = await retrieveContext(userA_id, "Help me get financially better", {
+        topK: 5
+      });
 
       expect(ragResult.query).toBe("Help me get financially better");
       expect(ragResult.results.length).toBeGreaterThan(0);

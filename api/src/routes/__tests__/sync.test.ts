@@ -248,4 +248,3 @@ describe("Sync Processor - Pull Changes & Tombstones", () => {
     expect(pullResult.changes.notes?.deleted).toContain("deleted-note-123");
   });
 });
-

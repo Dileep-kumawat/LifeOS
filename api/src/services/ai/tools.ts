@@ -63,7 +63,10 @@ export const createNoteSchema = z.object({
 export const querySpendingSchema = z.object({
   month: z.string().optional().describe("Target month in YYYY-MM format (e.g. 2026-08)"),
   category: z.string().optional().describe("Optional category to filter spending"),
-  monthsTrend: z.number().optional().describe("Number of months for historical trend analysis (default: 6)")
+  monthsTrend: z
+    .number()
+    .optional()
+    .describe("Number of months for historical trend analysis (default: 6)")
 });
 
 export type CreateCalendarEventInput = z.infer<typeof createCalendarEventSchema>;
@@ -93,7 +96,8 @@ export const createNoteTool = tool(async (input) => JSON.stringify(input), {
 
 export const querySpendingTool = tool(async (input) => JSON.stringify(input), {
   name: "query_spending",
-  description: "Query structured spending summary, category breakdowns, monthly totals, and budget statuses for the user.",
+  description:
+    "Query structured spending summary, category breakdowns, monthly totals, and budget statuses for the user.",
   schema: querySpendingSchema
 });
 
@@ -332,4 +336,3 @@ export async function executeToolCall(userId: string, toolName: string, args: an
       throw new Error(`Unknown tool name: ${toolName}`);
   }
 }
-

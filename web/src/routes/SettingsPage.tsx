@@ -81,7 +81,11 @@ export function SettingsPage() {
                 Soft-delete account with 30-day permanent purge delay
               </span>
             </div>
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} className="w-full sm:w-auto">
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="w-full sm:w-auto"
+            >
               Delete Account
             </Button>
           </CardContent>

@@ -9,14 +9,7 @@ import {
   Alert
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Check,
-  Smartphone,
-  Cloud,
-  Edit3
-} from "lucide-react-native";
+import { AlertTriangle, ArrowLeft, Check, Smartphone, Cloud, Edit3 } from "lucide-react-native";
 import { useSyncStore } from "../../store/syncStore";
 import { syncEngine } from "../../services/syncEngine";
 import { ThemedText } from "../../components/ui/ThemedText";
@@ -126,7 +119,11 @@ export function ConflictResolutionScreen() {
         <ThemedText variant="heading2" style={{ marginTop: spacing.md }}>
           All Conflicts Resolved
         </ThemedText>
-        <ThemedText variant="bodyMd" color={colors.inkSecondary} style={{ textAlign: "center", marginTop: spacing.xs }}>
+        <ThemedText
+          variant="bodyMd"
+          color={colors.inkSecondary}
+          style={{ textAlign: "center", marginTop: spacing.xs }}
+        >
           Your local and remote databases are synchronized cleanly with no pending conflicts.
         </ThemedText>
         <Button
@@ -166,7 +163,7 @@ export function ConflictResolutionScreen() {
           contentContainerStyle={styles.conflictTabs}
         >
           {conflicts.map((c, i) => {
-            const isSelected = (c.id === activeConflict.id);
+            const isSelected = c.id === activeConflict.id;
             return (
               <TouchableOpacity
                 key={c.id}
@@ -196,7 +193,8 @@ export function ConflictResolutionScreen() {
             </ThemedText>
           </View>
           <ThemedText variant="caption" color={colors.inkSecondary}>
-            Different edits were made on your device and another synced device. Choose which version to keep or manually merge the changes.
+            Different edits were made on your device and another synced device. Choose which version
+            to keep or manually merge the changes.
           </ThemedText>
           {conflictingFields.length > 0 && (
             <View style={styles.fieldsBadgeContainer}>
@@ -205,7 +203,11 @@ export function ConflictResolutionScreen() {
               </ThemedText>
               {conflictingFields.map((f) => (
                 <View key={f} style={styles.fieldBadge}>
-                  <ThemedText variant="caption" color={colors.warning} style={{ fontWeight: "600" }}>
+                  <ThemedText
+                    variant="caption"
+                    color={colors.warning}
+                    style={{ fontWeight: "600" }}
+                  >
                     {f}
                   </ThemedText>
                 </View>
@@ -235,7 +237,11 @@ export function ConflictResolutionScreen() {
                 <ThemedText variant="bodyMd" style={styles.fieldText}>
                   {localData.title || "(Untitled)"}
                 </ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
                   Body Content:
                 </ThemedText>
                 <ThemedText variant="bodySm" style={styles.fieldContent}>
@@ -246,11 +252,27 @@ export function ConflictResolutionScreen() {
 
             {activeConflict.module === "transactions" && (
               <View style={styles.versionFields}>
-                <ThemedText variant="caption" color={colors.inkMuted}>Amount:</ThemedText>
-                <ThemedText variant="bodyMd" style={styles.fieldText}>${localData.amount ?? 0}</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>Category:</ThemedText>
+                <ThemedText variant="caption" color={colors.inkMuted}>
+                  Amount:
+                </ThemedText>
+                <ThemedText variant="bodyMd" style={styles.fieldText}>
+                  ${localData.amount ?? 0}
+                </ThemedText>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
+                  Category:
+                </ThemedText>
                 <ThemedText variant="bodySm">{localData.category || "General"}</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>Note:</ThemedText>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
+                  Note:
+                </ThemedText>
                 <ThemedText variant="bodySm">{localData.note || "(No note)"}</ThemedText>
               </View>
             )}
@@ -270,7 +292,11 @@ export function ConflictResolutionScreen() {
             <View style={styles.versionHeader}>
               <View style={styles.versionTag}>
                 <Cloud size={14} color={colors.inkSecondary} />
-                <ThemedText variant="caption" color={colors.inkSecondary} style={{ fontWeight: "600" }}>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkSecondary}
+                  style={{ fontWeight: "600" }}
+                >
                   Server / Other Device
                 </ThemedText>
               </View>
@@ -284,7 +310,11 @@ export function ConflictResolutionScreen() {
                 <ThemedText variant="bodyMd" style={styles.fieldText}>
                   {remoteData.title || "(Untitled)"}
                 </ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
                   Body Content:
                 </ThemedText>
                 <ThemedText variant="bodySm" style={styles.fieldContent}>
@@ -295,11 +325,27 @@ export function ConflictResolutionScreen() {
 
             {activeConflict.module === "transactions" && (
               <View style={styles.versionFields}>
-                <ThemedText variant="caption" color={colors.inkMuted}>Amount:</ThemedText>
-                <ThemedText variant="bodyMd" style={styles.fieldText}>${remoteData.amount ?? 0}</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>Category:</ThemedText>
+                <ThemedText variant="caption" color={colors.inkMuted}>
+                  Amount:
+                </ThemedText>
+                <ThemedText variant="bodyMd" style={styles.fieldText}>
+                  ${remoteData.amount ?? 0}
+                </ThemedText>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
+                  Category:
+                </ThemedText>
                 <ThemedText variant="bodySm">{remoteData.category || "General"}</ThemedText>
-                <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.xs }}>Note:</ThemedText>
+                <ThemedText
+                  variant="caption"
+                  color={colors.inkMuted}
+                  style={{ marginTop: spacing.xs }}
+                >
+                  Note:
+                </ThemedText>
                 <ThemedText variant="bodySm">{remoteData.note || "(No note)"}</ThemedText>
               </View>
             )}
@@ -342,7 +388,9 @@ export function ConflictResolutionScreen() {
             <ScrollView style={styles.modalBody}>
               {activeConflict.module === "notes" && (
                 <>
-                  <ThemedText variant="caption" color={colors.inkMuted}>Title:</ThemedText>
+                  <ThemedText variant="caption" color={colors.inkMuted}>
+                    Title:
+                  </ThemedText>
                   <TextInput
                     style={styles.input}
                     value={mergeTitle}
@@ -351,7 +399,11 @@ export function ConflictResolutionScreen() {
                     placeholderTextColor={colors.inkFaint}
                   />
 
-                  <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.sm }}>
+                  <ThemedText
+                    variant="caption"
+                    color={colors.inkMuted}
+                    style={{ marginTop: spacing.sm }}
+                  >
                     Combined Content:
                   </ThemedText>
                   <TextInput
@@ -367,25 +419,35 @@ export function ConflictResolutionScreen() {
 
               {activeConflict.module === "transactions" && (
                 <>
-                  <ThemedText variant="caption" color={colors.inkMuted}>Amount ($):</ThemedText>
+                  <ThemedText variant="caption" color={colors.inkMuted}>
+                    Amount ($):
+                  </ThemedText>
                   <TextInput
                     style={styles.input}
                     value={mergeAmount}
                     onChangeText={setMergeAmount}
                     keyboardType="decimal-pad"
                   />
-                  <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.sm }}>Category:</ThemedText>
+                  <ThemedText
+                    variant="caption"
+                    color={colors.inkMuted}
+                    style={{ marginTop: spacing.sm }}
+                  >
+                    Category:
+                  </ThemedText>
                   <TextInput
                     style={styles.input}
                     value={mergeCategory}
                     onChangeText={setMergeCategory}
                   />
-                  <ThemedText variant="caption" color={colors.inkMuted} style={{ marginTop: spacing.sm }}>Note:</ThemedText>
-                  <TextInput
-                    style={styles.input}
-                    value={mergeNote}
-                    onChangeText={setMergeNote}
-                  />
+                  <ThemedText
+                    variant="caption"
+                    color={colors.inkMuted}
+                    style={{ marginTop: spacing.sm }}
+                  >
+                    Note:
+                  </ThemedText>
+                  <TextInput style={styles.input} value={mergeNote} onChangeText={setMergeNote} />
                 </>
               )}
             </ScrollView>

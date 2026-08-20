@@ -1,11 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-  StatusBar
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, RefreshControl, StatusBar } from "react-native";
 import {
   Sparkles,
   FileText,
@@ -241,7 +235,12 @@ export function DashboardScreen({ navigation }: any) {
     if (lower.includes("read") || lower.includes("book") || lower.includes("learn")) {
       return <BookOpen size={16} color={STITCH_COLORS.tertiaryContainer} />;
     }
-    if (lower.includes("fit") || lower.includes("gym") || lower.includes("work") || lower.includes("run")) {
+    if (
+      lower.includes("fit") ||
+      lower.includes("gym") ||
+      lower.includes("work") ||
+      lower.includes("run")
+    ) {
       return <Dumbbell size={16} color={STITCH_COLORS.secondary} />;
     }
     if (index % 3 === 0) return <Droplets size={16} color={STITCH_COLORS.primaryContainer} />;
@@ -258,7 +257,13 @@ export function DashboardScreen({ navigation }: any) {
   return (
     <ScreenContainer
       scrollable
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={STITCH_COLORS.primary} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={STITCH_COLORS.primary}
+        />
+      }
     >
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
@@ -304,7 +309,10 @@ export function DashboardScreen({ navigation }: any) {
           <View style={styles.focusScorePill}>
             <Sparkles size={15} color={STITCH_COLORS.primary} />
             <ThemedText variant="caption" style={styles.focusScoreText}>
-              Focus Score: <ThemedText variant="caption" style={styles.focusScoreValue}>{focusScore}%</ThemedText>
+              Focus Score:{" "}
+              <ThemedText variant="caption" style={styles.focusScoreValue}>
+                {focusScore}%
+              </ThemedText>
             </ThemedText>
             <View style={styles.focusProgressBarTrack}>
               <View style={[styles.focusProgressBarFill, { width: `${focusScore}%` }]} />
@@ -321,7 +329,12 @@ export function DashboardScreen({ navigation }: any) {
           style={styles.quickActionItem}
           onPress={() => navigation?.navigate("Notes")}
         >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.primaryContainerSoft }]}>
+          <View
+            style={[
+              styles.quickActionIconWrap,
+              { backgroundColor: STITCH_COLORS.primaryContainerSoft }
+            ]}
+          >
             <FileText size={20} color={STITCH_COLORS.primaryContainer} />
           </View>
           <ThemedText variant="caption" style={styles.quickActionLabel}>
@@ -335,7 +348,12 @@ export function DashboardScreen({ navigation }: any) {
           style={styles.quickActionItem}
           onPress={() => navigation?.navigate("Finance")}
         >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.tertiaryContainerSoft }]}>
+          <View
+            style={[
+              styles.quickActionIconWrap,
+              { backgroundColor: STITCH_COLORS.tertiaryContainerSoft }
+            ]}
+          >
             <Receipt size={20} color={STITCH_COLORS.tertiaryContainer} />
           </View>
           <ThemedText variant="caption" style={styles.quickActionLabel}>
@@ -349,7 +367,12 @@ export function DashboardScreen({ navigation }: any) {
           style={styles.quickActionItem}
           onPress={() => navigation?.navigate("Calendar")}
         >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.secondaryContainerSoft }]}>
+          <View
+            style={[
+              styles.quickActionIconWrap,
+              { backgroundColor: STITCH_COLORS.secondaryContainerSoft }
+            ]}
+          >
             <PlusCircle size={20} color={STITCH_COLORS.secondary} />
           </View>
           <ThemedText variant="caption" style={styles.quickActionLabel}>
@@ -363,7 +386,9 @@ export function DashboardScreen({ navigation }: any) {
           style={styles.quickActionItem}
           onPress={() => navigation?.navigate("Assistant")}
         >
-          <View style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.aiPurpleSoft }]}>
+          <View
+            style={[styles.quickActionIconWrap, { backgroundColor: STITCH_COLORS.aiPurpleSoft }]}
+          >
             <Sparkles size={20} color={STITCH_COLORS.aiPurple} />
           </View>
           <ThemedText variant="caption" style={styles.quickActionLabel}>
@@ -381,7 +406,11 @@ export function DashboardScreen({ navigation }: any) {
               Today's Timeline
             </ThemedText>
             <TouchableOpacity onPress={() => navigation?.navigate("Calendar")}>
-              <ThemedText variant="caption" color={STITCH_COLORS.primary} style={{ fontWeight: "600" }}>
+              <ThemedText
+                variant="caption"
+                color={STITCH_COLORS.primary}
+                style={{ fontWeight: "600" }}
+              >
                 View all
               </ThemedText>
             </TouchableOpacity>
@@ -391,7 +420,9 @@ export function DashboardScreen({ navigation }: any) {
             <View style={styles.timelineList}>
               {/* Default Mock / Placeholder Timeline items matching Stitch design if no events */}
               <View style={styles.timelineItem}>
-                <View style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
+                <View
+                  style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.primaryContainer }]}
+                />
                 <View style={styles.timelineContent}>
                   <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
                     Team Sync
@@ -408,7 +439,9 @@ export function DashboardScreen({ navigation }: any) {
               </View>
 
               <View style={[styles.timelineItem, { borderBottomWidth: 0 }]}>
-                <View style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                <View
+                  style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                />
                 <View style={styles.timelineContent}>
                   <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
                     Design Review
@@ -472,7 +505,11 @@ export function DashboardScreen({ navigation }: any) {
               Habit Streak
             </ThemedText>
             <TouchableOpacity onPress={() => navigation?.navigate("Habits & Goals")}>
-              <ThemedText variant="caption" color={STITCH_COLORS.primary} style={{ fontWeight: "600" }}>
+              <ThemedText
+                variant="caption"
+                color={STITCH_COLORS.primary}
+                style={{ fontWeight: "600" }}
+              >
                 Manage
               </ThemedText>
             </TouchableOpacity>
@@ -490,10 +527,27 @@ export function DashboardScreen({ navigation }: any) {
                     </ThemedText>
                   </View>
                   <View style={styles.streakDotsRow}>
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.primaryContainer }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View
+                      style={[
+                        styles.streakDot,
+                        { backgroundColor: STITCH_COLORS.primaryContainer }
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.streakDot,
+                        { backgroundColor: STITCH_COLORS.primaryContainer }
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.streakDot,
+                        { backgroundColor: STITCH_COLORS.primaryContainer }
+                      ]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
                   </View>
                 </View>
 
@@ -505,10 +559,24 @@ export function DashboardScreen({ navigation }: any) {
                     </ThemedText>
                   </View>
                   <View style={styles.streakDotsRow}>
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.tertiaryContainer }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.tertiaryContainer }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View
+                      style={[
+                        styles.streakDot,
+                        { backgroundColor: STITCH_COLORS.tertiaryContainer }
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.streakDot,
+                        { backgroundColor: STITCH_COLORS.tertiaryContainer }
+                      ]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
                   </View>
                 </View>
 
@@ -520,10 +588,18 @@ export function DashboardScreen({ navigation }: any) {
                     </ThemedText>
                   </View>
                   <View style={styles.streakDotsRow}>
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.secondary }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
-                    <View style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]} />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.secondary }]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
+                    <View
+                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
+                    />
                   </View>
                 </View>
               </>
@@ -570,10 +646,7 @@ export function DashboardScreen({ navigation }: any) {
 
         {/* Finance Snapshot Section */}
         <Card style={styles.stitchCard}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => navigation?.navigate("Finance")}
-          >
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation?.navigate("Finance")}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.iconTitleInline}>
                 <Wallet size={18} color={STITCH_COLORS.textOnSurface} />
@@ -599,7 +672,12 @@ export function DashboardScreen({ navigation }: any) {
               <ProgressBar
                 progress={
                   monthlyBudgetLimit > 0
-                    ? Math.min(100, Math.round(((financeSummary.totalExpense || 1450) / monthlyBudgetLimit) * 100))
+                    ? Math.min(
+                        100,
+                        Math.round(
+                          ((financeSummary.totalExpense || 1450) / monthlyBudgetLimit) * 100
+                        )
+                      )
                     : 72.5
                 }
                 height={8}
@@ -623,8 +701,8 @@ export function DashboardScreen({ navigation }: any) {
                               idx === 0
                                 ? STITCH_COLORS.tertiaryContainer
                                 : idx === 1
-                                ? STITCH_COLORS.secondary
-                                : STITCH_COLORS.primaryContainer
+                                  ? STITCH_COLORS.secondary
+                                  : STITCH_COLORS.primaryContainer
                           }
                         ]}
                       />
@@ -680,10 +758,7 @@ export function DashboardScreen({ navigation }: any) {
 
         {/* Pinned Note Section */}
         <Card style={styles.stitchCard}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => navigation?.navigate("Notes")}
-          >
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation?.navigate("Notes")}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.iconTitleInline}>
                 <Pin size={18} color={STITCH_COLORS.textOnSurface} />

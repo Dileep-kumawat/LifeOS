@@ -1,5 +1,14 @@
 import React from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 import type { MonthlyTrendItem } from "../types";
 
 interface TrendLineChartProps {
@@ -66,7 +75,11 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
             <YAxis stroke="#615d59" fontSize={12} tickFormatter={(val: any) => `₹${val}`} />
             <Tooltip
               formatter={(val: any) => [`₹${Number(val).toFixed(2)}`, ""]}
-              contentStyle={{ backgroundColor: "#ffffff", borderRadius: "8px", borderColor: "#e6e6e6" }}
+              contentStyle={{
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                borderColor: "#e6e6e6"
+              }}
             />
             <Legend verticalAlign="top" height={36} />
             <Line

@@ -205,7 +205,11 @@ export function FinanceScreen() {
           <View style={styles.listContainer}>
             {transactions.length === 0 ? (
               <Card style={styles.emptyCard}>
-                <ThemedText variant="bodyMd" color={colors.inkMuted} style={{ textAlign: "center" }}>
+                <ThemedText
+                  variant="bodyMd"
+                  color={colors.inkMuted}
+                  style={{ textAlign: "center" }}
+                >
                   No transactions logged. Tap "+ Log Expense" to record spending offline.
                 </ThemedText>
               </Card>
@@ -272,7 +276,11 @@ export function FinanceScreen() {
           <View style={styles.listContainer}>
             {budgets.length === 0 ? (
               <Card style={styles.emptyCard}>
-                <ThemedText variant="bodyMd" color={colors.inkMuted} style={{ textAlign: "center" }}>
+                <ThemedText
+                  variant="bodyMd"
+                  color={colors.inkMuted}
+                  style={{ textAlign: "center" }}
+                >
                   No category budgets created. Tap "+ New Budget" to set spending limits.
                 </ThemedText>
               </Card>
@@ -298,13 +306,21 @@ export function FinanceScreen() {
                           {isOverspent ? (
                             <View style={styles.overspendBadge}>
                               <AlertTriangle size={11} color={colors.error} />
-                              <ThemedText variant="caption" color={colors.error} style={{ fontWeight: "600" }}>
+                              <ThemedText
+                                variant="caption"
+                                color={colors.error}
+                                style={{ fontWeight: "600" }}
+                              >
                                 Overspent (${Math.round(b.currentSpend - b.limit)})
                               </ThemedText>
                             </View>
                           ) : isNearLimit ? (
                             <View style={styles.warningBadge}>
-                              <ThemedText variant="caption" color={colors.warning} style={{ fontWeight: "600" }}>
+                              <ThemedText
+                                variant="caption"
+                                color={colors.warning}
+                                style={{ fontWeight: "600" }}
+                              >
                                 80%+ Limit Reached
                               </ThemedText>
                             </View>
@@ -321,7 +337,11 @@ export function FinanceScreen() {
                           variant="caption"
                           style={{
                             fontWeight: "700",
-                            color: isOverspent ? colors.error : isNearLimit ? colors.warning : colors.ink
+                            color: isOverspent
+                              ? colors.error
+                              : isNearLimit
+                                ? colors.warning
+                                : colors.ink
                           }}
                         >
                           {percent}%
@@ -498,4 +518,3 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg
   }
 });
-

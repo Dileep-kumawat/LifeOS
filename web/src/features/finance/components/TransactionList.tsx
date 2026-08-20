@@ -54,7 +54,9 @@ export function TransactionList({
   onDeleteTransaction,
   onClearFilters
 }: TransactionListProps) {
-  const hasActiveFilters = Boolean(selectedCategory || selectedType || startDate || endDate || search);
+  const hasActiveFilters = Boolean(
+    selectedCategory || selectedType || startDate || endDate || search
+  );
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);

@@ -71,7 +71,10 @@ export function NoteCard({
 
       <div className="flex items-center justify-between gap-2 border-t border-[#e6e6e6] pt-2.5">
         <div className="flex min-w-0 items-center gap-2">
-          <FileText className="size-3.5 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110" aria-hidden="true" />
+          <FileText
+            className="size-3.5 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110"
+            aria-hidden="true"
+          />
           <span className="text-[11px] text-[#615d59]">
             {formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}
           </span>
@@ -86,7 +89,9 @@ export function NoteCard({
         {note.tags.length > 0 && (
           <div className="flex shrink-0 items-center gap-1">
             <Tag className="size-3 text-[#a39e98]" aria-hidden="true" />
-            <span className="text-[11px] text-[#31302e] font-medium transition-colors duration-150 group-hover:text-[#0075de]">{note.tags.slice(0, 2).join(", ")}</span>
+            <span className="text-[11px] text-[#31302e] font-medium transition-colors duration-150 group-hover:text-[#0075de]">
+              {note.tags.slice(0, 2).join(", ")}
+            </span>
             {note.tags.length > 2 && (
               <span className="text-[11px] text-[#a39e98]">+{note.tags.length - 2}</span>
             )}

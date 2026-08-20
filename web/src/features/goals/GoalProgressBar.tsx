@@ -41,7 +41,9 @@ export function GoalProgressBar({
             </span>
           )}
         </div>
-        <span className="font-semibold text-[#000000] tabular-nums transition-all duration-300">{clampedProgress}%</span>
+        <span className="font-semibold text-[#000000] tabular-nums transition-all duration-300">
+          {clampedProgress}%
+        </span>
       </div>
 
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-[#f6f5f4] border border-[#e6e6e6]">

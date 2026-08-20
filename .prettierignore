@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.expo
+coverage
+.storybook-static
+storybook-static
+.agents
+.kilocode
+.git
+package-lock.json
+skills-lock.json

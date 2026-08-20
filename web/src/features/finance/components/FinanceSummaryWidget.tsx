@@ -18,7 +18,11 @@ export function FinanceSummaryWidget({ summary, isLoading }: FinanceSummaryWidge
   }
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0
+    }).format(amount);
 
   const { monthlyTotals, categoryBreakdown, trend } = summary;
   const totalCategoryExpense = categoryBreakdown
@@ -28,10 +32,7 @@ export function FinanceSummaryWidget({ summary, isLoading }: FinanceSummaryWidge
   const expenseCategories = categoryBreakdown.filter((c) => c.type === "expense");
 
   // Max amount for scaling trend bars
-  const maxTrendAmount = Math.max(
-    ...trend.map((t) => Math.max(t.income, t.expense)),
-    100
-  );
+  const maxTrendAmount = Math.max(...trend.map((t) => Math.max(t.income, t.expense)), 100);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -81,7 +82,9 @@ export function FinanceSummaryWidget({ summary, isLoading }: FinanceSummaryWidge
               Top Expenses by Category
             </span>
             {expenseCategories.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-2">No expenses logged for this month.</p>
+              <p className="text-xs text-muted-foreground italic py-2">
+                No expenses logged for this month.
+              </p>
             ) : (
               expenseCategories.slice(0, 5).map((item) => {
                 const percentage =
@@ -143,12 +146,28 @@ export function FinanceSummaryWidget({ summary, isLoading }: FinanceSummaryWidge
               const monthLabel = (() => {
                 const parts = item.month.split("-");
                 const mIdx = parseInt(parts[1], 10) - 1;
-                const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const monthsShort = [
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec"
+                ];
                 return monthsShort[mIdx] || item.month;
               })();
 
               return (
-                <div key={item.month} className="flex flex-col items-center flex-1 h-full justify-end group">
+                <div
+                  key={item.month}
+                  className="flex flex-col items-center flex-1 h-full justify-end group"
+                >
                   <div className="flex items-end gap-1 w-full justify-center h-full">
                     {/* Income Bar */}
                     <div

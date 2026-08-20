@@ -21,7 +21,7 @@ export const UnderFiftyPercent: Story = {
   args: {
     category: "Groceries",
     limit: 500,
-    currentSpend: 175.50,
+    currentSpend: 175.5,
     period: "monthly",
     showLabels: true
   }
@@ -31,7 +31,7 @@ export const ApproachingLimit: Story = {
   args: {
     category: "Dining & Entertainment",
     limit: 300,
-    currentSpend: 255.00, // 85%
+    currentSpend: 255.0, // 85%
     period: "monthly",
     showLabels: true
   }
@@ -41,7 +41,7 @@ export const AtLimit: Story = {
   args: {
     category: "Transportation",
     limit: 200,
-    currentSpend: 200.00, // 100%
+    currentSpend: 200.0, // 100%
     period: "monthly",
     showLabels: true
   }
@@ -51,7 +51,7 @@ export const OverLimit: Story = {
   args: {
     category: "Shopping",
     limit: 400,
-    currentSpend: 545.80, // 136.45%
+    currentSpend: 545.8, // 136.45%
     period: "monthly",
     showLabels: true
   }

@@ -8,10 +8,7 @@ import { ThemedText } from "../ui/ThemedText";
 import { colors, radius, spacing } from "../../theme";
 import type { LocalNote, LocalNoteFolder, LocalNoteVersion } from "../../db/schema";
 import { noteRepo } from "../../db/repositories/noteRepo";
-import {
-  convertTextToProseMirrorDoc,
-  convertProseMirrorDocToText
-} from "./proseMirrorUtils";
+import { convertTextToProseMirrorDoc, convertProseMirrorDocToText } from "./proseMirrorUtils";
 
 interface NoteEditorModalProps {
   visible: boolean;
@@ -57,7 +54,10 @@ export function NoteEditorModal({
         setTags([]);
       }
       // Fetch version history
-      noteRepo.listNoteVersions(noteToEdit.id).then(setVersions).catch(() => {});
+      noteRepo
+        .listNoteVersions(noteToEdit.id)
+        .then(setVersions)
+        .catch(() => {});
     } else {
       setTitle("");
       setBodyText("");
@@ -178,10 +178,7 @@ export function NoteEditorModal({
                   onPress={() => setSelectedFolderId(f.id)}
                   style={[styles.folderChip, isSelected && styles.chipSelected]}
                 >
-                  <ThemedText
-                    variant="caption"
-                    color={isSelected ? colors.onPrimary : colors.ink}
-                  >
+                  <ThemedText variant="caption" color={isSelected ? colors.onPrimary : colors.ink}>
                     {f.name}
                   </ThemedText>
                 </TouchableOpacity>
@@ -193,10 +190,14 @@ export function NoteEditorModal({
         {/* Formatting Quick Toolbar */}
         <View style={styles.formatToolbar}>
           <TouchableOpacity onPress={() => handleInsertFormat("# ")} style={styles.formatBtn}>
-            <ThemedText variant="caption" style={{ fontWeight: "700" }}>H1</ThemedText>
+            <ThemedText variant="caption" style={{ fontWeight: "700" }}>
+              H1
+            </ThemedText>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleInsertFormat("## ")} style={styles.formatBtn}>
-            <ThemedText variant="caption" style={{ fontWeight: "700" }}>H2</ThemedText>
+            <ThemedText variant="caption" style={{ fontWeight: "700" }}>
+              H2
+            </ThemedText>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleInsertFormat("- ")} style={styles.formatBtn}>
             <ThemedText variant="caption">• List</ThemedText>
@@ -225,7 +226,11 @@ export function NoteEditorModal({
         {/* Version History Drawer */}
         {showHistory ? (
           <View style={styles.historyDrawer}>
-            <ThemedText variant="caption" color={colors.inkMuted} style={{ fontWeight: "600", marginBottom: spacing.xs }}>
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              style={{ fontWeight: "600", marginBottom: spacing.xs }}
+            >
               Version History Snapshots
             </ThemedText>
             {versions.map((ver) => (
@@ -243,7 +248,11 @@ export function NoteEditorModal({
                   style={styles.restoreBtn}
                 >
                   <RotateCcw size={12} color={colors.primary} />
-                  <ThemedText variant="caption" color={colors.primary} style={{ fontWeight: "600" }}>
+                  <ThemedText
+                    variant="caption"
+                    color={colors.primary}
+                    style={{ fontWeight: "600" }}
+                  >
                     Restore
                   </ThemedText>
                 </TouchableOpacity>
@@ -292,11 +301,7 @@ export function NoteEditorModal({
               onSubmitEditing={handleAddTag}
               returnKeyType="done"
             />
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleAddTag}
-              style={styles.addTagBtn}
-            >
+            <TouchableOpacity activeOpacity={0.8} onPress={handleAddTag} style={styles.addTagBtn}>
               <Plus size={18} color={colors.onPrimary} />
             </TouchableOpacity>
           </View>

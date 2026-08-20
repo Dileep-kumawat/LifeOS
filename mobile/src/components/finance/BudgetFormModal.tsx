@@ -12,11 +12,7 @@ interface BudgetFormModalProps {
   visible: boolean;
   onClose: () => void;
   budgetToEdit?: LocalBudget | null;
-  onSave: (budgetData: {
-    category: string;
-    limit: number;
-    period: "monthly";
-  }) => Promise<void>;
+  onSave: (budgetData: { category: string; limit: number; period: "monthly" }) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
 }
 

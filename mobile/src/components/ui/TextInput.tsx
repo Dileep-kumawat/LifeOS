@@ -16,13 +16,7 @@ export interface TextInputProps extends RNTextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function TextInput({
-  label,
-  error,
-  containerStyle,
-  style,
-  ...props
-}: TextInputProps) {
+export function TextInput({ label, error, containerStyle, style, ...props }: TextInputProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -94,4 +88,3 @@ const styles = StyleSheet.create({
     fontSize: 12
   }
 });
-

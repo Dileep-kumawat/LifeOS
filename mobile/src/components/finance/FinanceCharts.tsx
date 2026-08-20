@@ -13,7 +13,7 @@ const PALETTE = [
   "#8B5CF6", // Purple
   "#EC4899", // Pink
   "#06B6D4", // Cyan
-  "#6B7280"  // Gray
+  "#6B7280" // Gray
 ];
 
 interface CategoryBreakdownChartProps {
@@ -28,7 +28,11 @@ export function CategoryBreakdownChart({ data, totalExpense }: CategoryBreakdown
         <ThemedText variant="heading3" style={styles.cardTitle}>
           Category Breakdown
         </ThemedText>
-        <ThemedText variant="caption" color={colors.inkMuted} style={{ textAlign: "center", paddingVertical: spacing.md }}>
+        <ThemedText
+          variant="caption"
+          color={colors.inkMuted}
+          style={{ textAlign: "center", paddingVertical: spacing.md }}
+        >
           No expense transactions logged for this period.
         </ThemedText>
       </Card>
@@ -129,10 +133,7 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
   const chartWidth = width - padLeft - padRight;
   const chartHeight = height - padTop - padBottom;
 
-  const maxVal = Math.max(
-    ...data.map((d) => Math.max(d.income, d.expense)),
-    100
-  );
+  const maxVal = Math.max(...data.map((d) => Math.max(d.income, d.expense)), 100);
 
   const formatDollarLabel = (val: number) => {
     if (val >= 1000000) {
@@ -171,11 +172,15 @@ export function TrendLineChart({ data }: TrendLineChartProps) {
         <View style={styles.trendLegend}>
           <View style={styles.legendChip}>
             <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-            <ThemedText variant="caption" style={styles.legendText}>Income</ThemedText>
+            <ThemedText variant="caption" style={styles.legendText}>
+              Income
+            </ThemedText>
           </View>
           <View style={styles.legendChip}>
             <View style={[styles.legendDot, { backgroundColor: "#EA580C" }]} />
-            <ThemedText variant="caption" style={styles.legendText}>Expense</ThemedText>
+            <ThemedText variant="caption" style={styles.legendText}>
+              Expense
+            </ThemedText>
           </View>
         </View>
       </View>

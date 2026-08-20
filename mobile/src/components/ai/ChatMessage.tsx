@@ -126,15 +126,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {toolCallData.status === "pending_confirmation" && (
                 <View style={styles.toolPendingCard}>
                   <View style={styles.toolPendingHeader}>
-                    <View style={styles.toolIconWrap}>
-                      {getToolIcon(toolCallData.toolName)}
-                    </View>
+                    <View style={styles.toolIconWrap}>{getToolIcon(toolCallData.toolName)}</View>
                     <View style={styles.toolPendingInfo}>
                       <ThemedText variant="caption" style={styles.toolProposedTitle}>
                         Action Proposed
                       </ThemedText>
                       <ThemedText variant="caption" color={colors.inkMuted} numberOfLines={1}>
-                        <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
+                        <ThemedText variant="caption" style={styles.toolNameTag}>
+                          {toolCallData.toolName}
+                        </ThemedText>
                       </ThemedText>
                     </View>
                   </View>
@@ -157,7 +157,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <CheckCircle2 size={16} color="#059669" style={{ marginTop: 2 }} />
                   <View style={{ flex: 1 }}>
                     <ThemedText variant="bodySm" style={{ fontWeight: "700", color: "#065F46" }}>
-                      Executed: <ThemedText variant="caption" style={styles.toolNameTag}>{toolCallData.toolName}</ThemedText>
+                      Executed:{" "}
+                      <ThemedText variant="caption" style={styles.toolNameTag}>
+                        {toolCallData.toolName}
+                      </ThemedText>
                     </ThemedText>
                     {toolCallData.result?.message && (
                       <ThemedText variant="caption" color="#047857" style={{ marginTop: 2 }}>
@@ -212,10 +215,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 style={styles.actionIconBtn}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <ThumbsUp
-                  size={14}
-                  color={feedback === "up" ? colors.primary : colors.inkMuted}
-                />
+                <ThumbsUp size={14} color={feedback === "up" ? colors.primary : colors.inkMuted} />
               </TouchableOpacity>
 
               <TouchableOpacity

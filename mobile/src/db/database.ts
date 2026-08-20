@@ -26,8 +26,13 @@ class InMemoryDatabaseAdapter implements DatabaseAdapter {
     }
   }
 
-  async runAsync(sql: string, ...params: any[]): Promise<{ lastInsertRowId: number; changes: number }> {
-    const insertMatch = sql.match(/INSERT (?:OR REPLACE )?INTO (\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i);
+  async runAsync(
+    sql: string,
+    ...params: any[]
+  ): Promise<{ lastInsertRowId: number; changes: number }> {
+    const insertMatch = sql.match(
+      /INSERT (?:OR REPLACE )?INTO (\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/i
+    );
     if (insertMatch) {
       const tableName = insertMatch[1];
       const columns = insertMatch[2].split(",").map((c) => c.trim().replace(/[`"']/g, ""));

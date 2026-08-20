@@ -215,7 +215,12 @@ describe("Mobile Sync Engine - Per-Module Conflict Resolution Lifecycle", () => 
       note.id,
       "notes",
       JSON.stringify({ title: "Local Title to Overwrite", contentText: "Local text" }),
-      JSON.stringify({ id: note.id, userId, title: "Remote Master Title", contentText: "Remote Master Content" }),
+      JSON.stringify({
+        id: note.id,
+        userId,
+        title: "Remote Master Title",
+        contentText: "Remote Master Content"
+      }),
       JSON.stringify(["title"]),
       "unresolved",
       new Date().toISOString()
@@ -226,7 +231,12 @@ describe("Mobile Sync Engine - Per-Module Conflict Resolution Lifecycle", () => 
       entityId: note.id,
       module: "notes",
       localData: JSON.stringify({ title: "Local Title to Overwrite", contentText: "Local text" }),
-      remoteData: JSON.stringify({ id: note.id, userId, title: "Remote Master Title", contentText: "Remote Master Content" }),
+      remoteData: JSON.stringify({
+        id: note.id,
+        userId,
+        title: "Remote Master Title",
+        contentText: "Remote Master Content"
+      }),
       conflictingFields: JSON.stringify(["title"]),
       status: "unresolved",
       createdAt: new Date().toISOString()
@@ -273,7 +283,12 @@ describe("Mobile Sync Engine - Per-Module Conflict Resolution Lifecycle", () => 
       entityId: note.id,
       module: "notes",
       localData: JSON.stringify({ title: "Local Title", contentText: "Local Body" }),
-      remoteData: JSON.stringify({ id: note.id, userId, title: "Server Title", contentText: "Server Body" }),
+      remoteData: JSON.stringify({
+        id: note.id,
+        userId,
+        title: "Server Title",
+        contentText: "Server Body"
+      }),
       conflictingFields: JSON.stringify(["title", "content"]),
       status: "unresolved",
       createdAt: new Date().toISOString()

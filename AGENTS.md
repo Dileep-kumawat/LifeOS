@@ -5,11 +5,13 @@ Always adhere to [DESIGN.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Deve
 ## Required Skills by Domain
 
 ### 1. Web & UI Design
+
 - **`shadcn`**: For shadcn/ui components, composition, styling, and UI registry management.
 - **`web-design-guidelines`**: For UI/UX reviews, accessibility audits, and web interface best practices.
 - **`vercel-react-best-practices`**: For React performance optimization, clean rendering patterns, and bundle efficiency.
 
 ### 2. Mobile & Universal (Expo & React Native)
+
 - **`expo-router`**: Navigation architecture, file-based routing, layouts, tabs, and modals.
 - **`expo-native-ui`**: Native UI controls, Apple HIG styling, semantic tokens, and animations.
 - **`expo-design-system`**: Design tokens, component theme structuring, and shared design system maintenance.
@@ -23,4 +25,5 @@ Always adhere to [DESIGN.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Deve
 - **`expo-examples`**: Canonical reference patterns and 3rd-party integrations in Expo.
 
 ### 3. Tooling & Observability
+
 - **`sentry-cli`**: Sentry CLI operations, error tracking, release handling, and issue inspection.

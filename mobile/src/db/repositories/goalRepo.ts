@@ -71,8 +71,14 @@ export const goalRepo = {
 
     const total = milestones.length;
     const completedCount = milestones.filter((m) => m.completed).length;
-    const progressPercent = total > 0 ? Math.round((completedCount / total) * 100) : goal.progressPercent;
-    const nextStatus = total > 0 && completedCount === total ? "completed" : goal.status === "completed" ? "active" : goal.status;
+    const progressPercent =
+      total > 0 ? Math.round((completedCount / total) * 100) : goal.progressPercent;
+    const nextStatus =
+      total > 0 && completedCount === total
+        ? "completed"
+        : goal.status === "completed"
+          ? "active"
+          : goal.status;
 
     await this.updateGoal(goalId, {
       milestones: JSON.stringify(milestones),

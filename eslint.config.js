@@ -12,7 +12,12 @@ export default [
       "**/build/**",
       "**/storybook-static/**",
       "**/.storybook-static/**",
-      "**/coverage/**"
+      "**/coverage/**",
+      "**/.expo/**",
+      "**/android/**",
+      "**/ios/**",
+      ".agents/**",
+      ".kilocode/**"
     ]
   },
   {
@@ -32,8 +37,17 @@ export default [
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-namespace": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" }
+      ],
       "no-console": ["warn", { allow: ["warn", "error"] }]
+    }
+  },
+  {
+    files: ["**/*.stories.tsx", "**/*.stories.ts"],
+    rules: {
+      "no-console": "off"
     }
   },
   prettier

@@ -201,7 +201,9 @@ export function TransactionFormModal({
 
         <View style={styles.buttonContainer}>
           <Button
-            title={isSaving ? "Saving..." : transactionToEdit ? "Update Transaction" : "Log Transaction"}
+            title={
+              isSaving ? "Saving..." : transactionToEdit ? "Update Transaction" : "Log Transaction"
+            }
             onPress={handleSave}
             disabled={isSaving}
           />

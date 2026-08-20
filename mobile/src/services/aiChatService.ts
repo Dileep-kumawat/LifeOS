@@ -11,11 +11,7 @@ export interface ConversationSummary {
 export type MessageRole = "user" | "assistant" | "tool" | "system";
 
 export type ToolCallStatus =
-  | "pending_confirmation"
-  | "confirmed"
-  | "cancelled"
-  | "executed"
-  | "failed";
+  "pending_confirmation" | "confirmed" | "cancelled" | "executed" | "failed";
 
 export interface ToolCallPayload {
   id: string;

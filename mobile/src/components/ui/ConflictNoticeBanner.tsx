@@ -47,7 +47,8 @@ export function ConflictNoticeBanner() {
       )}
 
       {conflictNotices.map((notice, idx) => {
-        const isCalendarNotice = notice.toLowerCase().includes("overwritten") || notice.toLowerCase().includes("calendar");
+        const isCalendarNotice =
+          notice.toLowerCase().includes("overwritten") || notice.toLowerCase().includes("calendar");
         return (
           <View key={`notice-${idx}`} style={[styles.banner, styles.noticeBanner]}>
             <View style={styles.iconContainer}>

@@ -13,11 +13,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const variants = {
-      default: "bg-[#0075de] text-white hover:bg-[#005bab] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm",
-      secondary: "bg-[#f6f5f4] text-[#31302e] hover:bg-[#e6e6e6] hover:-translate-y-0.5 active:translate-y-0",
-      outline: "border border-[#e6e6e6] bg-white text-[#31302e] hover:bg-[#f6f5f4] hover:border-[#c1c6d5] hover:-translate-y-0.5 active:translate-y-0",
+      default:
+        "bg-[#0075de] text-white hover:bg-[#005bab] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm",
+      secondary:
+        "bg-[#f6f5f4] text-[#31302e] hover:bg-[#e6e6e6] hover:-translate-y-0.5 active:translate-y-0",
+      outline:
+        "border border-[#e6e6e6] bg-white text-[#31302e] hover:bg-[#f6f5f4] hover:border-[#c1c6d5] hover:-translate-y-0.5 active:translate-y-0",
       ghost: "text-[#31302e] hover:bg-[#f6f5f4] hover:text-[#000000] active:scale-[0.98]",
-      destructive: "bg-red-600 text-white hover:bg-red-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
+      destructive:
+        "bg-red-600 text-white hover:bg-red-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
     };
 
     const sizes = {

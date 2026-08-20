@@ -33,7 +33,7 @@ describe("Budget Unit & Logic Tests", () => {
 
   it("correctly identifies one-time alert crossing state transitions", () => {
     const limit = 100;
-    
+
     // Scenario 1: Initial spend 50 -> no alert
     let currentSpend = 50;
     let notifiedOverspend = false;

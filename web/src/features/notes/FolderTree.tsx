@@ -1,14 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import {
-  ChevronRight,
-  Folder,
-  FolderOpen,
-  Files,
-  Plus,
-  Pencil,
-  Trash2
-} from "lucide-react";
+import { ChevronRight, Folder, FolderOpen, Files, Plus, Pencil, Trash2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { NoteFolder } from "./types";
 
@@ -84,7 +76,9 @@ function TreeRow({
             hasChildren ? "opacity-100 cursor-pointer" : "opacity-0 pointer-events-none"
           )}
         >
-          <ChevronRight className={cn("size-4 transition-transform duration-200", expanded && "rotate-90")} />
+          <ChevronRight
+            className={cn("size-4 transition-transform duration-200", expanded && "rotate-90")}
+          />
         </button>
 
         <button
@@ -93,9 +87,15 @@ function TreeRow({
           className="flex min-w-0 flex-1 items-center gap-1.5 text-left cursor-pointer"
         >
           {active ? (
-            <FolderOpen className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110" aria-hidden="true" />
+            <FolderOpen
+              className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110"
+              aria-hidden="true"
+            />
           ) : (
-            <Folder className="size-4 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110 group-hover:text-[#0075de]" aria-hidden="true" />
+            <Folder
+              className="size-4 shrink-0 text-[#a39e98] transition-transform duration-150 group-hover:scale-110 group-hover:text-[#0075de]"
+              aria-hidden="true"
+            />
           )}
           <span className="truncate">{folder.name}</span>
           {count !== undefined && count > 0 && (

@@ -5,7 +5,9 @@ import type { SyncStatus } from "../schema";
  * Generate a client-side unique identifier (hex format compatible with MongoDB ObjectId)
  */
 export function generateClientId(): string {
-  const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, "0");
+  const timestamp = Math.floor(Date.now() / 1000)
+    .toString(16)
+    .padStart(8, "0");
   const random = "xxxxxxxxxxxxxxxx".replace(/[x]/g, () =>
     Math.floor(Math.random() * 16).toString(16)
   );
@@ -80,9 +82,12 @@ export const localRepo = {
 
     const keys = Object.keys(fieldsToSet);
     const setClauses = keys.map((k) => `\`${k}\` = ?`).join(", ");
-    const values = [...Object.values(fieldsToSet).map((v) =>
-      typeof v === "object" && v !== null ? JSON.stringify(v) : v
-    ), id];
+    const values = [
+      ...Object.values(fieldsToSet).map((v) =>
+        typeof v === "object" && v !== null ? JSON.stringify(v) : v
+      ),
+      id
+    ];
 
     const sql = `UPDATE ${tableName} SET ${setClauses} WHERE id = ?;`;
     const res = await db.runAsync(sql, ...values);
@@ -114,10 +119,7 @@ export const localRepo = {
     if (ids.length === 0) return;
     const db = await getDatabase();
     for (const id of ids) {
-      await db.runAsync(
-        `UPDATE ${tableName} SET syncStatus = 'synced' WHERE id = ?;`,
-        id
-      );
+      await db.runAsync(`UPDATE ${tableName} SET syncStatus = 'synced' WHERE id = ?;`, id);
     }
   }
 };

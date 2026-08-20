@@ -34,10 +34,11 @@ export function ForgotPasswordScreen({ navigation }: { navigation: any }) {
     setLoading(true);
     try {
       const res = await authApi.forgotPassword({ email });
-      setSuccessMessage(res.message || "If an account exists, a password reset link has been dispatched.");
+      setSuccessMessage(
+        res.message || "If an account exists, a password reset link has been dispatched."
+      );
     } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Failed to submit request.";
+      const message = err?.response?.data?.message || err?.message || "Failed to submit request.";
       setErrors({ general: message });
     } finally {
       setLoading(false);

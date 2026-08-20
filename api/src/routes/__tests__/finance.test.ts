@@ -9,10 +9,7 @@ vi.mock("../../models/Embedding.js", () => ({
   Embedding: { deleteOne: vi.fn().mockResolvedValue({}) }
 }));
 
-import {
-  onTransactionDeleted,
-  registerOnTransactionDeleted
-} from "../../services/financeHooks.js";
+import { onTransactionDeleted, registerOnTransactionDeleted } from "../../services/financeHooks.js";
 
 // ─── Service Unit & Logic Tests ─────────────────────────────────────────────
 

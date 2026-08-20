@@ -106,7 +106,10 @@ export function convertTextToProseMirrorDoc(rawText: string): {
 /**
  * Extracts raw editable formatted text from a stored ProseMirror JSON document.
  */
-export function convertProseMirrorDocToText(docJsonString: string, fallbackContentText?: string): string {
+export function convertProseMirrorDocToText(
+  docJsonString: string,
+  fallbackContentText?: string
+): string {
   if (fallbackContentText) return fallbackContentText;
   try {
     const doc = JSON.parse(docJsonString);

@@ -73,7 +73,8 @@ export function formatBudgetForEmbedding(budget: BudgetDoc): FormattedSourceCont
   const title = `Budget: $${budget.limit} for ${cat}`;
   const percent = budget.limit > 0 ? Math.round((budget.currentSpend / budget.limit) * 100) : 0;
   const statusStr = budget.currentSpend > budget.limit ? " (OVER BUDGET)" : ` (${percent}% used)`;
-  const embeddedText = `Budget: $${budget.limit} for ${cat}, Period: ${budget.period || "monthly"}, Current Spend: $${budget.currentSpend}${statusStr}`.trim();
+  const embeddedText =
+    `Budget: $${budget.limit} for ${cat}, Period: ${budget.period || "monthly"}, Current Spend: $${budget.currentSpend}${statusStr}`.trim();
   return { title, embeddedText };
 }
 

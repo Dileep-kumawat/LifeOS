@@ -27,8 +27,6 @@ export const PopulatedSixMonths: Story = {
 export const SingleMonthHistory: Story = {
   args: {
     title: "Spending Trend",
-    data: [
-      { month: "2026-08", income: 3500, expense: 1850, net: 1650 }
-    ]
+    data: [{ month: "2026-08", income: 3500, expense: 1850, net: 1650 }]
   }
 };

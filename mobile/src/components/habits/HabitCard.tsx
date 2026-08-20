@@ -60,7 +60,11 @@ export function HabitCard({
             {Boolean(habit.reminderEnabled && habit.reminderTime) && (
               <View style={styles.reminderTag}>
                 <Bell size={11} color={colors.accentPurpleDeep} />
-                <ThemedText variant="caption" color={colors.accentPurpleDeep} style={{ fontSize: 11 }}>
+                <ThemedText
+                  variant="caption"
+                  color={colors.accentPurpleDeep}
+                  style={{ fontSize: 11 }}
+                >
                   {habit.reminderTime}
                 </ThemedText>
               </View>

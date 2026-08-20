@@ -169,7 +169,10 @@ export function HabitCard({
                 : "bg-white text-[#000000] border border-[#e6e6e6] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
             }`}
           >
-            <Check className={`size-3.5 ${isCheckedInToday ? "animate-check-pop" : ""}`} data-icon="inline-start" />
+            <Check
+              className={`size-3.5 ${isCheckedInToday ? "animate-check-pop" : ""}`}
+              data-icon="inline-start"
+            />
             <span>{isCheckedInToday ? "Completed" : "Mark Done"}</span>
           </button>
 

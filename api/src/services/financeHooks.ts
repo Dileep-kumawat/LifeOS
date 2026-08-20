@@ -35,7 +35,10 @@ creationListeners.push(async (transaction: TransactionDoc) => {
     try {
       await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
     } catch (err) {
-      logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction creation");
+      logger.error(
+        { err, transactionId: transaction._id },
+        "Error recalculating budget on transaction creation"
+      );
     }
   }
 });
@@ -54,7 +57,10 @@ deletionListeners.push(async (transaction: TransactionDoc) => {
     try {
       await recalculateBudgetSpend(transaction.userId, transaction.category, transaction.date);
     } catch (err) {
-      logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction deletion");
+      logger.error(
+        { err, transactionId: transaction._id },
+        "Error recalculating budget on transaction deletion"
+      );
     }
   }
 });
@@ -66,7 +72,10 @@ updateListeners.push(async (transaction: TransactionDoc, previous?: TransactionP
   try {
     await enqueueEmbeddingJob("transaction", transaction._id, transaction.userId);
   } catch (err) {
-    logger.error({ err, transactionId: transaction._id }, "Error enqueuing transaction embedding on update");
+    logger.error(
+      { err, transactionId: transaction._id },
+      "Error enqueuing transaction embedding on update"
+    );
   }
 
   try {
@@ -84,7 +93,10 @@ updateListeners.push(async (transaction: TransactionDoc, previous?: TransactionP
       );
     }
   } catch (err) {
-    logger.error({ err, transactionId: transaction._id }, "Error recalculating budget on transaction update");
+    logger.error(
+      { err, transactionId: transaction._id },
+      "Error recalculating budget on transaction update"
+    );
   }
 });
 

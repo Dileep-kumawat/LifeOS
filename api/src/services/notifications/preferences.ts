@@ -6,11 +6,7 @@ import type { NotificationChannel, NotificationPreferences } from "@lifeos/share
  * later = add a key here and to the User model; nothing else changes.
  */
 export type PreferenceModule =
-  | "calendarReminders"
-  | "habitReminders"
-  | "system"
-  | "financeBudgetAlerts"
-  | "dailySummary";
+  "calendarReminders" | "habitReminders" | "system" | "financeBudgetAlerts" | "dailySummary";
 
 export const NOTIFICATION_PREFERENCE_MODULES: PreferenceModule[] = [
   "calendarReminders",

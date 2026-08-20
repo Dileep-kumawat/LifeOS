@@ -49,21 +49,21 @@ export const colors = {
 
 export const spacing = {
   xxs: rawSpacing.xxs, // 4
-  xs: rawSpacing.xs,   // 8
-  sm: rawSpacing.sm,   // 12
-  md: rawSpacing.md,   // 16
-  lg: rawSpacing.lg,   // 24
-  xl: rawSpacing.xl,   // 28
-  xxl: rawSpacing.xxl  // 32
+  xs: rawSpacing.xs, // 8
+  sm: rawSpacing.sm, // 12
+  md: rawSpacing.md, // 16
+  lg: rawSpacing.lg, // 24
+  xl: rawSpacing.xl, // 28
+  xxl: rawSpacing.xxl // 32
 } as const;
 
 export const radius = {
-  xs: rawRadius.xs,     // 4
-  sm: rawRadius.sm,     // 5
-  md: rawRadius.md,     // 8
-  lg: rawRadius.lg,     // 12
-  xl: rawRadius.xl,     // 16
-  full: rawRadius.full  // 9999
+  xs: rawRadius.xs, // 4
+  sm: rawRadius.sm, // 5
+  md: rawRadius.md, // 8
+  lg: rawRadius.lg, // 12
+  xl: rawRadius.xl, // 16
+  full: rawRadius.full // 9999
 } as const;
 
 export const type = {
@@ -172,4 +172,3 @@ export const shadows = {
 
 export const motion = rawMotion;
 export const typography = type;
-
