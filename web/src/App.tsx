@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
-import axios from "axios";
 import { queryClient } from "./lib/queryClient";
+import { refreshAccessToken } from "./lib/apiClient";
 import { RootLayout } from "./routes/RootLayout";
 import { LoginPage } from "./routes/LoginPage";
 import { RegisterPage } from "./routes/RegisterPage";
@@ -21,7 +21,6 @@ import { ChatPage } from "./features/ai/ChatPage";
 import { FinancePage } from "./features/finance/FinancePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { useAuthStore } from "./store/authStore";
 
 const router = createBrowserRouter([
   {
@@ -125,22 +124,10 @@ const router = createBrowserRouter([
 ]);
 
 export function App() {
-  const setAuth = useAuthStore((state) => state.setAuth);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
-
   useEffect(() => {
-    // Silent session restore attempt on app boot
-    async function restoreSession() {
-      try {
-        const response = await axios.post("/api/v1/auth/refresh", {}, { withCredentials: true });
-        const { user, accessToken } = response.data;
-        setAuth(user, accessToken);
-      } catch (_err) {
-        clearAuth();
-      }
-    }
-    restoreSession();
-  }, [setAuth, clearAuth]);
+    // Deduplicated session restore on app boot
+    refreshAccessToken();
+  }, []);
 
   // Register the service worker for web-push receipt. Registration alone never
   // triggers a permission prompt — the push opt-in gate lives in the

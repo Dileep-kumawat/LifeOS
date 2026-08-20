@@ -16,6 +16,11 @@
     "plugins": [
       "expo-secure-store",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "11500448-30a4-460b-9409-c0e945fadeac"
+      }
+    }
   }
 }

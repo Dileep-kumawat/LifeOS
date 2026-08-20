@@ -65,7 +65,7 @@ describe("Auth Module Logic", () => {
   });
 
   describe("3. Refresh Token Rotation & Theft/Reuse Detection", () => {
-    it("should detect reuse of a revoked token and revoke entire token family", async () => {
+    it("should detect reuse of a revoked token outside grace period and revoke entire token family", async () => {
       const rawToken = "sample-revoked-token";
       const tokenHash = hashToken(rawToken);
       const familyId = "family-12345";
@@ -74,7 +74,7 @@ describe("Auth Module Logic", () => {
         tokenHash,
         userId: "user-123",
         familyId,
-        revokedAt: new Date(Date.now() - 1000), // Already revoked!
+        revokedAt: new Date(Date.now() - 60000), // Revoked 60s ago (outside 30s grace period)
         expiresAt: new Date(Date.now() + 1000000),
         save: vi.fn()
       };
@@ -86,6 +86,34 @@ describe("Auth Module Logic", () => {
         /Security alert: Revoked refresh token reused/
       );
 
+      expect(RefreshToken.updateMany).toHaveBeenCalledWith(
+        { familyId, revokedAt: null },
+        { $set: { revokedAt: expect.any(Date) } }
+      );
+    });
+
+    it("should allow safe rotation when token was revoked within grace period (concurrent requests)", async () => {
+      const rawToken = "sample-recent-revoked-token";
+      const tokenHash = hashToken(rawToken);
+      const familyId = "family-12345";
+
+      const mockRecentRevokedToken = {
+        tokenHash,
+        userId: "user-123",
+        familyId,
+        revokedAt: new Date(Date.now() - 2000), // Revoked 2s ago (inside grace period)
+        expiresAt: new Date(Date.now() + 1000000),
+        save: vi.fn()
+      };
+
+      vi.mocked(RefreshToken.findOne).mockResolvedValue(mockRecentRevokedToken as any);
+      vi.mocked(RefreshToken.updateMany).mockResolvedValue({ modifiedCount: 1 } as any);
+      vi.mocked(RefreshToken.create).mockResolvedValue({} as any);
+
+      const result = await rotateRefreshToken(rawToken, "Test Device");
+
+      expect(result.userId).toBe("user-123");
+      expect(result.newRawToken).toBeDefined();
       expect(RefreshToken.updateMany).toHaveBeenCalledWith(
         { familyId, revokedAt: null },
         { $set: { revokedAt: expect.any(Date) } }

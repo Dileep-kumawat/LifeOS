@@ -46,6 +46,8 @@ export async function createRefreshToken(
   return { rawToken, familyId, expiresAt };
 }
 
+const GRACE_PERIOD_MS = 30 * 1000; // 30s grace period for concurrent / StrictMode refresh requests
+
 export async function rotateRefreshToken(
   rawToken: string,
   deviceInfo: string
@@ -57,8 +59,31 @@ export async function rotateRefreshToken(
     throw new Error("Invalid refresh token");
   }
 
-  // Token Reuse / Theft Detection: If token was already revoked, revoke entire family!
+  // Token Reuse / Theft Detection: If token was already revoked
   if (existingToken.revokedAt) {
+    const timeSinceRevocation = Date.now() - existingToken.revokedAt.getTime();
+
+    // If within grace period (e.g. concurrent requests, React StrictMode double effect, multiple tabs)
+    if (timeSinceRevocation <= GRACE_PERIOD_MS) {
+      // Revoke any active tokens in the family and issue a single fresh token
+      await RefreshToken.updateMany(
+        { familyId: existingToken.familyId, revokedAt: null },
+        { $set: { revokedAt: new Date() } }
+      );
+
+      const { rawToken: newRawToken } = await createRefreshToken(
+        existingToken.userId.toString(),
+        deviceInfo,
+        existingToken.familyId
+      );
+
+      return {
+        newRawToken,
+        userId: existingToken.userId.toString()
+      };
+    }
+
+    // Outside grace period: real token reuse / theft detected! Revoke entire family.
     await RefreshToken.updateMany(
       { familyId: existingToken.familyId, revokedAt: null },
       { $set: { revokedAt: new Date() } }
@@ -100,9 +125,9 @@ export function setRefreshCookie(res: Response, rawToken: string): void {
   res.cookie(COOKIE_NAME, rawToken, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    path: "/api/v1/auth"
+    path: "/"
   });
 }
 
@@ -110,8 +135,8 @@ export function clearRefreshCookie(res: Response): void {
   res.cookie(COOKIE_NAME, "", {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: 0,
-    path: "/api/v1/auth"
+    path: "/"
   });
 }
