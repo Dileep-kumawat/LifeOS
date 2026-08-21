@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eas-build-post-install": "npm run build --prefix ../packages/shared"
+    "eas-build-pre-install": "npm run build --prefix ../packages/shared",
+    "eas-build-post-install": "npm run build --prefix ../packages/shared && node -e \"const fs=require('fs');const path=require('path');const s=path.resolve('../packages/shared/dist');const d=path.resolve('node_modules/@lifeos/shared/dist');if(fs.existsSync(s)){fs.mkdirSync(d,{recursive:true});fs.cpSync(s,d,{recursive:true});}\""
   },
   "dependencies": {
     "@lifeos/shared": "file:../packages/shared",

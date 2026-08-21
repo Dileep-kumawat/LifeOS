@@ -16,6 +16,7 @@
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=api && npm run build --workspace=web",
     "build:shared": "npm run build --workspace=packages/shared",
     "postinstall": "npm run build --workspace=packages/shared",
+    "eas-build-pre-install": "npm run build --workspace=packages/shared",
     "eas-build-post-install": "npm run build --workspace=packages/shared",
     "lint": "eslint .",
     "format": "prettier --write .",

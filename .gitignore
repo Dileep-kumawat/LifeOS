@@ -1,5 +1,7 @@
 node_modules/
 dist/
+!packages/shared/dist/
+!packages/shared/dist/**
 build/
 .env
 .env.local
