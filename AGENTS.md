@@ -2,6 +2,11 @@
 
 Always adhere to [DESIGN.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/DESIGN.md) for project design and visual language.
 
+## Project Memory & Context Protocol
+
+- **Context Initialization**: Every AI agent **MUST** read [memory.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/memory.md) at the start of a session/task to get immediate, token-efficient context on the monorepo architecture, database models, API endpoints, and workspace layout.
+- **Memory Maintenance**: After completing any work (adding features, database models, API routes, screens, or build scripts), agents **MUST** update [memory.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/memory.md) following the protocol outlined in Section 7 of `memory.md`.
+
 ## Required Skills by Domain
 
 ### 1. Web & UI Design
