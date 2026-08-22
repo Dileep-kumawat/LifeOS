@@ -7,7 +7,7 @@ COPY package.json package-lock.json* tsconfig.base.json ./
 COPY api/package.json ./api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 
-RUN npm install --ignore-scripts
+RUN npm install --ignore-scripts --legacy-peer-deps
 
 COPY packages/shared ./packages/shared
 COPY api ./api

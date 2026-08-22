@@ -35,6 +35,7 @@ import { SyncStatusIndicator } from "../components/ui/SyncStatusIndicator";
 import { ConflictNoticeBanner } from "../components/ui/ConflictNoticeBanner";
 import { syncEngine } from "../services/syncEngine";
 import { notificationService } from "../services/notificationService";
+import { FloatingDock } from "./FloatingDock";
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -60,6 +61,7 @@ function MainTabNavigator() {
     <View style={{ flex: 1, backgroundColor: colors.canvasSoft }}>
       <ConflictNoticeBanner />
       <Tab.Navigator
+        tabBar={(props) => <FloatingDock {...props} />}
         screenOptions={{
           headerShown: true,
           headerStyle: {
@@ -84,24 +86,6 @@ function MainTabNavigator() {
               <SyncStatusIndicator />
             </View>
           ),
-          tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.hairline,
-            borderTopWidth: 1,
-            height: 62,
-            paddingBottom: 8,
-            paddingTop: 6,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: -1 },
-            shadowOpacity: 0.03,
-            shadowRadius: 2,
-            elevation: 2
-          },
-          tabBarLabelStyle: {
-            fontSize: 10.5,
-            fontWeight: "600",
-            marginTop: -2
-          },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.inkMuted
         }}
@@ -110,35 +94,35 @@ function MainTabNavigator() {
           name="Dashboard"
           component={DashboardScreen}
           options={{
-            tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
           name="Calendar"
           component={CalendarScreen}
           options={{
-            tabBarIcon: ({ color }) => <Calendar color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <Calendar color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
           name="Habits & Goals"
           component={HabitsGoalsScreen}
           options={{
-            tabBarIcon: ({ color }) => <CheckSquare color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
           name="Notes"
           component={NotesScreen}
           options={{
-            tabBarIcon: ({ color }) => <FileText color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <FileText color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
           name="Finance"
           component={FinanceScreen}
           options={{
-            tabBarIcon: ({ color }) => <DollarSign color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
@@ -146,14 +130,14 @@ function MainTabNavigator() {
           component={ChatScreen}
           options={{
             headerShown: false,
-            tabBarIcon: ({ color }) => <Sparkles color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size || 20} />
           }}
         />
         <Tab.Screen
           name="Settings"
           component={SettingsScreen}
           options={{
-            tabBarIcon: ({ color }) => <Settings color={color} size={20} />
+            tabBarIcon: ({ color, size }) => <Settings color={color} size={size || 20} />
           }}
         />
       </Tab.Navigator>

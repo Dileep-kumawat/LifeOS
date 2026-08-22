@@ -265,7 +265,7 @@ export function DashboardScreen({ navigation }: any) {
         />
       }
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Top Header Bar */}
       <View style={styles.topHeader}>

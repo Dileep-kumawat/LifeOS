@@ -10,7 +10,7 @@
 - **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `packages/shared`).
 - **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/Bull), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, OAuth stub), Swagger (`/api/v1/docs`), Sentry.
 - **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Storybook, Sentry.
-- **Mobile (`/mobile`)**: Expo SDK (React Native), TypeScript, React Navigation, WatermelonDB / SQLite local storage, EAS Build, Sentry.
+- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, haptic feedback), SQLite local storage, EAS Build, Sentry.
 - **Shared Package (`/packages/shared`)**: Shared Zod schemas, TypeScript types, design system tokens, and utility functions.
 - **Infra & DevOps**: Docker Compose (`mongo`, `redis`, `api`), GitHub Actions CI.
 
@@ -39,6 +39,7 @@ LifeOS/
 ├── mobile/                # Expo React Native App
 │   ├── src/
 │   │   ├── db/            # Local DB setup & offline sync logic
+│   │   ├── navigation/    # RootNavigator & FloatingDock (sliding dynamic navigation)
 │   │   ├── screens/       # Auth & Main screens (Dashboard, Calendar, Finance, Habits, Notes, Chat, ConflictResolution)
 │   │   ├── store/         # Mobile Zustand state
 │   │   ├── services/      # API client & offline sync engine

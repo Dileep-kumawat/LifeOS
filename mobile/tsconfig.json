@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "lib": ["DOM", "ESNext"],
     "moduleResolution": "bundler",
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

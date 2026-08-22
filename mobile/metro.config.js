@@ -15,4 +15,13 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules")
 ];
 
+// 3. Prevent hierarchical lookup collisions across monorepo packages
+config.resolver.disableHierarchicalLookup = true;
+
+// 4. Pin critical Expo dependencies to mobile node_modules
+config.resolver.extraNodeModules = {
+  "react-native": path.resolve(projectRoot, "node_modules/react-native"),
+  react: path.resolve(projectRoot, "node_modules/react")
+};
+
 module.exports = config;

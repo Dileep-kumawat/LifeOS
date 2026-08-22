@@ -5,7 +5,8 @@ import {
   StyleSheet,
   View,
   ViewStyle,
-  StyleProp
+  StyleProp,
+  RefreshControlProps
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../../theme";
@@ -17,7 +18,7 @@ export interface ScreenContainerProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
   edges?: ("top" | "left" | "right" | "bottom")[];
-  refreshControl?: React.ReactElement;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export function ScreenContainer({
