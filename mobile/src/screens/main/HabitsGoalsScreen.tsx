@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { colors, radius, spacing } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import { habitRepo } from "../../db/repositories/habitRepo";
 import { goalRepo } from "../../db/repositories/goalRepo";
 import { syncEngine } from "../../services/syncEngine";
@@ -21,6 +22,7 @@ import { GoalFormModal } from "../../components/goals/GoalFormModal";
 type ActiveTab = "habits" | "goals";
 
 export function HabitsGoalsScreen() {
+  const dockHeight = useDockHeight();
   const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState<ActiveTab>("habits");
 
@@ -267,7 +269,11 @@ export function HabitsGoalsScreen() {
       </View>
 
       {/* Content Lists */}
-      <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.listContainer}
+        contentContainerStyle={{ paddingBottom: dockHeight }}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === "habits" ? (
           habits.length === 0 ? (
             <Card style={styles.emptyCard}>

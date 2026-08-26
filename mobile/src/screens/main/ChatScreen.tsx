@@ -8,7 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Keyboard
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -31,6 +32,7 @@ import { ChatMessage } from "../../components/ai/ChatMessage";
 import { ToolConfirmationModal } from "../../components/ai/ToolConfirmationModal";
 import { ConversationHistoryModal } from "../../components/ai/ConversationHistoryModal";
 import { useSocketChat } from "../../services/useSocketChat";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import { colors, radius, spacing, shadows } from "../../theme";
 
 interface PromptSuggestion {
@@ -96,7 +98,24 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const dockHeight = useDockHeight();
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Auto-scroll to end on new messages or streaming chunks
   useEffect(() => {
@@ -265,7 +284,16 @@ export function ChatScreen() {
         )}
 
         {/* Signature ChatGPT Bottom Capsule Bar */}
-        <View style={[styles.bottomBarContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        <View
+          style={[
+            styles.bottomBarContainer,
+            {
+              paddingBottom: isKeyboardVisible
+                ? Math.max(insets.bottom, 10)
+                : dockHeight + 4
+            }
+          ]}
+        >
           <View style={styles.inputCapsule}>
             {/* Plus / Quick Actions Button */}
             <TouchableOpacity

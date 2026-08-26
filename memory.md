@@ -10,7 +10,7 @@
 - **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `packages/shared`).
 - **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/Bull), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, OAuth stub), Swagger (`/api/v1/docs`), Sentry.
 - **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Storybook, Sentry.
-- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, haptic feedback), SQLite local storage, EAS Build, Sentry.
+- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), SQLite local storage, EAS Build, Sentry.
 - **Shared Package (`/packages/shared`)**: Shared Zod schemas, TypeScript types, design system tokens, and utility functions.
 - **Infra & DevOps**: Docker Compose (`mongo`, `redis`, `api`), GitHub Actions CI.
 
@@ -111,6 +111,9 @@ LifeOS/
 - **Offline-First & Conflict Handling**:
   - SQLite/WatermelonDB local cache with background sync.
   - `ConflictResolutionScreen.tsx` on mobile to resolve client/server state conflicts.
+- **Dock & Layout Architecture**:
+  - `useDockHeight()` hook exported from `FloatingDock.tsx` calculates dynamic bottom clearance (`DOCK_HEIGHT + bottomOffset + DOCK_CLEARANCE`), used across all tab screens (`ScreenContainer.tsx` with `includeDockPadding`, subview scrollable lists) to prevent dock occlusion.
+  - Auth screens (`LoginScreen`, `RegisterScreen`, `ForgotPasswordScreen`) use `contentContainerStyle: { flexGrow: 1, justifyContent: "center" }` for vertical centering across various device heights with smooth keyboard scrolling.
 - **Physical Device Debugging (Android via USB)**:
   - `adb reverse tcp:8081 tcp:8081` (Metro bundler)
   - `adb reverse tcp:4000 tcp:4000` (API backend)

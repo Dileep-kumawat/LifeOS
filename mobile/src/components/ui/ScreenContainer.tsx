@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../../theme";
+import { useDockHeight } from "../../navigation/FloatingDock";
 
 export interface ScreenContainerProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export interface ScreenContainerProps {
   backgroundColor?: string;
   edges?: ("top" | "left" | "right" | "bottom")[];
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  includeDockPadding?: boolean;
 }
 
 export function ScreenContainer({
@@ -28,8 +30,15 @@ export function ScreenContainer({
   contentContainerStyle,
   backgroundColor = colors.canvasSoft,
   edges = ["left", "right"],
-  refreshControl
+  refreshControl,
+  includeDockPadding = false
 }: ScreenContainerProps) {
+  const dockHeight = useDockHeight();
+
+  const dockPaddingStyle: ViewStyle | undefined = includeDockPadding
+    ? { paddingBottom: dockHeight }
+    : undefined;
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }, style]} edges={edges}>
       <KeyboardAvoidingView
@@ -38,7 +47,7 @@ export function ScreenContainer({
       >
         {scrollable ? (
           <ScrollView
-            contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+            contentContainerStyle={[styles.scrollContent, contentContainerStyle, dockPaddingStyle]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             refreshControl={refreshControl}
@@ -46,7 +55,7 @@ export function ScreenContainer({
             {children}
           </ScrollView>
         ) : (
-          <View style={[styles.content, contentContainerStyle]}>{children}</View>
+          <View style={[styles.content, contentContainerStyle, dockPaddingStyle]}>{children}</View>
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>

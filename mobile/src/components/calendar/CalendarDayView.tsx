@@ -4,6 +4,7 @@ import { ThemedText } from "../ui/ThemedText";
 import { Card } from "../ui/Card";
 import { SyncBadge } from "../ui/SyncBadge";
 import { colors, radius, spacing } from "../../theme";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import type { LocalEvent } from "../../db/schema";
 
 interface CalendarDayViewProps {
@@ -13,6 +14,7 @@ interface CalendarDayViewProps {
 }
 
 export function CalendarDayView({ selectedDate, events, onSelectEvent }: CalendarDayViewProps) {
+  const dockHeight = useDockHeight();
   const dateStr = selectedDate.toISOString().split("T")[0];
 
   const dayEvents = events.filter((ev) => {
@@ -23,7 +25,11 @@ export function CalendarDayView({ selectedDate, events, onSelectEvent }: Calenda
   const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 6:00 to 23:00
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: dockHeight }}
+      showsVerticalScrollIndicator={false}
+    >
       {dayEvents.length === 0 ? (
         <Card style={styles.emptyCard}>
           <ThemedText variant="bodyMd" color={colors.inkMuted} style={{ textAlign: "center" }}>

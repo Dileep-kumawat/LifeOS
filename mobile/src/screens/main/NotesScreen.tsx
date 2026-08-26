@@ -8,6 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { colors, radius, spacing } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import { noteRepo } from "../../db/repositories/noteRepo";
 import { syncEngine } from "../../services/syncEngine";
 import type { LocalNote, LocalNoteFolder } from "../../db/schema";
@@ -17,6 +18,7 @@ import { NoteEditorModal } from "../../components/notes/NoteEditorModal";
 import { FolderManagerModal } from "../../components/notes/FolderManagerModal";
 
 export function NotesScreen() {
+  const dockHeight = useDockHeight();
   const user = useAuthStore((state) => state.user);
   const [notes, setNotes] = useState<LocalNote[]>([]);
   const [folders, setFolders] = useState<LocalNoteFolder[]>([]);
@@ -202,7 +204,11 @@ export function NotesScreen() {
       </View>
 
       {/* Notes List */}
-      <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.listContainer}
+        contentContainerStyle={{ paddingBottom: dockHeight }}
+        showsVerticalScrollIndicator={false}
+      >
         {notes.length === 0 ? (
           <Card style={styles.emptyCard}>
             <ThemedText variant="bodyMd" color={colors.inkMuted} style={{ textAlign: "center" }}>

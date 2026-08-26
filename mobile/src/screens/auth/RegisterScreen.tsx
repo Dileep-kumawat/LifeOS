@@ -47,7 +47,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable contentContainerStyle={styles.containerContent}>
       <View style={styles.header}>
         <ThemedText variant="heading1" style={styles.title}>
           Create Account
@@ -123,8 +123,12 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
+  containerContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: spacing.lg
+  },
   header: {
-    marginTop: spacing.xl,
     marginBottom: spacing.lg,
     alignItems: "center"
   },
@@ -155,6 +159,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: spacing.xl
+    marginTop: spacing.lg
   }
 });

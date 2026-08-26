@@ -9,6 +9,7 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { SyncBadge } from "../../components/ui/SyncBadge";
 import { colors, radius, spacing } from "../../theme";
 import { useAuthStore } from "../../store/authStore";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import { financeRepo, type FinanceSummaryData } from "../../db/repositories/financeRepo";
 import { syncEngine } from "../../services/syncEngine";
 import type { LocalTransaction, LocalBudget } from "../../db/schema";
@@ -21,6 +22,7 @@ import { FinanceInsightsCard } from "../../components/finance/FinanceInsightsCar
 type FinanceTab = "transactions" | "budgets" | "analytics";
 
 export function FinanceScreen() {
+  const dockHeight = useDockHeight();
   const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState<FinanceTab>("transactions");
 
@@ -200,7 +202,11 @@ export function FinanceScreen() {
       </View>
 
       {/* Tab Content */}
-      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.contentScroll}
+        contentContainerStyle={{ paddingBottom: dockHeight }}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === "transactions" && (
           <View style={styles.listContainer}>
             {transactions.length === 0 ? (

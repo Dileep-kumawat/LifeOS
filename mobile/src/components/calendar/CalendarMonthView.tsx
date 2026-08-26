@@ -4,6 +4,7 @@ import { ThemedText } from "../ui/ThemedText";
 import { Card } from "../ui/Card";
 import { SyncBadge } from "../ui/SyncBadge";
 import { colors, radius, spacing } from "../../theme";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import type { LocalEvent } from "../../db/schema";
 
 interface CalendarMonthViewProps {
@@ -23,6 +24,7 @@ export function CalendarMonthView({
   events,
   onSelectEvent
 }: CalendarMonthViewProps) {
+  const dockHeight = useDockHeight();
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
@@ -83,7 +85,11 @@ export function CalendarMonthView({
   const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: dockHeight }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Month Header Controls */}
       <View style={styles.monthHeader}>
         <ThemedText variant="heading2">{monthLabel}</ThemedText>

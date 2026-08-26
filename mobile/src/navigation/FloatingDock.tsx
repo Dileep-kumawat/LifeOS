@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -40,6 +40,24 @@ import { colors, radius } from "../theme";
 
 const AnimatedView = Animated.View as React.ComponentType<any>;
 
+// Dimensions & layout constants
+export const DOCK_HEIGHT = 64;
+export const DOCK_VERTICAL_OFFSET = 6;
+export const DOCK_CLEARANCE = 16;
+const ITEM_WIDTH = 54;
+const INDICATOR_SIZE = 50;
+const FADE_WIDTH = 48;
+
+/**
+ * Returns the total reserved height of the floating dock including bottom safe area and clearance.
+ * Used by tab screens for bottom content padding so items are not occluded.
+ */
+export function useDockHeight(extraPadding = 0): number {
+  const insets = useSafeAreaInsets();
+  const bottomOffset = Math.max(insets.bottom, 12) + DOCK_VERTICAL_OFFSET;
+  return DOCK_HEIGHT + bottomOffset + DOCK_CLEARANCE + extraPadding;
+}
+
 // Fallback icon resolver for dynamically added screens without explicit tabBarIcon
 function getFallbackIcon(routeName: string): LucideIcon {
   const name = routeName.toLowerCase();
@@ -55,22 +73,60 @@ function getFallbackIcon(routeName: string): LucideIcon {
   return Grid;
 }
 
-// Dimensions & layout constants
-const DOCK_HEIGHT = 64;
-const ITEM_WIDTH = 54;
-const INDICATOR_SIZE = 50;
-const FADE_WIDTH = 48;
+// Static gradient color & location arrays to avoid re-instantiation thrash
+const LEFT_FADE_COLORS =
+  Platform.OS === "ios"
+    ? (["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0.65)", "rgba(255, 255, 255, 0)"] as const)
+    : (["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 0.8)", "rgba(255, 255, 255, 0)"] as const);
+
+const RIGHT_FADE_COLORS =
+  Platform.OS === "ios"
+    ? (["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.65)", "rgba(255, 255, 255, 0.95)"] as const)
+    : (["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.8)", "rgba(255, 255, 255, 1)"] as const);
+
+const LEFT_FADE_LOCATIONS = [0, 0.35, 1] as const;
+const RIGHT_FADE_LOCATIONS = [0, 0.65, 1] as const;
+const GRADIENT_START = { x: 0, y: 0.5 };
+const GRADIENT_END = { x: 1, y: 0.5 };
+
+const LeftFadeMask = React.memo(() => (
+  <LinearGradient
+    colors={LEFT_FADE_COLORS as any}
+    locations={LEFT_FADE_LOCATIONS as any}
+    start={GRADIENT_START}
+    end={GRADIENT_END}
+    style={styles.leftEdgeFade}
+    pointerEvents="none"
+  />
+));
+
+const RightFadeMask = React.memo(() => (
+  <LinearGradient
+    colors={RIGHT_FADE_COLORS as any}
+    locations={RIGHT_FADE_LOCATIONS as any}
+    start={GRADIENT_START}
+    end={GRADIENT_END}
+    style={styles.rightEdgeFade}
+    pointerEvents="none"
+  />
+));
+
+const CenterIndicator = React.memo(() => (
+  <View style={styles.staticCenterIndicator} pointerEvents="none">
+    <View style={styles.activeDot} />
+  </View>
+));
 
 interface DockItemProps {
   route: BottomTabBarProps["state"]["routes"][number];
   index: number;
   scrollX: Animated.SharedValue<number>;
   options: BottomTabBarProps["descriptors"][string]["options"];
-  onPress: () => void;
-  onLongPress: () => void;
+  onPress: (index: number) => void;
+  onLongPress: (index: number) => void;
 }
 
-function DockItem({
+const DockItem = React.memo(function DockItem({
   route,
   index,
   scrollX,
@@ -124,6 +180,14 @@ function DockItem({
     IconNode = <FallbackComponent color={colors.primary} size={22} />;
   }
 
+  const handlePress = useCallback(() => {
+    onPress(index);
+  }, [onPress, index]);
+
+  const handleLongPress = useCallback(() => {
+    onLongPress(index);
+  }, [onLongPress, index]);
+
   return (
     <View style={styles.itemWrapper}>
       <AnimatedView style={[styles.itemContainer, animatedItemStyle]}>
@@ -131,8 +195,8 @@ function DockItem({
           accessibilityRole="button"
           accessibilityLabel={options.tabBarAccessibilityLabel || label}
           testID={options.tabBarButtonTestID}
-          onPress={onPress}
-          onLongPress={onLongPress}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
           style={styles.pressable}
           hitSlop={8}
         >
@@ -148,7 +212,7 @@ function DockItem({
       </AnimatedView>
     </View>
   );
-}
+});
 
 export function FloatingDock({
   state,
@@ -158,27 +222,46 @@ export function FloatingDock({
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const scrollViewRef = useRef<any>(null);
-  const [dockWidth, setDockWidth] = useState<number>(0);
   const lastSettledIndexRef = useRef<number>(state.index);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
+  const programmaticScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reanimated scroll tracking
+  // Deterministic dock width and side padding computed directly from screen width and route count
+  const dockWidth = Math.min(
+    screenWidth - 32,
+    Math.max(ITEM_WIDTH * 3, state.routes.length * ITEM_WIDTH + 32)
+  );
+  const sidePadding = Math.max(0, (dockWidth - ITEM_WIDTH) / 2);
+
+  // Reanimated scroll tracking initialized to current active index
   const scrollX = useSharedValue(state.index * ITEM_WIDTH);
 
-  // Determine max dock width
-  const effectiveDockWidth = dockWidth > 0 ? dockWidth : Math.min(screenWidth - 32, state.routes.length * ITEM_WIDTH + 32);
-  const sidePadding = Math.max(0, (effectiveDockWidth - ITEM_WIDTH) / 2);
+  const setProgrammaticScroll = useCallback((isProgrammatic: boolean) => {
+    isProgrammaticScrollRef.current = isProgrammatic;
+    if (programmaticScrollTimeoutRef.current) {
+      clearTimeout(programmaticScrollTimeoutRef.current);
+      programmaticScrollTimeoutRef.current = null;
+    }
+    if (isProgrammatic) {
+      // Safety fallback: auto-clear after 600ms in case onMomentumScrollEnd does not fire
+      programmaticScrollTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+        programmaticScrollTimeoutRef.current = null;
+      }, 600);
+    }
+  }, []);
 
   // Sync scroll position with active route index from React Navigation
   useEffect(() => {
     lastSettledIndexRef.current = state.index;
-    scrollX.value = state.index * ITEM_WIDTH;
+    setProgrammaticScroll(true);
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({
         x: state.index * ITEM_WIDTH,
         animated: true
       });
     }
-  }, [state.index]);
+  }, [state.index, setProgrammaticScroll]);
 
   // Scroll handler for real-time item scale and proximity interpolation
   const scrollHandler = useAnimatedScrollHandler({
@@ -187,7 +270,7 @@ export function FloatingDock({
     }
   });
 
-  // Handle scroll settle & route change
+  // Handle scroll settle & route change for manual user gestures only
   const handleScrollSettle = useCallback(
     (offsetX: number) => {
       const targetIndex = Math.round(offsetX / ITEM_WIDTH);
@@ -196,7 +279,7 @@ export function FloatingDock({
       if (clampedIndex !== lastSettledIndexRef.current) {
         lastSettledIndexRef.current = clampedIndex;
 
-        // Trigger haptic feedback exactly once on snap settle
+        // Trigger single-fire haptic feedback on snap settle
         try {
           Haptics.selectionAsync();
         } catch {
@@ -220,62 +303,87 @@ export function FloatingDock({
     [state.routes, navigation]
   );
 
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    handleScrollSettle(e.nativeEvent.contentOffset.x);
-  };
+  const onScrollBeginDrag = useCallback(() => {
+    // User is manually interacting with the dock; disable programmatic mode immediately
+    setProgrammaticScroll(false);
+  }, [setProgrammaticScroll]);
 
-  const onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    // If momentum scrolling will not occur, settle immediately
-    if (Platform.OS === "android") {
+  const onMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isProgrammaticScrollRef.current) {
+        setProgrammaticScroll(false);
+        return;
+      }
       handleScrollSettle(e.nativeEvent.contentOffset.x);
-    }
-  };
+    },
+    [handleScrollSettle, setProgrammaticScroll]
+  );
 
-  const handleItemPress = (index: number) => {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        x: index * ITEM_WIDTH,
-        animated: true
-      });
-    }
+  const onScrollEndDrag = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isProgrammaticScrollRef.current) return;
+      if (Platform.OS === "android") {
+        handleScrollSettle(e.nativeEvent.contentOffset.x);
+      }
+    },
+    [handleScrollSettle]
+  );
 
-    if (index !== state.index) {
+  const handleItemPress = useCallback(
+    (index: number) => {
+      // Mark as programmatic scroll so intermediate positions do NOT trigger navigation
+      setProgrammaticScroll(true);
+      lastSettledIndexRef.current = index;
+
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({
+          x: index * ITEM_WIDTH,
+          animated: true
+        });
+      }
+
+      if (index !== state.index) {
+        try {
+          Haptics.selectionAsync();
+        } catch {
+          // Fallback
+        }
+
+        const targetRoute = state.routes[index];
+        if (targetRoute) {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: targetRoute.key,
+            canPreventDefault: true
+          });
+
+          if (!event.defaultPrevented) {
+            navigation.navigate(targetRoute.name, targetRoute.params);
+          }
+        }
+      }
+    },
+    [state.index, state.routes, navigation, setProgrammaticScroll]
+  );
+
+  const handleItemLongPress = useCallback(
+    (index: number) => {
       try {
-        Haptics.selectionAsync();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       } catch {
         // Fallback
       }
 
       const targetRoute = state.routes[index];
       if (targetRoute) {
-        const event = navigation.emit({
-          type: "tabPress",
-          target: targetRoute.key,
-          canPreventDefault: true
+        navigation.emit({
+          type: "tabLongPress",
+          target: targetRoute.key
         });
-
-        if (!event.defaultPrevented) {
-          navigation.navigate(targetRoute.name, targetRoute.params);
-        }
       }
-    }
-  };
-
-  const handleItemLongPress = (index: number) => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    } catch {
-      // Fallback
-    }
-
-    const targetRoute = state.routes[index];
-    if (targetRoute) {
-      navigation.emit({
-        type: "tabLongPress",
-        target: targetRoute.key
-      });
-    }
-  };
+    },
+    [state.routes, navigation]
+  );
 
   // Active route options for top tooltip pill
   const activeRoute = state.routes[state.index];
@@ -287,7 +395,7 @@ export function FloatingDock({
       ? activeOptions.title
       : activeRoute?.name;
 
-  const bottomOffset = Math.max(insets.bottom, 12) + 6;
+  const bottomOffset = Math.max(insets.bottom, 12) + DOCK_VERTICAL_OFFSET;
 
   return (
     <View
@@ -314,15 +422,7 @@ export function FloatingDock({
 
       {/* Floating Dock Glass Container */}
       <View style={styles.dockShadowWrapper}>
-        <View
-          style={styles.dockClipContainer}
-          onLayout={(e) => {
-            const width = e.nativeEvent.layout.width;
-            if (width > 0 && width !== dockWidth) {
-              setDockWidth(width);
-            }
-          }}
-        >
+        <View style={[styles.dockClipContainer, { width: dockWidth }]}>
           {Platform.OS === "ios" ? (
             <BlurView intensity={90} tint="light" style={styles.blurAbsoluteFill} />
           ) : (
@@ -346,8 +446,9 @@ export function FloatingDock({
             bounces={true}
             scrollEventThrottle={16}
             onScroll={scrollHandler}
-            onMomentumScrollEnd={onMomentumScrollEnd}
+            onScrollBeginDrag={onScrollBeginDrag}
             onScrollEndDrag={onScrollEndDrag}
+            onMomentumScrollEnd={onMomentumScrollEnd}
             keyboardShouldPersistTaps="handled"
           >
             {state.routes.map((route, index) => {
@@ -360,45 +461,21 @@ export function FloatingDock({
                   index={index}
                   scrollX={scrollX}
                   options={options}
-                  onPress={() => handleItemPress(index)}
-                  onLongPress={() => handleItemLongPress(index)}
+                  onPress={handleItemPress}
+                  onLongPress={handleItemLongPress}
                 />
               );
             })}
           </Animated.ScrollView>
 
           {/* Left Edge Gradient Fade Mask */}
-          <LinearGradient
-            colors={
-              Platform.OS === "ios"
-                ? ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0.65)", "rgba(255, 255, 255, 0)"]
-                : ["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 0.8)", "rgba(255, 255, 255, 0)"]
-            }
-            locations={[0, 0.35, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={[styles.leftEdgeFade, { height: DOCK_HEIGHT }]}
-            pointerEvents="none"
-          />
+          <LeftFadeMask />
 
           {/* Right Edge Gradient Fade Mask */}
-          <LinearGradient
-            colors={
-              Platform.OS === "ios"
-                ? ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.65)", "rgba(255, 255, 255, 0.95)"]
-                : ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.8)", "rgba(255, 255, 255, 1)"]
-            }
-            locations={[0, 0.65, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={[styles.rightEdgeFade, { height: DOCK_HEIGHT }]}
-            pointerEvents="none"
-          />
+          <RightFadeMask />
 
           {/* Fixed Static Center Active Indicator (Never scrolls, unaffected by edge fade) */}
-          <View style={styles.staticCenterIndicator} pointerEvents="none">
-            <View style={styles.activeDot} />
-          </View>
+          <CenterIndicator />
         </View>
       </View>
     </View>
@@ -472,6 +549,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
+    height: DOCK_HEIGHT,
     width: FADE_WIDTH,
     zIndex: 3,
     borderTopLeftRadius: radius.full,
@@ -482,6 +560,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
+    height: DOCK_HEIGHT,
     width: FADE_WIDTH,
     zIndex: 3,
     borderTopRightRadius: radius.full,

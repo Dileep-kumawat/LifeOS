@@ -46,7 +46,7 @@ export function ForgotPasswordScreen({ navigation }: { navigation: any }) {
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable contentContainerStyle={styles.containerContent}>
       <View style={styles.header}>
         <ThemedText variant="heading2" style={styles.title}>
           Reset Password
@@ -108,8 +108,12 @@ export function ForgotPasswordScreen({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
+  containerContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: spacing.lg
+  },
   header: {
-    marginTop: spacing.xl,
     marginBottom: spacing.lg,
     alignItems: "center"
   },

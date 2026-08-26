@@ -132,7 +132,7 @@ export function SettingsScreen({ navigation }: any) {
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable includeDockPadding>
       <View style={styles.header}>
         <ThemedText variant="heading2">Settings & Sync</ThemedText>
         <ThemedText variant="bodySm" color={colors.inkMuted}>

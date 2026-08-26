@@ -257,6 +257,7 @@ export function DashboardScreen({ navigation }: any) {
   return (
     <ScreenContainer
       scrollable
+      includeDockPadding
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

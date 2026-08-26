@@ -4,6 +4,7 @@ import { ThemedText } from "../ui/ThemedText";
 import { Card } from "../ui/Card";
 import { SyncBadge } from "../ui/SyncBadge";
 import { colors, radius, spacing } from "../../theme";
+import { useDockHeight } from "../../navigation/FloatingDock";
 import type { LocalEvent } from "../../db/schema";
 
 interface CalendarWeekViewProps {
@@ -19,6 +20,7 @@ export function CalendarWeekView({
   events,
   onSelectEvent
 }: CalendarWeekViewProps) {
+  const dockHeight = useDockHeight();
   // Compute start of current week (Sunday)
   const currentDay = selectedDate.getDay();
   const startOfWeek = new Date(selectedDate);
@@ -38,7 +40,11 @@ export function CalendarWeekView({
   });
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: dockHeight }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* 7-day strip */}
       <View style={styles.weekStrip}>
         {weekDays.map((d) => {
