@@ -87,7 +87,9 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
           </View>
           <View style={{ flex: 1 }}>
             <View style={styles.titleBadgeRow}>
-              <ThemedText variant="heading3">Today's Daily Summary</ThemedText>
+              <ThemedText variant="heading3" style={styles.scheduledTitle}>
+                Daily Summary
+              </ThemedText>
               <View style={styles.scheduledBadge}>
                 <ThemedText variant="caption" style={styles.scheduledBadgeText}>
                   Scheduled
@@ -303,7 +305,12 @@ const styles = StyleSheet.create({
   titleBadgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 6
+  },
+  scheduledTitle: {
+    flexShrink: 1
   },
   scheduledBadge: {
     backgroundColor: colors.canvasSoft,
@@ -311,7 +318,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.hairline
+    borderColor: colors.hairline,
+    flexShrink: 0
   },
   scheduledBadgeText: {
     fontSize: 11,

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  useWindowDimensions
+  useWindowDimensions,
+  Keyboard
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,8 +21,8 @@ import Animated, {
   useAnimatedScrollHandler,
   interpolate,
   Extrapolation,
-  FadeIn,
-  FadeOut
+  withTiming,
+  Easing
 } from "react-native-reanimated";
 import {
   LayoutDashboard,
@@ -225,6 +226,24 @@ export function FloatingDock({
   const lastSettledIndexRef = useRef<number>(state.index);
   const isProgrammaticScrollRef = useRef<boolean>(false);
   const programmaticScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const labelFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
+
+  // Auto-hide floating dock when virtual keyboard is active (via opacity to keep state mounted)
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Deterministic dock width and side padding computed directly from screen width and route count
   const dockWidth = Math.min(
@@ -235,6 +254,30 @@ export function FloatingDock({
 
   // Reanimated scroll tracking initialized to current active index
   const scrollX = useSharedValue(state.index * ITEM_WIDTH);
+
+  // Reanimated opacity for the transient active title pill label
+  const labelOpacity = useSharedValue(1);
+
+  // Reanimated opacity for the dock container during keyboard visibility transitions
+  const dockOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    dockOpacity.value = withTiming(isKeyboardVisible ? 0 : 1, {
+      duration: 180,
+      easing: Easing.out(Easing.ease)
+    });
+  }, [isKeyboardVisible, dockOpacity]);
+
+  const animatedDockContainerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: dockOpacity.value,
+      transform: [
+        {
+          translateY: interpolate(dockOpacity.value, [0, 1], [16, 0], Extrapolation.CLAMP)
+        }
+      ]
+    };
+  });
 
   const setProgrammaticScroll = useCallback((isProgrammatic: boolean) => {
     isProgrammaticScrollRef.current = isProgrammatic;
@@ -263,11 +306,49 @@ export function FloatingDock({
     }
   }, [state.index, setProgrammaticScroll]);
 
+  // Auto-fade the active screen title pill after hold duration on index change
+  useEffect(() => {
+    if (labelFadeTimeoutRef.current) {
+      clearTimeout(labelFadeTimeoutRef.current);
+      labelFadeTimeoutRef.current = null;
+    }
+
+    // Immediately show label at full opacity on confirmed screen change
+    labelOpacity.value = 1;
+
+    // Hold for 1300ms, then smoothly fade out over 280ms
+    labelFadeTimeoutRef.current = setTimeout(() => {
+      labelOpacity.value = withTiming(0, {
+        duration: 280,
+        easing: Easing.out(Easing.ease)
+      });
+    }, 1300);
+
+    return () => {
+      if (labelFadeTimeoutRef.current) {
+        clearTimeout(labelFadeTimeoutRef.current);
+        labelFadeTimeoutRef.current = null;
+      }
+    };
+  }, [state.index, labelOpacity]);
+
   // Scroll handler for real-time item scale and proximity interpolation
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollX.value = event.contentOffset.x;
     }
+  });
+
+  // Dynamic animated style for the auto-fading title pill
+  const animatedLabelStyle = useAnimatedStyle(() => {
+    return {
+      opacity: labelOpacity.value,
+      transform: [
+        {
+          translateY: interpolate(labelOpacity.value, [0, 1], [4, 0], Extrapolation.CLAMP)
+        }
+      ]
+    };
   });
 
   // Handle scroll settle & route change for manual user gestures only
@@ -398,23 +479,22 @@ export function FloatingDock({
   const bottomOffset = Math.max(insets.bottom, 12) + DOCK_VERTICAL_OFFSET;
 
   return (
-    <View
-      pointerEvents="box-none"
+    <AnimatedView
+      pointerEvents={isKeyboardVisible ? "none" : "box-none"}
       style={[
         styles.dockOuterContainer,
         {
           bottom: bottomOffset,
           paddingHorizontal: 16
-        }
+        },
+        animatedDockContainerStyle
       ]}
     >
-      {/* Floating Dynamic Island Title Pill */}
-      {activeLabel && (
+      {/* Floating Dynamic Island Title Pill (Transient auto-fading label) */}
+      {Boolean(activeLabel) && (
         <AnimatedView
-          key={activeRoute?.key}
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          style={styles.labelPill}
+          pointerEvents="none"
+          style={[styles.labelPill, animatedLabelStyle]}
         >
           <Text style={styles.labelPillText}>{activeLabel}</Text>
         </AnimatedView>
@@ -434,6 +514,7 @@ export function FloatingDock({
             ref={scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
+            contentOffset={{ x: state.index * ITEM_WIDTH, y: 0 }}
             contentContainerStyle={[
               styles.scrollContent,
               {
@@ -478,7 +559,7 @@ export function FloatingDock({
           <CenterIndicator />
         </View>
       </View>
-    </View>
+    </AnimatedView>
   );
 }
 
