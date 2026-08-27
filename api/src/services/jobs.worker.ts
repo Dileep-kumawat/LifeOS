@@ -202,6 +202,7 @@ async function handleBudgetRollover(job: Job<{ refDate?: string }>): Promise<voi
 }
 
 import { processEmbeddingJob } from "./ai/embeddingJob.js";
+import { handleOcrJobWorker } from "./ocr/ocrJobService.js";
 
 /** Dispatch table: job name -> handler. */
 const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
@@ -210,7 +211,10 @@ const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
   ai_retry_job: handleAiRetry,
   embedding: processEmbeddingJob,
   generate_daily_summary: handleGenerateDailySummary,
-  budget_rollover: handleBudgetRollover
+  budget_rollover: handleBudgetRollover,
+  ocr: async (job: Job<any>) => {
+    await handleOcrJobWorker(job.id || job.data?.jobId || "unknown", job.data);
+  }
 };
 
 async function processJob(job: Job): Promise<void> {

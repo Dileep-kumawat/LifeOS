@@ -101,6 +101,8 @@ LifeOS/
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
 - `/api/v1/ai/chat` - AI assistant conversational interface (RAG enabled).
 - `/api/v1/ai/summary` - Automated daily & weekly life performance summaries.
+- `/api/v1/ocr/extract` - Shared server-side OCR extraction (Tesseract fallback, BullMQ queue, 10MB limit, rate limited).
+- `/api/v1/ocr/extract/:jobId` - Polling status and result retrieval for async OCR extraction jobs.
 
 ---
 
@@ -221,6 +223,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
 - [DashboardScreen]: Added `flexWrap` and `gap` to `DailySummaryCard` badges/items — fixed scheduled item layout overflow on narrow device widths.
 - [FloatingDock]: Maintained dock mounting and transitioned Reanimated opacity on keyboard show/hide — fixed active screen indicator resetting to first icon (Dashboard) after keyboard dismiss.
 - [ChatScreen / Assistant]: Adjusted `KeyboardAvoidingView` offsets and dynamic bottom padding with dock auto-fade — fixed message input disappearing behind virtual keyboard when focused.
@@ -235,7 +238,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [FloatingDock]: Introduced static center active indicator with proximity-driven scale/opacity transforms — fixed sliding dock alignment and eliminated multi-fire haptic feedback.
 - [FloatingDock]: Initial floating dock navigation implementation — replaced standard React Navigation bottom tab bar with dynamic Reanimated horizontal sliding bar.
 - [Sync Engine]: Added `sync_conflicts` table and `/sync/resolve-conflict` endpoint — fixed silent data overwrites during concurrent offline mobile and web edits.
-- [Sync Processor]: Fixed payload deserialization and upsert type parsing — fixed sync failure when processing batch offline transactions and habit check-ins.
 
 ---
 
@@ -243,6 +245,10 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **Unified OCR Pipeline & Confidence Retention**:
+  - All OCR extraction (mobile on-device ML Kit or backend fallback via Tesseract/BullMQ) MUST return the unified `OcrExtractionResult` (`extractedText`, `confidence` 0.0-1.0, `source: "on_device" | "server_fallback"`, `blocks` with `boundingBox` and `lines`).
+  - Never discard block/line-level confidence scores or spatial bounding box geometry; downstream confirmation UIs (Notes and Finance) rely on these signals to flag uncertain fields for user review.
+  - Server OCR fallback endpoint (`POST /api/v1/ocr/extract`) enforces 10MB size limit, validates image MIME types (rejecting with 400 Bad Request), and gates calls behind Redis tier rate limits (`ratelimit:ocr:${userId}:${dateStr}`).
 - **Keyboard Avoidance for Input Screens**:
   - Combine `KeyboardAvoidingView` (`behavior={Platform.OS === "ios" ? "padding" : undefined}`) with `Keyboard.addListener` ("keyboardWillShow"/"keyboardWillHide" on iOS, "keyboardDidShow"/"keyboardDidHide" on Android).
   - Dynamically toggle bottom container padding between keyboard safe inset and `useDockHeight()`. See [ChatScreen.tsx](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile/src/screens/main/ChatScreen.tsx) and [ScreenContainer.tsx](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile/src/components/ui/ScreenContainer.tsx).
@@ -266,7 +272,7 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
 Standing environment variables (names only) and system ports across workspaces.
 
 - **Required Environment Variables**:
-  - **Backend (`/api`)**: `NODE_ENV`, `PORT` (default 4000), `MONGO_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `AI_PROVIDER_ORDER`. Optional: `MISTRAL_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `SENTRY_DSN`, `RESEND_API_KEY`, `POSTMARK_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SWAGGER_ALLOWED_IPS`.
+  - **Backend (`/api`)**: `NODE_ENV`, `PORT` (default 4000), `MONGO_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `AI_PROVIDER_ORDER`. Optional: `MISTRAL_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_VISION_API_KEY`, `SENTRY_DSN`, `RESEND_API_KEY`, `POSTMARK_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SWAGGER_ALLOWED_IPS`.
   - **Frontend Web (`/web`)**: `VITE_VAPID_PUBLIC_KEY`. Optional: `VITE_SENTRY_DSN`.
   - **Mobile (`/mobile`)**: `EXPO_PUBLIC_API_URL` (optional override; defaults to auto-detecting host machine IP over Wi-Fi or `http://localhost:4000/api/v1` via USB `adb reverse`).
 - **System Ports Overview**:

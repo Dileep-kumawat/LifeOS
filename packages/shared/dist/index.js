@@ -5,5 +5,6 @@ export * from "./schemas/notes.js";
 export * from "./schemas/notifications.js";
 export * from "./schemas/finance.js";
 export * from "./schemas/sync.js";
+export * from "./schemas/ocr.js";
 export * from "./tokens/index.js";
 export { buildRruleString } from "./lib/rruleBuilder.js";

@@ -2,17 +2,17 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy workspace manifests and base configs for layer caching and building.
+RUN apk add --no-cache libc6-compat
+
+# Copy workspace manifests, base configs, and shared package source
 COPY package.json package-lock.json* tsconfig.base.json ./
 COPY api/package.json ./api/package.json
-COPY packages/shared/package.json ./packages/shared/package.json
-
-RUN npm install --ignore-scripts --legacy-peer-deps
-
 COPY packages/shared ./packages/shared
-COPY api ./api
 
-RUN npm run build --workspace=@lifeos/shared
+# Install dependencies and build shared package via postinstall
+RUN npm install --legacy-peer-deps
+
+COPY api ./api
 
 WORKDIR /app/api
 
