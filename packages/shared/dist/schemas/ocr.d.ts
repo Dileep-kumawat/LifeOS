@@ -605,3 +605,252 @@ export declare const ocrExtractBodySchema: z.ZodObject<{
 export type OcrExtractBody = z.infer<typeof ocrExtractBodySchema>;
 export declare const ALLOWED_IMAGE_MIME_TYPES: readonly ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/bmp", "image/tiff"];
 export declare const MAX_IMAGE_SIZE_BYTES: number;
+export declare function createReceiptFieldSchema<T extends z.ZodTypeAny>(valueSchema: T): z.ZodObject<{
+    value: T;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, z.objectUtil.addQuestionMarks<z.baseObjectOutputType<{
+    value: T;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}>, any> extends infer T_1 ? { [k in keyof T_1]: T_1[k]; } : never, z.baseObjectInputType<{
+    value: T;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}> extends infer T_2 ? { [k_1 in keyof T_2]: T_2[k_1]; } : never>;
+export declare const receiptFieldStringSchema: z.ZodObject<{
+    value: z.ZodString;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    value: string;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}, {
+    value: string;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}>;
+export declare const receiptFieldNumberSchema: z.ZodObject<{
+    value: z.ZodNullable<z.ZodNumber>;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    value: number | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}, {
+    value: number | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}>;
+export declare const receiptFieldDateSchema: z.ZodObject<{
+    value: z.ZodNullable<z.ZodString>;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    value: string | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}, {
+    value: string | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}>;
+export declare const receiptFieldCategorySchema: z.ZodObject<{
+    value: z.ZodNullable<z.ZodString>;
+    confidence: z.ZodNumber;
+    isLowConfidence: z.ZodBoolean;
+    rawText: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    value: string | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}, {
+    value: string | null;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string | undefined;
+}>;
+export type ReceiptField<T> = {
+    value: T;
+    confidence: number;
+    isLowConfidence: boolean;
+    rawText?: string;
+};
+export declare const receiptLineItemSchema: z.ZodObject<{
+    description: z.ZodString;
+    amount: z.ZodOptional<z.ZodNumber>;
+    confidence: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    description: string;
+    amount?: number | undefined;
+    confidence?: number | undefined;
+}, {
+    description: string;
+    amount?: number | undefined;
+    confidence?: number | undefined;
+}>;
+export type ReceiptLineItem = z.infer<typeof receiptLineItemSchema>;
+export declare const parsedReceiptResultSchema: z.ZodObject<{
+    merchant: z.ZodObject<{
+        value: z.ZodString;
+        confidence: z.ZodNumber;
+        isLowConfidence: z.ZodBoolean;
+        rawText: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        value: string;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }, {
+        value: string;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }>;
+    amount: z.ZodObject<{
+        value: z.ZodNullable<z.ZodNumber>;
+        confidence: z.ZodNumber;
+        isLowConfidence: z.ZodBoolean;
+        rawText: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        value: number | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }, {
+        value: number | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }>;
+    date: z.ZodObject<{
+        value: z.ZodNullable<z.ZodString>;
+        confidence: z.ZodNumber;
+        isLowConfidence: z.ZodBoolean;
+        rawText: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }, {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }>;
+    category: z.ZodOptional<z.ZodObject<{
+        value: z.ZodNullable<z.ZodString>;
+        confidence: z.ZodNumber;
+        isLowConfidence: z.ZodBoolean;
+        rawText: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }, {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    }>>;
+    lineItems: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        description: z.ZodString;
+        amount: z.ZodOptional<z.ZodNumber>;
+        confidence: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        description: string;
+        amount?: number | undefined;
+        confidence?: number | undefined;
+    }, {
+        description: string;
+        amount?: number | undefined;
+        confidence?: number | undefined;
+    }>, "many">>;
+    overallConfidence: z.ZodNumber;
+    source: z.ZodEnum<["on_device", "server_fallback"]>;
+    rawText: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    date: {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    amount: {
+        value: number | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    source: "on_device" | "server_fallback";
+    rawText: string;
+    merchant: {
+        value: string;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    overallConfidence: number;
+    category?: {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    } | undefined;
+    lineItems?: {
+        description: string;
+        amount?: number | undefined;
+        confidence?: number | undefined;
+    }[] | undefined;
+}, {
+    date: {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    amount: {
+        value: number | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    source: "on_device" | "server_fallback";
+    rawText: string;
+    merchant: {
+        value: string;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    };
+    overallConfidence: number;
+    category?: {
+        value: string | null;
+        confidence: number;
+        isLowConfidence: boolean;
+        rawText?: string | undefined;
+    } | undefined;
+    lineItems?: {
+        description: string;
+        amount?: number | undefined;
+        confidence?: number | undefined;
+    }[] | undefined;
+}>;
+export type ParsedReceiptResult = z.infer<typeof parsedReceiptResultSchema>;

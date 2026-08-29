@@ -12,6 +12,8 @@ interface TransactionFormModalProps {
   visible: boolean;
   onClose: () => void;
   transactionToEdit?: LocalTransaction | null;
+  prefillData?: Partial<LocalTransaction> | null;
+  fieldConfidence?: Record<string, { confidence: number; isLowConfidence: boolean }>;
   onSave: (txData: {
     amount: number;
     type: "income" | "expense";
@@ -27,6 +29,8 @@ export function TransactionFormModal({
   visible,
   onClose,
   transactionToEdit,
+  prefillData,
+  fieldConfidence,
   onSave,
   onDelete
 }: TransactionFormModalProps) {
@@ -47,6 +51,20 @@ export function TransactionFormModal({
       setCategory(transactionToEdit.category);
       setDateStr(transactionToEdit.date ? transactionToEdit.date.split("T")[0] : "");
       setNote(transactionToEdit.note || "");
+    } else if (prefillData) {
+      setAmountStr(
+        prefillData.amount !== undefined && prefillData.amount !== null
+          ? String(prefillData.amount)
+          : ""
+      );
+      setType(prefillData.type || "expense");
+      setCategory(prefillData.category || "Food");
+      setDateStr(
+        prefillData.date
+          ? prefillData.date.split("T")[0]
+          : new Date().toISOString().split("T")[0]
+      );
+      setNote(prefillData.note || "");
     } else {
       setAmountStr("");
       setType("expense");
@@ -55,7 +73,7 @@ export function TransactionFormModal({
       setNote("");
     }
     setError(null);
-  }, [transactionToEdit, visible]);
+  }, [transactionToEdit, prefillData, visible]);
 
   const handleSave = async () => {
     const numAmount = parseFloat(amountStr);
@@ -151,7 +169,11 @@ export function TransactionFormModal({
         </View>
 
         <TextInput
-          label="Amount ($)"
+          label={
+            fieldConfidence?.amount?.isLowConfidence
+              ? "Amount ($) — Please Verify"
+              : "Amount ($)"
+          }
           placeholder="0.00"
           value={amountStr}
           onChangeText={setAmountStr}
@@ -186,14 +208,22 @@ export function TransactionFormModal({
         </View>
 
         <TextInput
-          label="Date (YYYY-MM-DD)"
+          label={
+            fieldConfidence?.date?.isLowConfidence
+              ? "Date (YYYY-MM-DD) — Please Verify"
+              : "Date (YYYY-MM-DD)"
+          }
           placeholder="2026-08-17"
           value={dateStr}
           onChangeText={setDateStr}
         />
 
         <TextInput
-          label="Note (optional)"
+          label={
+            fieldConfidence?.merchant?.isLowConfidence
+              ? "Note / Merchant — Please Verify"
+              : "Note (optional)"
+          }
           placeholder="e.g. Grocery store run or Client payment"
           value={note}
           onChangeText={setNote}

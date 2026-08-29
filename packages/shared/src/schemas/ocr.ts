@@ -79,3 +79,46 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 ] as const;
 
 export const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+
+// ─── Structured Receipt Parsing Schemas (Finance FR-6.2, UC-3) ───────────────
+export function createReceiptFieldSchema<T extends z.ZodTypeAny>(valueSchema: T) {
+  return z.object({
+    value: valueSchema,
+    confidence: z.number().min(0).max(1).describe("Confidence score between 0.0 and 1.0"),
+    isLowConfidence: z.boolean().describe("True if confidence is below review threshold or matched via weak heuristics"),
+    rawText: z.string().optional().describe("Underlying matched text fragment or line")
+  });
+}
+
+export const receiptFieldStringSchema = createReceiptFieldSchema(z.string());
+export const receiptFieldNumberSchema = createReceiptFieldSchema(z.number().nullable());
+export const receiptFieldDateSchema = createReceiptFieldSchema(z.string().nullable());
+export const receiptFieldCategorySchema = createReceiptFieldSchema(z.string().nullable());
+
+export type ReceiptField<T> = {
+  value: T;
+  confidence: number;
+  isLowConfidence: boolean;
+  rawText?: string;
+};
+
+export const receiptLineItemSchema = z.object({
+  description: z.string(),
+  amount: z.number().optional(),
+  confidence: z.number().min(0).max(1).optional()
+});
+
+export type ReceiptLineItem = z.infer<typeof receiptLineItemSchema>;
+
+export const parsedReceiptResultSchema = z.object({
+  merchant: receiptFieldStringSchema,
+  amount: receiptFieldNumberSchema,
+  date: receiptFieldDateSchema,
+  category: receiptFieldCategorySchema.optional(),
+  lineItems: z.array(receiptLineItemSchema).optional(),
+  overallConfidence: z.number().min(0).max(1),
+  source: z.enum(["on_device", "server_fallback"]),
+  rawText: z.string()
+});
+
+export type ParsedReceiptResult = z.infer<typeof parsedReceiptResultSchema>;

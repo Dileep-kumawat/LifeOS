@@ -55,24 +55,10 @@ function parseBoundingBox(rawFrame: any): OcrBoundingBox | undefined {
 
 /**
  * Default on-device text recognizer adapter.
- * Tries dynamic import of native ML Kit text recognition module if installed/linked,
- * with safe fallback if running in environments without native binary bindings.
+ * When running in standard Expo Go or environments without native ML Kit binary bindings,
+ * throws to allow seamless fallback to server-side OCR extraction.
  */
-export async function defaultMlKitRecognizer(imageUri: string): Promise<MlKitNativeResult> {
-  try {
-    // Attempt dynamic resolution of @react-native-ml-kit/text-recognition if available in native runtime
-    const mlkitModule = await import(
-      /* webpackIgnore: true */ "@react-native-ml-kit/text-recognition" as any
-    ).catch(() => null);
-
-    if (mlkitModule && typeof mlkitModule.default?.recognize === "function") {
-      const nativeRes = await mlkitModule.default.recognize(imageUri);
-      return nativeRes;
-    }
-  } catch (_err) {
-    // Native module not linked in current environment (e.g. standard Expo Go or web)
-  }
-
+export async function defaultMlKitRecognizer(_imageUri: string): Promise<MlKitNativeResult> {
   throw new Error("On-device ML Kit text recognition module is not linked or unavailable in this environment");
 }
 

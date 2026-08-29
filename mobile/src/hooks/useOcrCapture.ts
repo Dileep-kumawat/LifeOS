@@ -96,7 +96,7 @@ export function useOcrCapture(): UseOcrCaptureReturn {
         }
 
         const pickerResult = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ["images"],
           quality: 0.85,
           allowsEditing: false
         });
@@ -140,7 +140,7 @@ export function useOcrCapture(): UseOcrCaptureReturn {
         }
 
         const pickerResult = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ["images"],
           quality: 0.85,
           allowsEditing: false
         });

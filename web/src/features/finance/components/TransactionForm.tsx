@@ -24,6 +24,8 @@ interface TransactionFormProps {
   onSubmit: (data: TransactionFormValues) => Promise<void>;
   categories: Category[];
   initialData?: Transaction | null;
+  prefillData?: Partial<TransactionFormValues> | null;
+  fieldConfidence?: Record<string, { confidence: number; isLowConfidence: boolean }>;
   onAddCategory?: (name: string, type: TransactionType) => Promise<string>;
 }
 
@@ -33,6 +35,8 @@ export function TransactionForm({
   onSubmit,
   categories,
   initialData,
+  prefillData,
+  fieldConfidence,
   onAddCategory
 }: TransactionFormProps) {
   const [isAddingInlineCategory, setIsAddingInlineCategory] = useState(false);
@@ -41,7 +45,9 @@ export function TransactionForm({
 
   const defaultDateString = initialData?.date
     ? new Date(initialData.date).toISOString().split("T")[0]
-    : new Date().toISOString().split("T")[0];
+    : prefillData?.date
+      ? new Date(prefillData.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0];
 
   const {
     register,
@@ -53,12 +59,12 @@ export function TransactionForm({
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(createTransactionSchema) as any,
     defaultValues: {
-      amount: initialData?.amount ?? 0,
-      type: initialData?.type ?? "expense",
-      category: initialData?.category ?? "",
+      amount: initialData?.amount ?? prefillData?.amount ?? 0,
+      type: initialData?.type ?? prefillData?.type ?? "expense",
+      category: initialData?.category ?? prefillData?.category ?? "",
       date: new Date(defaultDateString),
-      note: initialData?.note ?? "",
-      receiptAttachment: initialData?.receiptAttachment ?? null
+      note: initialData?.note ?? prefillData?.note ?? "",
+      receiptAttachment: initialData?.receiptAttachment ?? prefillData?.receiptAttachment ?? null
     }
   });
 
@@ -81,6 +87,15 @@ export function TransactionForm({
           note: initialData.note || "",
           receiptAttachment: initialData.receiptAttachment || null
         });
+      } else if (prefillData) {
+        reset({
+          amount: (prefillData.amount ?? "") as any,
+          type: prefillData.type ?? "expense",
+          category: prefillData.category ?? (categories.filter((c) => c.type === (prefillData.type ?? "expense"))[0]?.name || "Food"),
+          date: prefillData.date ? new Date(prefillData.date) : new Date(),
+          note: prefillData.note ?? "",
+          receiptAttachment: prefillData.receiptAttachment ?? null
+        });
       } else {
         const filtered = categories.filter((c) => c.type === "expense");
         const defaultCat = filtered.length > 0 ? filtered[0].name : "Food";
@@ -96,7 +111,7 @@ export function TransactionForm({
       setIsAddingInlineCategory(false);
       setInlineCategoryName("");
     }
-  }, [isOpen, initialData, reset, categories]);
+  }, [isOpen, initialData, prefillData, reset, categories]);
 
   const availableCategories = categories.filter((c) => c.type === selectedType);
 
@@ -177,12 +192,19 @@ export function TransactionForm({
 
           {/* Amount Input */}
           <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="amount"
-              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-            >
-              Amount (₹)
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="amount"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Amount (₹)
+              </Label>
+              {fieldConfidence?.amount?.isLowConfidence && (
+                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">
+                  Check Amount
+                </span>
+              )}
+            </div>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground text-sm font-semibold">
                 ₹
@@ -193,7 +215,11 @@ export function TransactionForm({
                 step="0.01"
                 min="0.01"
                 placeholder="0.00"
-                className="pl-7 text-base font-semibold"
+                className={`pl-7 text-base font-semibold ${
+                  fieldConfidence?.amount?.isLowConfidence
+                    ? "border-amber-400 bg-amber-50/40 focus-visible:ring-amber-400"
+                    : ""
+                }`}
                 {...register("amount", { valueAsNumber: true })}
               />
             </div>
@@ -273,16 +299,28 @@ export function TransactionForm({
 
           {/* Date Input */}
           <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="date"
-              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-            >
-              Date
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="date"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Date
+              </Label>
+              {fieldConfidence?.date?.isLowConfidence && (
+                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">
+                  Check Date
+                </span>
+              )}
+            </div>
             <Input
               id="date"
               type="date"
               value={formattedDateValue}
+              className={
+                fieldConfidence?.date?.isLowConfidence
+                  ? "border-amber-400 bg-amber-50/40 focus-visible:ring-amber-400"
+                  : ""
+              }
               onChange={(e) => setValue("date", new Date(e.target.value), { shouldValidate: true })}
             />
             {errors.date && (
@@ -292,13 +330,29 @@ export function TransactionForm({
 
           {/* Note Input */}
           <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor="note"
-              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-            >
-              Note (Optional)
-            </Label>
-            <Input id="note" placeholder="Add a description or note..." {...register("note")} />
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="note"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Merchant / Note
+              </Label>
+              {fieldConfidence?.merchant?.isLowConfidence && (
+                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">
+                  Check Merchant
+                </span>
+              )}
+            </div>
+            <Input
+              id="note"
+              placeholder="e.g. Starbucks or Weekly grocery run"
+              className={
+                fieldConfidence?.merchant?.isLowConfidence
+                  ? "border-amber-400 bg-amber-50/40 focus-visible:ring-amber-400"
+                  : ""
+              }
+              {...register("note")}
+            />
             {errors.note && (
               <p className="text-xs text-destructive font-medium">{errors.note.message}</p>
             )}

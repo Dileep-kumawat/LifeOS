@@ -48,7 +48,7 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *       
  *       Primary consumers:
  *       1. Notes Module (FR-5.3): "Photographed text → editable note pre-fill", converting extractedText into ProseMirror draft notes.
- *       2. Finance Module (FR-5.2): Receipt scanning, parsing line items and transaction metadata.
+ *       2. Finance Module (FR-6.2, UC-3): "Photographed receipt → merchant/amount/date extraction → pre-filled transaction for confirmation", parsing structured fields with per-field confidence before user confirmation via standard POST /finance/transactions.
  *     tags:
  *       - OCR
  *     security:

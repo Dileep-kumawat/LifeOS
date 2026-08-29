@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Plus, DollarSign, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react-native";
+import { Plus, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Camera } from "lucide-react-native";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { Button } from "../../components/ui/Button";
@@ -15,6 +15,7 @@ import { syncEngine } from "../../services/syncEngine";
 import type { LocalTransaction, LocalBudget } from "../../db/schema";
 
 import { TransactionFormModal } from "../../components/finance/TransactionFormModal";
+import { ReceiptScanModal } from "../../components/finance/ReceiptScanModal";
 import { BudgetFormModal } from "../../components/finance/BudgetFormModal";
 import { CategoryBreakdownChart, TrendLineChart } from "../../components/finance/FinanceCharts";
 import { FinanceInsightsCard } from "../../components/finance/FinanceInsightsCard";
@@ -38,7 +39,12 @@ export function FinanceScreen() {
   });
 
   const [editingTransaction, setEditingTransaction] = useState<LocalTransaction | null>(null);
+  const [txPrefillData, setTxPrefillData] = useState<Partial<LocalTransaction> | null>(null);
+  const [txFieldConfidence, setTxFieldConfidence] = useState<
+    Record<string, { confidence: number; isLowConfidence: boolean }> | undefined
+  >(undefined);
   const [isTxModalVisible, setIsTxModalVisible] = useState(false);
+  const [isScanModalVisible, setIsScanModalVisible] = useState(false);
 
   const [editingBudget, setEditingBudget] = useState<LocalBudget | null>(null);
   const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
@@ -121,20 +127,33 @@ export function FinanceScreen() {
       {/* Top Header */}
       <View style={styles.headerBar}>
         <ThemedText variant="heading2">Finance</ThemedText>
-        <Button
-          title={activeTab === "budgets" ? "New Budget" : "Log Expense"}
-          icon={<Plus size={16} color={colors.onPrimary} />}
-          onPress={() => {
-            if (activeTab === "budgets") {
-              setEditingBudget(null);
-              setIsBudgetModalVisible(true);
-            } else {
-              setEditingTransaction(null);
-              setIsTxModalVisible(true);
-            }
-          }}
-          style={styles.addBtn}
-        />
+        <View style={styles.headerBtnGroup}>
+          <Button
+            title="Scan"
+            variant="outline"
+            icon={<Camera size={15} color={colors.primary} />}
+            onPress={() => setIsScanModalVisible(true)}
+            style={styles.scanBtn}
+            textStyle={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}
+          />
+
+          <Button
+            title={activeTab === "budgets" ? "New Budget" : "Log Expense"}
+            icon={<Plus size={16} color={colors.onPrimary} />}
+            onPress={() => {
+              if (activeTab === "budgets") {
+                setEditingBudget(null);
+                setIsBudgetModalVisible(true);
+              } else {
+                setEditingTransaction(null);
+                setTxPrefillData(null);
+                setTxFieldConfidence(undefined);
+                setIsTxModalVisible(true);
+              }
+            }}
+            style={styles.addBtn}
+          />
+        </View>
       </View>
 
       {/* Monthly Summary Cards */}
@@ -380,11 +399,36 @@ export function FinanceScreen() {
         )}
       </ScrollView>
 
+      {/* Receipt Scan Modal */}
+      <ReceiptScanModal
+        visible={isScanModalVisible}
+        onClose={() => setIsScanModalVisible(false)}
+        onSave={handleSaveTransaction}
+        onOpenFormWithPrefill={(prefill, confidence) => {
+          setEditingTransaction(null);
+          setTxPrefillData(prefill as any);
+          setTxFieldConfidence(confidence);
+          setIsTxModalVisible(true);
+        }}
+        onOpenBlankForm={() => {
+          setEditingTransaction(null);
+          setTxPrefillData(null);
+          setTxFieldConfidence(undefined);
+          setIsTxModalVisible(true);
+        }}
+      />
+
       {/* Transaction Entry / Edit Modal */}
       <TransactionFormModal
         visible={isTxModalVisible}
-        onClose={() => setIsTxModalVisible(false)}
+        onClose={() => {
+          setIsTxModalVisible(false);
+          setTxPrefillData(null);
+          setTxFieldConfidence(undefined);
+        }}
         transactionToEdit={editingTransaction}
+        prefillData={txPrefillData}
+        fieldConfidence={txFieldConfidence}
         onSave={handleSaveTransaction}
         onDelete={handleDeleteTransaction}
       />
@@ -408,6 +452,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: spacing.sm,
     marginTop: spacing.xs
+  },
+  headerBtnGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs
+  },
+  scanBtn: {
+    height: 38,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.surface,
+    borderColor: colors.hairline
   },
   addBtn: {
     height: 38,

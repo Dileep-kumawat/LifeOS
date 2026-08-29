@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Tag, PieChart, Wallet } from "lucide-react";
+import { Plus, Tag, PieChart, Wallet, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { financeApi } from "./api";
 import type { Budget, BudgetDetail, Transaction, TransactionType } from "./types";
@@ -15,6 +15,7 @@ import { BudgetDetailDialog } from "./components/BudgetDetailDialog";
 import { CategoryBreakdownChart } from "./components/CategoryBreakdownChart";
 import { TrendLineChart } from "./components/TrendLineChart";
 import { InsightsCard } from "./components/InsightsCard";
+import { ReceiptScanModal } from "./components/ReceiptScanModal";
 import { Button } from "../../components/Button";
 
 export function FinancePage() {
@@ -32,8 +33,9 @@ export function FinancePage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // Transaction & Category Modals
+  // Transaction, Receipt Scan & Category Modals
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
+  const [isReceiptScanOpen, setIsReceiptScanOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
 
@@ -253,6 +255,16 @@ export function FinancePage() {
           </Button>
 
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsReceiptScanOpen(true)}
+            className="flex items-center gap-1.5 text-xs sm:text-sm border-[#0075de]/30 text-[#0075de] bg-[#0075de]/5 hover:bg-[#0075de]/10"
+          >
+            <Camera className="size-4 text-[#0075de]" />
+            Upload Receipt
+          </Button>
+
+          <Button
             size="sm"
             onClick={() => {
               setEditingTransaction(null);
@@ -414,6 +426,18 @@ export function FinancePage() {
           setIsBudgetFormOpen(true);
         }}
         onDelete={handleDeleteBudget}
+      />
+
+      {/* Receipt Scan Modal */}
+      <ReceiptScanModal
+        open={isReceiptScanOpen}
+        onClose={() => setIsReceiptScanOpen(false)}
+        categories={categories}
+        onConfirmTransaction={handleSaveTransaction}
+        onOpenBlankForm={() => {
+          setEditingTransaction(null);
+          setIsTransactionFormOpen(true);
+        }}
       />
 
       {/* Transaction Form Modal */}

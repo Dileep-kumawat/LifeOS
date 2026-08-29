@@ -223,6 +223,8 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
+- [Finance OCR Integration]: Implemented FR-6.2/UC-3 photographed receipt to structured transaction pre-fill — added heuristic receipt parser in @lifeos/shared, Web ReceiptPreviewCard & ReceiptScanModal (with 4 states), Mobile MobileReceiptPreviewCard & ReceiptScanModal, extended TransactionForm/TransactionFormModal with prefill & confidence cues, Storybook stories, and integration test suites.
 - [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
 - [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
 - [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
@@ -236,8 +238,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [FloatingDock]: Memoized `DockItem`, `CenterIndicator`, and `LinearGradient` edge masks with `React.memo` — fixed dock glitching, mount jump, and layout thrashing on screen state updates.
 - [FloatingDock]: Decoupled `scrollX` continuous animation worklet from synchronous React state updates — fixed dock pop/snapback desync during fast gestures.
 - [FloatingDock]: Tuned `LinearGradient` edge fade overlays with `pointerEvents="none"` — fixed gradient masks intercepting tap events on outer dock icons.
-- [FloatingDock]: Computed deterministic width and symmetric side padding `(dockWidth - ITEM_WIDTH) / 2` — fixed outer dock items unable to scroll fully into static center indicator.
-- [FloatingDock]: Introduced static center active indicator with proximity-driven scale/opacity transforms — fixed sliding dock alignment and eliminated multi-fire haptic feedback.
 
 ---
 
@@ -245,6 +245,10 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **Finance Receipt OCR Pre-Fill & Confirmation Pattern (FR-6.2, UC-3)**:
+  - Photographed receipts route through the unified OCR extraction pipeline (`parseReceiptOcr`), extracting structured fields (`merchant`, `amount`, `date`, `category`, and line items) alongside per-field confidence scores without routing through LLMs.
+  - Low-confidence fields (<0.7) trigger amber warning cues in `ReceiptPreviewCard`, `MobileReceiptPreviewCard`, and the confirmation forms (`TransactionForm` and `TransactionFormModal`), requiring explicit user review before submission.
+  - Scanned receipts do not create persistent OCR models; once confirmed, they execute standard `POST /api/v1/finance/transactions` (web) or SQLite `financeRepo.createTransaction` (mobile), triggering the exact same category normalization and budget recalculation hooks as manual entries.
 - **Notes OCR Pre-Fill & Ephemeral Draft Pattern**:
   - OCR-created notes convert extracted text into standard ProseMirror JSON documents with first-line title heuristics (or fallback `"Scanned note — YYYY-MM-DD"`) and surface low-confidence line cues (<0.7) for inline user correction.
   - Pre-filled drafts remain ephemeral until saved through the standard `POST /api/v1/notes` endpoint without custom or leftover OCR flags.
