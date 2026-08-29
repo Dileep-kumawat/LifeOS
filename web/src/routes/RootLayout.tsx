@@ -13,7 +13,8 @@ import {
   Settings,
   Menu,
   X,
-  LogOut
+  LogOut,
+  GraduationCap
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { apiClient } from "../lib/apiClient";
@@ -171,6 +172,10 @@ export function RootLayout() {
                 <FileText className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Notes</span>
               </NavLink>
+              <NavLink to="/study" className={getDrawerNavLinkClass}>
+                <GraduationCap className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
+                <span>Study</span>
+              </NavLink>
 
               <div className="border-t border-[#c1c6d5]/60 my-2 pt-2">
                 <span className="text-[11px] font-semibold text-[#717784] px-3 uppercase tracking-wider mb-1">
@@ -253,6 +258,10 @@ export function RootLayout() {
           <NavLink to="/notes" className={getNavLinkClass}>
             <FileText className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Notes</span>
+          </NavLink>
+          <NavLink to="/study" className={getNavLinkClass}>
+            <GraduationCap className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
+            <span>Study</span>
           </NavLink>
         </div>
 

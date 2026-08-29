@@ -20,6 +20,7 @@ import { NoteDetailPage } from "./features/notes/NoteDetailPage";
 import { ChatPage } from "./features/ai/ChatPage";
 import { FinancePage } from "./features/finance/FinancePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { StudyPage } from "./features/study/StudyPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -96,6 +97,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <NoteDetailPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "study",
+        element: (
+          <ProtectedRoute>
+            <StudyPage />
           </ProtectedRoute>
         )
       },

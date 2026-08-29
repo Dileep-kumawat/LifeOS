@@ -79,6 +79,10 @@ LifeOS/
   - `NoteVersion`: Revision history & delta diffs.
 - **Offline Sync & Tombstones**:
   - `SyncTombstone`: Soft-deletion tracking for client delta synchronization.
+- **Study Planner & Spaced Repetition**:
+  - `Subject`: Name, color accent, optional exam deadline.
+  - `Topic`: Subject ref, title, deadline, priority (`low`/`medium`/`high`), status (`not_started`/`in_progress`/`completed`), duration estimate.
+  - `Flashcard`: Front, back, optional topic/subject refs, SM-2 state (`easeFactor`, `intervalDays`, `repetitions`, `nextReviewDate`).
 - **AI & Notifications**:
   - `AiRequestLog`: Token usage & prompt history log.
   - `Conversation` & `Message`: Chat history with AI assistant.
@@ -97,6 +101,11 @@ LifeOS/
 - `/api/v1/habits` - CRUD habits, daily check-in toggle, streak computation.
 - `/api/v1/goals` - CRUD goals, key result updates, progress tracking.
 - `/api/v1/notes` - CRUD notes & folders, version history, search, tag filters.
+- `/api/v1/study/subjects` - CRUD subjects with cascade deletion of topics & flashcards.
+- `/api/v1/study/topics` - CRUD syllabus topics, filter by subject, status, due-soon.
+- `/api/v1/study/flashcards` - CRUD flashcards, filter by topic/subject.
+- `/api/v1/study/flashcards/due` - Spaced repetition daily review queue (`nextReviewDate <= now`).
+- `/api/v1/study/flashcards/:id/review` - SM-2 self-assessment review (0–5 rating).
 - `/api/v1/notifications` - Alert feed, push subscriptions (VAPID/Expo push).
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
 - `/api/v1/ai/chat` - AI assistant conversational interface (RAG enabled).
@@ -223,6 +232,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Study Planner & SM-2 Spaced Repetition (Phase 7 - Prompt 1)]: Implemented core Subject/Topic/Flashcard data models, pure SuperMemo SM-2 spaced repetition scheduler in @lifeos/shared, cascade-deletion behavior on subjects, RESTful CRUD endpoints under /study, daily review queue, Web UI components, and Storybook stories.
 - [Phase 6 OCR Audit & Fix]: Completed documentation and quality audit pass — enriched Swagger/OpenAPI annotations with supported MIME types, 10MB limit, raw vs structured extraction architecture, dual worked examples, error schemas, and cross-references; updated Storybook coverage with TransactionForm OCR prefill stories, NoteEditor OCR stories, and non-color warning cues for A11y.
 - [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
 - [Finance OCR Integration]: Implemented FR-6.2/UC-3 photographed receipt to structured transaction pre-fill — added heuristic receipt parser in @lifeos/shared, Web ReceiptPreviewCard & ReceiptScanModal (with 4 states), Mobile MobileReceiptPreviewCard & ReceiptScanModal, extended TransactionForm/TransactionFormModal with prefill & confidence cues, Storybook stories, and integration test suites.
@@ -237,7 +247,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Auth Screens]: Switched root container styling to `contentContainerStyle: { flexGrow: 1, justifyContent: "center" }` — fixed login/register forms top-aligning instead of vertically centering across devices.
 - [ScreenContainer / Tab Screens]: Integrated `useDockHeight()` dynamic bottom clearance hook across all main tabs — fixed bottom cards and list items occluded behind floating dock overlay.
 - [FloatingDock]: Memoized `DockItem`, `CenterIndicator`, and `LinearGradient` edge masks with `React.memo` — fixed dock glitching, mount jump, and layout thrashing on screen state updates.
-- [FloatingDock]: Decoupled `scrollX` continuous animation worklet from synchronous React state updates — fixed dock pop/snapback desync during fast gestures.
 
 ---
 
@@ -245,6 +254,10 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **Study Planner & Cascade Deletion Precedent (FR-7.1, FR-7.3)**:
+  - Unlike Notes (where deleting a folder reassigns notes to root because notes possess standalone semantic value), deleting a `Subject` **cascade-deletes** all child `Topic`s and associated `Flashcard`s because study items have no meaning without subject context.
+  - Spaced repetition scheduling is computed strictly through the deterministic, pure `calculateNextReview` SM-2 function in `@lifeos/shared`, enforcing minimum 1.3 easeFactor clamping and standard 0–5 quality self-assessment ratings.
+  - Due flashcards query (`GET /api/v1/study/flashcards/due`) selects `nextReviewDate <= now` sorted ascending (most overdue first).
 - **Finance Receipt OCR Pre-Fill & Confirmation Pattern (FR-6.2, UC-3)**:
   - Photographed receipts route through the unified OCR extraction pipeline (`parseReceiptOcr`), extracting structured fields (`merchant`, `amount`, `date`, `category`, and line items) alongside per-field confidence scores without routing through LLMs.
   - Low-confidence fields (<0.7) trigger amber warning cues in `ReceiptPreviewCard`, `MobileReceiptPreviewCard`, and the confirmation forms (`TransactionForm` and `TransactionFormModal`), requiring explicit user review before submission.
