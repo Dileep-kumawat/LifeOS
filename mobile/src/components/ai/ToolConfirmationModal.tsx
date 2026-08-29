@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Calendar, CheckCircle2, FileText, Target, AlertTriangle } from "lucide-react-native";
+import { Calendar, CheckCircle2, FileText, Target, AlertTriangle, BookOpen } from "lucide-react-native";
 import type { ToolCallPayload } from "../../services/aiChatService";
 import { Modal } from "../ui/Modal";
 import { ThemedText } from "../ui/ThemedText";
@@ -83,6 +83,37 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
             { label: "Title", value: title },
             { label: "Content Preview", value: snippet },
             ...(args.tags?.length ? [{ label: "Tags", value: args.tags.join(", ") }] : [])
+          ]
+        };
+      }
+
+      case "generate_study_plan":
+      case "create_study_plan": {
+        const targetDate = args.targetDate || "tomorrow";
+        const plan = Array.isArray(args.plan) ? args.plan : Array.isArray(args.assignments) ? args.assignments : [];
+        const count = plan.length;
+        const totalMins = args.totalStudyMinutes || plan.reduce((sum: number, p: any) => sum + (p.durationMinutes || 0), 0);
+
+        return {
+          icon: <BookOpen size={24} color={colors.primary} />,
+          actionTitle: "Apply AI Study Plan",
+          description: `Schedule ${count} study session(s) (${totalMins} min) for ${targetDate}?`,
+          items: [
+            { label: "Target Date", value: targetDate },
+            { label: "Total Sessions", value: `${count} study session(s)` },
+            { label: "Total Duration", value: `${totalMins} minutes` },
+            ...plan.map((s: any, idx: number) => {
+              const start = s.startTime
+                ? new Date(s.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "";
+              const end = s.endTime
+                ? new Date(s.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "";
+              return {
+                label: `Session ${idx + 1}: ${s.topicTitle || "Study Topic"}`,
+                value: `${start} – ${end} (${s.durationMinutes || 45}m)`
+              };
+            })
           ]
         };
       }

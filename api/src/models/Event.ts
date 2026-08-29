@@ -37,7 +37,8 @@ const eventSchema = new Schema(
     // Lightweight clone of a single occurrence. Never returned as a
     // standalone event; only surfaced through its parent's exception entry.
     isOverride: { type: Boolean, default: false, index: true },
-    parentEventId: { type: Schema.Types.ObjectId, ref: "Event", default: null, index: true }
+    parentEventId: { type: Schema.Types.ObjectId, ref: "Event", default: null, index: true },
+    linkedTopicId: { type: Schema.Types.ObjectId, ref: "Topic", default: null, index: true }
   },
   { timestamps: true }
 );

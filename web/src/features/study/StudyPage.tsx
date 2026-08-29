@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   GraduationCap,
@@ -8,7 +9,8 @@ import {
   Layers,
   Filter,
   Trash2,
-  Edit2
+  Edit2,
+  Sparkles
 } from "lucide-react";
 import { apiClient } from "../../lib/apiClient";
 import { SubjectCard } from "./components/SubjectCard";
@@ -53,6 +55,7 @@ interface FlashcardItem {
 }
 
 export function StudyPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Active Tab: "subjects" | "flashcards" | "review"
@@ -269,8 +272,17 @@ export function StudyPage() {
           </div>
         </div>
 
-        {/* Quick Action Button: New Subject */}
+        {/* Action Buttons: Plan with AI & New Subject */}
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate("/chat?prompt=Create tomorrow's study plan")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold transition-all shadow-2xs"
+          >
+            <Sparkles className="size-4 text-indigo-600" />
+            <span>Plan with AI</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {

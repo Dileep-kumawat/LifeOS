@@ -47,6 +47,7 @@ export declare const calendarOccurrenceSchema: z.ZodObject<{
     isAllDay: z.ZodBoolean;
     isRecurring: z.ZodBoolean;
     isOverridden: z.ZodBoolean;
+    linkedTopicId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     occurrenceId: string;
     eventId: string;
@@ -59,6 +60,7 @@ export declare const calendarOccurrenceSchema: z.ZodObject<{
     isAllDay: boolean;
     isRecurring: boolean;
     isOverridden: boolean;
+    linkedTopicId?: string | null | undefined;
 }, {
     occurrenceId: string;
     eventId: string;
@@ -71,6 +73,7 @@ export declare const calendarOccurrenceSchema: z.ZodObject<{
     isAllDay: boolean;
     isRecurring: boolean;
     isOverridden: boolean;
+    linkedTopicId?: string | null | undefined;
 }>;
 export type CalendarOccurrence = z.infer<typeof calendarOccurrenceSchema>;
 export declare const calendarExceptionSchema: z.ZodObject<{
@@ -141,6 +144,7 @@ export declare const calendarEventDetailSchema: z.ZodObject<{
         isCancelled: boolean;
         overrideEventId: string | null;
     }>, "many">>;
+    linkedTopicId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     title: string;
@@ -161,6 +165,7 @@ export declare const calendarEventDetailSchema: z.ZodObject<{
         until?: string | undefined;
         count?: number | undefined;
     } | null;
+    linkedTopicId?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
     exceptions?: {
         originalDate: string;
@@ -187,6 +192,7 @@ export declare const calendarEventDetailSchema: z.ZodObject<{
         until?: string | undefined;
         count?: number | undefined;
     } | null;
+    linkedTopicId?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
     exceptions?: {
         originalDate: string;
@@ -206,6 +212,7 @@ export declare const createEventSchema: z.ZodEffects<z.ZodObject<{
     recurrenceRule: z.ZodDefault<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     recurrenceEndDate: z.ZodDefault<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     reminderLeadMinutes: z.ZodDefault<z.ZodOptional<z.ZodNullable<z.ZodNumber>>>;
+    linkedTopicId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     title: string;
     description: string;
@@ -217,6 +224,7 @@ export declare const createEventSchema: z.ZodEffects<z.ZodObject<{
     recurrenceRule: string | null;
     recurrenceEndDate: string | null;
     reminderLeadMinutes: number | null;
+    linkedTopicId?: string | null | undefined;
 }, {
     title: string;
     startTime: string;
@@ -225,6 +233,7 @@ export declare const createEventSchema: z.ZodEffects<z.ZodObject<{
     description?: string | undefined;
     location?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
@@ -239,6 +248,7 @@ export declare const createEventSchema: z.ZodEffects<z.ZodObject<{
     recurrenceRule: string | null;
     recurrenceEndDate: string | null;
     reminderLeadMinutes: number | null;
+    linkedTopicId?: string | null | undefined;
 }, {
     title: string;
     startTime: string;
@@ -247,6 +257,7 @@ export declare const createEventSchema: z.ZodEffects<z.ZodObject<{
     description?: string | undefined;
     location?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
@@ -263,6 +274,7 @@ export declare const updateEventSchema: z.ZodEffects<z.ZodObject<{
     recurrenceRule: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     recurrenceEndDate: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     reminderLeadMinutes: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    linkedTopicId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     scope: z.ZodDefault<z.ZodOptional<z.ZodEnum<["series", "occurrence"]>>>;
 }, "strip", z.ZodTypeAny, {
     scope: "series" | "occurrence";
@@ -273,6 +285,7 @@ export declare const updateEventSchema: z.ZodEffects<z.ZodObject<{
     endTime?: string | undefined;
     timezone?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
@@ -284,6 +297,7 @@ export declare const updateEventSchema: z.ZodEffects<z.ZodObject<{
     endTime?: string | undefined;
     timezone?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
@@ -297,6 +311,7 @@ export declare const updateEventSchema: z.ZodEffects<z.ZodObject<{
     endTime?: string | undefined;
     timezone?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;
@@ -308,6 +323,7 @@ export declare const updateEventSchema: z.ZodEffects<z.ZodObject<{
     endTime?: string | undefined;
     timezone?: string | undefined;
     isAllDay?: boolean | undefined;
+    linkedTopicId?: string | null | undefined;
     recurrenceRule?: string | null | undefined;
     recurrenceEndDate?: string | null | undefined;
     reminderLeadMinutes?: number | null | undefined;

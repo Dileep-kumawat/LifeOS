@@ -61,7 +61,7 @@ export const createNoteSchema = z.object({
 });
 
 export const querySpendingSchema = z.object({
-  month: z.string().optional().describe("Target month in YYYY-MM format (e.g. 2026-08)"),
+  month: z.string().optional().describe("Target month in YYYY-MM-DD format (e.g. 2026-08)"),
   category: z.string().optional().describe("Optional category to filter spending"),
   monthsTrend: z
     .number()
@@ -69,10 +69,22 @@ export const querySpendingSchema = z.object({
     .describe("Number of months for historical trend analysis (default: 6)")
 });
 
+export const generateStudyPlanSchema = z.object({
+  targetDate: z
+    .string()
+    .optional()
+    .describe("Target date for the study plan (e.g. 'tomorrow', 'today', or 'YYYY-MM-DD'). Defaults to tomorrow if unspecified."),
+  timezone: z
+    .string()
+    .optional()
+    .describe("Optional IANA timezone identifier, e.g. UTC, America/New_York")
+});
+
 export type CreateCalendarEventInput = z.infer<typeof createCalendarEventSchema>;
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type QuerySpendingInput = z.infer<typeof querySpendingSchema>;
+export type GenerateStudyPlanInput = z.infer<typeof generateStudyPlanSchema>;
 
 // ─── 2. Provider-Agnostic LangChain Tool Definitions ───────────────────────
 
@@ -101,11 +113,19 @@ export const querySpendingTool = tool(async (input) => JSON.stringify(input), {
   schema: querySpendingSchema
 });
 
+export const generateStudyPlanTool = tool(async (input) => JSON.stringify(input), {
+  name: "generate_study_plan",
+  description:
+    "Generate an optimized AI study plan allocating active syllabus topics into the user's free calendar time blocks for a given date (defaults to tomorrow).",
+  schema: generateStudyPlanSchema
+});
+
 export const ALL_AI_TOOLS = [
   createCalendarEventTool,
   createHabitTool,
   createNoteTool,
-  querySpendingTool
+  querySpendingTool,
+  generateStudyPlanTool
 ];
 
 // ─── 3. Shared Backend Execution Services (FR-2.14 Validation Parity) ───────
@@ -321,6 +341,73 @@ export async function executeQuerySpending(userId: string, args: QuerySpendingIn
   };
 }
 
+export async function executeGenerateStudyPlan(userId: string, args: any) {
+  const plan: Array<{ topicId?: string; topicTitle: string; startTime: string; endTime: string }> =
+    Array.isArray(args.plan) ? args.plan : Array.isArray(args.assignments) ? args.assignments : [];
+
+  if (plan.length === 0) {
+    throw new Error("No study plan sessions provided to execute.");
+  }
+
+  const timezone = args.timezone || "UTC";
+  if (!isValidTimezone(timezone)) {
+    throw new Error(`"${timezone}" is not a valid IANA timezone.`);
+  }
+
+  const createdEvents = [];
+
+  for (const session of plan) {
+    const startTime = new Date(session.startTime);
+    const endTime = new Date(session.endTime);
+
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      throw new Error("Invalid start or end date format provided in study plan session.");
+    }
+    if (endTime <= startTime) {
+      throw new Error("Study session end time must be after start time.");
+    }
+
+    const doc = await Event.create({
+      userId,
+      title: session.topicTitle.startsWith("Study:") ? session.topicTitle : `Study: ${session.topicTitle}`,
+      description: `Scheduled study session for topic: ${session.topicTitle}`,
+      location: "",
+      startTime,
+      endTime,
+      timezone,
+      isAllDay: false,
+      recurrenceRule: null,
+      reminderLeadMinutes: 15,
+      linkedTopicId: session.topicId || null
+    });
+
+    if (doc.reminderLeadMinutes != null) {
+      const jobId = await scheduleEventReminder(doc);
+      if (jobId) {
+        doc.reminderJobId = jobId;
+        await doc.save();
+      }
+    }
+
+    await enqueueEmbeddingJob("event", doc._id.toString(), userId);
+
+    createdEvents.push({
+      id: doc._id.toString(),
+      title: doc.title,
+      startTime: doc.startTime.toISOString(),
+      endTime: doc.endTime.toISOString(),
+      timezone: doc.timezone,
+      linkedTopicId: (doc as any).linkedTopicId ? (doc as any).linkedTopicId.toString() : null
+    });
+  }
+
+  return {
+    count: createdEvents.length,
+    events: createdEvents,
+    message: `Successfully scheduled ${createdEvents.length} study session(s) on your calendar.`
+  };
+}
+
 export async function executeToolCall(userId: string, toolName: string, args: any) {
   switch (toolName) {
     case "create_calendar_event":
@@ -332,6 +419,9 @@ export async function executeToolCall(userId: string, toolName: string, args: an
     case "query_spending":
     case "financial_analysis":
       return await executeQuerySpending(userId, args);
+    case "generate_study_plan":
+    case "create_study_plan":
+      return await executeGenerateStudyPlan(userId, args);
     default:
       throw new Error(`Unknown tool name: ${toolName}`);
   }

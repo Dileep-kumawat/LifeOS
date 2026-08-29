@@ -63,7 +63,7 @@ LifeOS/
   - `User`: Core profile, password hash, OAuth IDs, preferences, tier settings.
   - `RefreshToken`: Active refresh tokens, device info, expiration.
 - **Calendar & Time**:
-  - `Event`: Calendar events, start/end timestamps, recurrence rules, Google Sync IDs.
+  - `Event`: Calendar events, start/end timestamps, recurrence rules, Google Sync IDs, `linkedTopicId` (reverse-link to syllabus topics).
 - **Finance**:
   - `Transaction`: Amount, category, type (income/expense), date, notes.
   - `Budget`: Monthly category budgets & alert thresholds.
@@ -232,6 +232,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [AI Study Plan Generation & Tool Calling (Phase 7 - Prompt 2)]: Implemented FR-7.2/UC-2 AI study planner composing Phase 3's tool-calling pipeline with Calendar free-time detection (8am–10pm window) and prioritized topics; added generate_study_plan tool, confirm-before-write Calendar event generation with linkedTopicId, Web StudyPlanCard, Storybook stories, and end-to-end test suites.
 - [Study Planner & SM-2 Spaced Repetition (Phase 7 - Prompt 1)]: Implemented core Subject/Topic/Flashcard data models, pure SuperMemo SM-2 spaced repetition scheduler in @lifeos/shared, cascade-deletion behavior on subjects, RESTful CRUD endpoints under /study, daily review queue, Web UI components, and Storybook stories.
 - [Phase 6 OCR Audit & Fix]: Completed documentation and quality audit pass — enriched Swagger/OpenAPI annotations with supported MIME types, 10MB limit, raw vs structured extraction architecture, dual worked examples, error schemas, and cross-references; updated Storybook coverage with TransactionForm OCR prefill stories, NoteEditor OCR stories, and non-color warning cues for A11y.
 - [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
@@ -246,7 +247,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [FloatingDock]: Guarded programmatic `scrollTo` with `isProgrammaticScrollRef` and timeout fallback — fixed rapid intermediate screen flashing/flickering when tapping distant dock icons.
 - [Auth Screens]: Switched root container styling to `contentContainerStyle: { flexGrow: 1, justifyContent: "center" }` — fixed login/register forms top-aligning instead of vertically centering across devices.
 - [ScreenContainer / Tab Screens]: Integrated `useDockHeight()` dynamic bottom clearance hook across all main tabs — fixed bottom cards and list items occluded behind floating dock overlay.
-- [FloatingDock]: Memoized `DockItem`, `CenterIndicator`, and `LinearGradient` edge masks with `React.memo` — fixed dock glitching, mount jump, and layout thrashing on screen state updates.
 
 ---
 
@@ -254,6 +254,10 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **AI-Generated Study Plan & Free-Time Allocation (FR-7.2, UC-2)**:
+  - Study plan generation computes free time gaps within an 8am–10pm working hours window using Calendar's read-time recurrence expansion (`expandRange`), combines them with active topics pre-sorted by deadline proximity and priority, and leverages `callAI()` for structured JSON allocation with deterministic heuristic fallback.
+  - Follows Phase 3's confirm-before-write paradigm: plans are proposed in chat / `ToolConfirmationModal` / `StudyPlanCard` and only written to `Event` documents (linked via `linkedTopicId`) upon explicit user confirmation; cancellation creates zero database side effects.
+  - When no free time is available or no active topics exist, the assistant returns uncertainty signaling messages rather than proposing empty/broken plans.
 - **Study Planner & Cascade Deletion Precedent (FR-7.1, FR-7.3)**:
   - Unlike Notes (where deleting a folder reassigns notes to root because notes possess standalone semantic value), deleting a `Subject` **cascade-deletes** all child `Topic`s and associated `Flashcard`s because study items have no meaning without subject context.
   - Spaced repetition scheduling is computed strictly through the deterministic, pure `calculateNextReview` SM-2 function in `@lifeos/shared`, enforcing minimum 1.3 easeFactor clamping and standard 0–5 quality self-assessment ratings.

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Calendar, CheckCircle2, FileText, Target, AlertTriangle, X } from "lucide-react";
+import { Calendar, CheckCircle2, FileText, Target, AlertTriangle, X, BookOpen } from "lucide-react";
 import type { ToolCallPayload } from "../types";
 
 export interface ToolConfirmationModalProps {
@@ -125,12 +125,46 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
         };
       }
 
+      case "generate_study_plan":
+      case "create_study_plan": {
+        const targetDate = args.targetDate || "tomorrow";
+        const plan = Array.isArray(args.plan) ? args.plan : Array.isArray(args.assignments) ? args.assignments : [];
+        const count = plan.length;
+        const totalMins = args.totalStudyMinutes || plan.reduce((sum: number, p: any) => sum + (p.durationMinutes || 0), 0);
+
+        return {
+          icon: <BookOpen className="w-6 h-6 text-indigo-600" />,
+          actionTitle: "Apply AI Study Plan",
+          description: `Schedule ${count} study session${count === 1 ? "" : "s"} (${totalMins} min total) on your calendar for ${targetDate}?`,
+          items: [
+            { label: "Target Date", value: targetDate },
+            { label: "Total Sessions", value: `${count} study session(s)` },
+            { label: "Total Duration", value: `${totalMins} minutes` },
+            ...plan.map((s: any, idx: number) => {
+              const start = s.startTime
+                ? new Date(s.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "";
+              const end = s.endTime
+                ? new Date(s.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "";
+              return {
+                label: `Session ${idx + 1}: ${s.topicTitle || "Study Topic"}`,
+                value: `${start} – ${end} (${s.durationMinutes || 45} min)`
+              };
+            })
+          ]
+        };
+      }
+
       default:
         return {
           icon: <AlertTriangle className="w-6 h-6 text-amber-600" />,
           actionTitle: `Execute Action: ${toolName}`,
           description: `Confirm proposed tool action with parameters below?`,
-          items: Object.entries(args).map(([k, v]) => ({ label: k, value: String(v) }))
+          items: Object.entries(args).map(([k, v]) => ({
+            label: k,
+            value: typeof v === "object" ? JSON.stringify(v) : String(v)
+          }))
         };
     }
   };

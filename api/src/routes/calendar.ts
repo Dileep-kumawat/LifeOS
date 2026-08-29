@@ -46,6 +46,7 @@ function formatEventDetail(doc: EventDoc) {
     recurrenceEndDate: doc.recurrenceEndDate ? new Date(doc.recurrenceEndDate).toISOString() : null,
     recurrence: describeRecurrence(doc.recurrenceRule ?? null),
     reminderLeadMinutes: doc.reminderLeadMinutes ?? null,
+    linkedTopicId: (doc as any).linkedTopicId ? (doc as any).linkedTopicId.toString() : null,
     exceptions: (doc.exceptions || []).map((e: any) => ({
       originalDate: new Date(e.originalDate).toISOString(),
       isCancelled: Boolean(e.isCancelled),
@@ -213,7 +214,8 @@ calendarRouter.post(
         isAllDay: body.isAllDay,
         recurrenceRule: body.recurrenceRule || null,
         recurrenceEndDate: body.recurrenceEndDate ? new Date(body.recurrenceEndDate) : null,
-        reminderLeadMinutes: body.reminderLeadMinutes ?? null
+        reminderLeadMinutes: body.reminderLeadMinutes ?? null,
+        linkedTopicId: body.linkedTopicId || null
       });
 
       if (!doc.recurrenceRule && doc.reminderLeadMinutes != null) {
@@ -556,6 +558,9 @@ calendarRouter.patch(
       }
       if (body.reminderLeadMinutes !== undefined) {
         doc.reminderLeadMinutes = body.reminderLeadMinutes;
+      }
+      if (body.linkedTopicId !== undefined) {
+        (doc as any).linkedTopicId = body.linkedTopicId || null;
       }
 
       if (doc.startTime >= doc.endTime) {

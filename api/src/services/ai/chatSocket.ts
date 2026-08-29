@@ -10,6 +10,7 @@ import { retrieveContext } from "./retriever.js";
 import { createProviderModel } from "./providers.js";
 import { getProviderOrder, callAI } from "./callAI.js";
 import { ALL_AI_TOOLS, executeToolCall } from "./tools.js";
+import { generateStudyPlanAllocation } from "../study/studyPlanService.js";
 
 interface AuthenticatedSocket extends Socket {
   user?: UserDoc;
@@ -196,7 +197,42 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
               const tc = toolCalls[0];
               const toolCallId = tc.id || `tc_${Date.now()}`;
               const toolName = tc.name;
-              const args = tc.args || {};
+              let args = tc.args || {};
+
+              // If study plan tool is invoked, run allocation pipeline to generate the candidate plan
+              if (toolName === "generate_study_plan" || toolName === "create_study_plan") {
+                const planResult = await generateStudyPlanAllocation(userId, args.targetDate, args.timezone);
+
+                if (planResult.status === "no_free_time" || planResult.status === "no_topics") {
+                  const assistantMsg = await Message.create({
+                    conversationId,
+                    userId,
+                    role: "assistant",
+                    content: planResult.message
+                  });
+
+                  socket.emit("chat_stream_chunk", {
+                    conversationId,
+                    chunk: planResult.message
+                  });
+                  socket.emit("chat_stream_end", {
+                    conversationId,
+                    messageId: assistantMsg._id.toString()
+                  });
+
+                  served = true;
+                  break;
+                }
+
+                // Enrich tool args with the generated concrete assignments
+                args = {
+                  targetDate: planResult.targetDate,
+                  timezone: planResult.timezone,
+                  plan: planResult.plan,
+                  totalStudyMinutes: planResult.totalStudyMinutes,
+                  summary: `Study plan with ${planResult.plan.length} session(s) on ${planResult.targetDate}`
+                };
+              }
 
               const assistantMsg = await Message.create({
                 conversationId,

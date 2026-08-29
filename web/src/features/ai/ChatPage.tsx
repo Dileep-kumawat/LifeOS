@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Sparkles,
   Plus,
@@ -19,6 +19,7 @@ import { StreamingIndicator } from "./components/StreamingIndicator";
 import { ToolConfirmationModal } from "./components/ToolConfirmationModal";
 
 export const ChatPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     conversations,
     activeConversationId,
@@ -40,6 +41,15 @@ export const ChatPage: React.FC = () => {
     typeof window !== "undefined" ? window.innerWidth >= 1024 : false
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Handle incoming prompt parameter (e.g. from Study Planner "Plan with AI" button)
+  useEffect(() => {
+    const prompt = searchParams.get("prompt");
+    if (prompt && !isStreaming) {
+      sendMessage(prompt);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, isStreaming, sendMessage, setSearchParams]);
 
   // Auto-scroll on new messages
   useEffect(() => {
