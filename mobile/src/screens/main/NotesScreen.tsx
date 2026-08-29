@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Plus, Search, FolderPlus } from "lucide-react-native";
+import { Plus, Search, FolderPlus, Camera } from "lucide-react-native";
 import { ScreenContainer } from "../../components/ui/ScreenContainer";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { TextInput } from "../../components/ui/TextInput";
@@ -16,6 +16,7 @@ import type { LocalNote, LocalNoteFolder } from "../../db/schema";
 import { NoteCard } from "../../components/notes/NoteCard";
 import { NoteEditorModal } from "../../components/notes/NoteEditorModal";
 import { FolderManagerModal } from "../../components/notes/FolderManagerModal";
+import { NotesScanModal } from "../../components/notes/NotesScanModal";
 
 export function NotesScreen() {
   const dockHeight = useDockHeight();
@@ -31,6 +32,7 @@ export function NotesScreen() {
   const [editingNote, setEditingNote] = useState<LocalNote | null>(null);
   const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
   const [isFolderModalVisible, setIsFolderModalVisible] = useState(false);
+  const [isScanModalVisible, setIsScanModalVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
@@ -110,6 +112,26 @@ export function NotesScreen() {
     syncEngine.syncNow().catch(() => {});
   };
 
+  const handleOpenEditorWithDraft = (draftData: {
+    title: string;
+    bodyText: string;
+    folderId: string | null;
+    tags: string[];
+  }) => {
+    setEditingNote({
+      id: "",
+      userId: user?.id || "",
+      title: draftData.title,
+      content: "",
+      contentText: draftData.bodyText,
+      folderId: draftData.folderId,
+      tags: JSON.stringify(draftData.tags),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    } as LocalNote);
+    setIsNoteModalVisible(true);
+  };
+
   const folderMap = new Map<string, LocalNoteFolder>();
   folders.forEach((f) => folderMap.set(f.id, f));
 
@@ -119,6 +141,13 @@ export function NotesScreen() {
       <View style={styles.topBar}>
         <ThemedText variant="heading2">Notes</ThemedText>
         <View style={styles.topBtnRow}>
+          <TouchableOpacity
+            onPress={() => setIsScanModalVisible(true)}
+            style={styles.scanBtn}
+            accessibilityLabel="Scan note from camera"
+          >
+            <Camera size={18} color={colors.primary} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsFolderModalVisible(true)} style={styles.folderBtn}>
             <FolderPlus size={18} color={colors.ink} />
           </TouchableOpacity>
@@ -250,6 +279,19 @@ export function NotesScreen() {
         onCreateFolder={handleCreateFolder}
         onDeleteFolder={handleDeleteFolder}
       />
+
+      {/* Scan Note OCR Modal */}
+      <NotesScanModal
+        visible={isScanModalVisible}
+        onClose={() => setIsScanModalVisible(false)}
+        folders={folders}
+        onSave={handleSaveNote}
+        onOpenEditorWithDraft={handleOpenEditorWithDraft}
+        onOpenBlankNote={() => {
+          setEditingNote(null);
+          setIsNoteModalVisible(true);
+        }}
+      />
     </ScreenContainer>
   );
 }
@@ -266,6 +308,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs
+  },
+  scanBtn: {
+    padding: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    height: 38,
+    width: 38,
+    alignItems: "center",
+    justifyContent: "center"
   },
   folderBtn: {
     padding: spacing.xs,

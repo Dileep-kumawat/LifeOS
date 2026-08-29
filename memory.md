@@ -223,6 +223,8 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
+- [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
 - [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
 - [DashboardScreen]: Added `flexWrap` and `gap` to `DailySummaryCard` badges/items — fixed scheduled item layout overflow on narrow device widths.
 - [FloatingDock]: Maintained dock mounting and transitioned Reanimated opacity on keyboard show/hide — fixed active screen indicator resetting to first icon (Dashboard) after keyboard dismiss.
@@ -236,8 +238,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [FloatingDock]: Tuned `LinearGradient` edge fade overlays with `pointerEvents="none"` — fixed gradient masks intercepting tap events on outer dock icons.
 - [FloatingDock]: Computed deterministic width and symmetric side padding `(dockWidth - ITEM_WIDTH) / 2` — fixed outer dock items unable to scroll fully into static center indicator.
 - [FloatingDock]: Introduced static center active indicator with proximity-driven scale/opacity transforms — fixed sliding dock alignment and eliminated multi-fire haptic feedback.
-- [FloatingDock]: Initial floating dock navigation implementation — replaced standard React Navigation bottom tab bar with dynamic Reanimated horizontal sliding bar.
-- [Sync Engine]: Added `sync_conflicts` table and `/sync/resolve-conflict` endpoint — fixed silent data overwrites during concurrent offline mobile and web edits.
 
 ---
 
@@ -245,6 +245,9 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **Notes OCR Pre-Fill & Ephemeral Draft Pattern**:
+  - OCR-created notes convert extracted text into standard ProseMirror JSON documents with first-line title heuristics (or fallback `"Scanned note — YYYY-MM-DD"`) and surface low-confidence line cues (<0.7) for inline user correction.
+  - Pre-filled drafts remain ephemeral until saved through the standard `POST /api/v1/notes` endpoint without custom or leftover OCR flags.
 - **Unified OCR Pipeline & Confidence Retention**:
   - All OCR extraction (mobile on-device ML Kit or backend fallback via Tesseract/BullMQ) MUST return the unified `OcrExtractionResult` (`extractedText`, `confidence` 0.0-1.0, `source: "on_device" | "server_fallback"`, `blocks` with `boundingBox` and `lines`).
   - Never discard block/line-level confidence scores or spatial bounding box geometry; downstream confirmation UIs (Notes and Finance) rely on these signals to flag uncertain fields for user review.

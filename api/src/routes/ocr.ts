@@ -45,6 +45,10 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *       or base64 payload. Validates MIME type and enforces a 10MB size limit.
  *       Routes through the BullMQ job queue with synchronous waiting (up to 8s) or
  *       async status polling.
+ *       
+ *       Primary consumers:
+ *       1. Notes Module (FR-5.3): "Photographed text → editable note pre-fill", converting extractedText into ProseMirror draft notes.
+ *       2. Finance Module (FR-5.2): Receipt scanning, parsing line items and transaction metadata.
  *     tags:
  *       - OCR
  *     security:

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FilePlus, FolderPlus, Search, X, StickyNote } from "lucide-react";
+import { FilePlus, FolderPlus, Search, X, StickyNote, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { notesApi } from "./api";
 import { NoteCard } from "./NoteCard";
 import { FolderTree } from "./FolderTree";
 import { FolderManager } from "./FolderManager";
+import { NotesScanModal } from "./NotesScanModal";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/Button";
 import { cn } from "../../lib/utils";
@@ -20,6 +21,7 @@ export function NotesListPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
 
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [folderManager, setFolderManager] = useState<
     | { mode: "create"; parentFolderId: string | null }
     | { mode: "rename"; folder: NoteFolder }
@@ -36,6 +38,11 @@ export function NotesListPage() {
   const { data: folders = [] } = useQuery({
     queryKey: ["notes", "folders"],
     queryFn: () => notesApi.listFolders()
+  });
+
+  const { data: allTags = [] } = useQuery({
+    queryKey: ["notes", "tags"],
+    queryFn: () => notesApi.listTags()
   });
 
   const notesQuery = useInfiniteQuery({
@@ -61,6 +68,7 @@ export function NotesListPage() {
   const invalidateNotes = () => {
     queryClient.invalidateQueries({ queryKey: ["notes"] });
     queryClient.invalidateQueries({ queryKey: ["notes", "folders"] });
+    queryClient.invalidateQueries({ queryKey: ["notes", "tags"] });
   };
 
   function handleCreateNote() {
@@ -68,6 +76,23 @@ export function NotesListPage() {
       .create({ title: "", folderId: selectedFolder, tags: [] })
       .then((note) => navigate(`/notes/${note.id}`))
       .catch((err) => toast.error(err.response?.data?.message || "Failed to create note"));
+  }
+
+  async function handleSaveScannedNote(noteData: {
+    title: string;
+    content: any;
+    folderId: string | null;
+    tags: string[];
+  }) {
+    try {
+      const created = await notesApi.create(noteData);
+      invalidateNotes();
+      toast.success("Note created from scan.");
+      navigate(`/notes/${created.id}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save scanned note");
+      throw err;
+    }
   }
 
   function handleDeleteNote(id: string) {
@@ -155,6 +180,14 @@ export function NotesListPage() {
             <FolderPlus className="size-3.5 text-[#0075de]" />
             <span>Folders {folders.length > 0 && `(${folders.length})`}</span>
           </button>
+          <Button
+            variant="outline"
+            onClick={() => setIsScanModalOpen(true)}
+            size="sm"
+          >
+            <Camera data-icon="inline-start" className="size-3.5 text-[#0075de]" />
+            Scan Note
+          </Button>
           <Button onClick={handleCreateNote} size="sm">
             <FilePlus data-icon="inline-start" className="size-3.5" />
             New Note
@@ -273,10 +306,16 @@ export function NotesListPage() {
                   : "Create your first note, or drag existing notes into folders."}
               </p>
               {!isSearching && (
-                <Button onClick={handleCreateNote}>
-                  <FilePlus data-icon="inline-start" />
-                  Create First Note
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button variant="outline" onClick={() => setIsScanModalOpen(true)}>
+                    <Camera data-icon="inline-start" className="size-4 text-[#0075de]" />
+                    Scan from Image
+                  </Button>
+                  <Button onClick={handleCreateNote}>
+                    <FilePlus data-icon="inline-start" />
+                    Create Blank Note
+                  </Button>
+                </div>
               )}
             </div>
           ) : (
@@ -321,6 +360,16 @@ export function NotesListPage() {
         onClose={() => setFolderManager(null)}
         onSubmit={handleFolderSubmit}
         isSubmitting={false}
+      />
+
+      <NotesScanModal
+        open={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        folders={folders}
+        allTags={allTags}
+        initialFolderId={selectedFolder}
+        onSaveNote={handleSaveScannedNote}
+        onOpenBlankNote={handleCreateNote}
       />
     </div>
   );
