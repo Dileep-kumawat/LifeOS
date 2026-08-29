@@ -75,6 +75,10 @@ async function folderBelongsToUser(folderId: string, userId: any): Promise<boole
  *       runs against. `title` may be blank (the editor shows an "Untitled"
  *       placeholder); `folderId` may be null (root) and `tags` is an array of
  *       free-form strings.
+ *       
+ *       **OCR Integration (FR-5.3):** Notes created from photographed text route through
+ *       the shared OCR extraction pipeline (`POST /ocr/extract`) and `@lifeos/shared`
+ *       `convertOcrToProseMirror` helper before saving here via standard JSON payload.
  *     requestBody:
  *       required: true
  *       content:

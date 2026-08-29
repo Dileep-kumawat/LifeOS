@@ -223,6 +223,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Phase 6 OCR Audit & Fix]: Completed documentation and quality audit pass — enriched Swagger/OpenAPI annotations with supported MIME types, 10MB limit, raw vs structured extraction architecture, dual worked examples, error schemas, and cross-references; updated Storybook coverage with TransactionForm OCR prefill stories, NoteEditor OCR stories, and non-color warning cues for A11y.
 - [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
 - [Finance OCR Integration]: Implemented FR-6.2/UC-3 photographed receipt to structured transaction pre-fill — added heuristic receipt parser in @lifeos/shared, Web ReceiptPreviewCard & ReceiptScanModal (with 4 states), Mobile MobileReceiptPreviewCard & ReceiptScanModal, extended TransactionForm/TransactionFormModal with prefill & confidence cues, Storybook stories, and integration test suites.
 - [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
@@ -237,7 +238,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [ScreenContainer / Tab Screens]: Integrated `useDockHeight()` dynamic bottom clearance hook across all main tabs — fixed bottom cards and list items occluded behind floating dock overlay.
 - [FloatingDock]: Memoized `DockItem`, `CenterIndicator`, and `LinearGradient` edge masks with `React.memo` — fixed dock glitching, mount jump, and layout thrashing on screen state updates.
 - [FloatingDock]: Decoupled `scrollX` continuous animation worklet from synchronous React state updates — fixed dock pop/snapback desync during fast gestures.
-- [FloatingDock]: Tuned `LinearGradient` edge fade overlays with `pointerEvents="none"` — fixed gradient masks intercepting tap events on outer dock icons.
 
 ---
 

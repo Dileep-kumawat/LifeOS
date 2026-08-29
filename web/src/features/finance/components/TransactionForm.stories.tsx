@@ -62,3 +62,56 @@ export const EditMode: Story = {
     }
   }
 };
+
+export const PrefilledFromOCR: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => console.log("Close"),
+    onSubmit: async (data) => console.log("Submit", data),
+    categories: mockCategories,
+    initialData: null,
+    prefillData: {
+      amount: 41.09,
+      type: "expense",
+      category: "Shopping",
+      date: new Date("2026-08-28"),
+      note: "WALMART SUPERCENTER #3245"
+    },
+    fieldConfidence: {
+      merchant: { confidence: 0.95, isLowConfidence: false },
+      amount: { confidence: 0.96, isLowConfidence: false },
+      date: { confidence: 0.91, isLowConfidence: false }
+    },
+    onAddCategory: async (name, type) => {
+      console.log("Add inline category", name, type);
+      return name;
+    }
+  }
+};
+
+export const PrefilledWithLowConfidenceWarnings: Story = {
+  args: {
+    isOpen: true,
+    onClose: () => console.log("Close"),
+    onSubmit: async (data) => console.log("Submit", data),
+    categories: mockCategories,
+    initialData: null,
+    prefillData: {
+      amount: 28.50,
+      type: "expense",
+      category: "Food",
+      date: new Date("2026-08-27"),
+      note: "CORNER CAFE & GRILL"
+    },
+    fieldConfidence: {
+      merchant: { confidence: 0.72, isLowConfidence: false },
+      amount: { confidence: 0.55, isLowConfidence: true },
+      date: { confidence: 0.40, isLowConfidence: true }
+    },
+    onAddCategory: async (name, type) => {
+      console.log("Add inline category", name, type);
+      return name;
+    }
+  }
+};
+

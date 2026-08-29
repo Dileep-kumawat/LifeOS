@@ -215,8 +215,10 @@ export function OCRPreviewCard({
                 {line.isLowConfidence && (
                   <span
                     title={`Low confidence score: ${Math.round((line.confidence ?? 0) * 100)}%`}
-                    className="inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 bg-amber-100"
+                    aria-label={`Low confidence line (${Math.round((line.confidence ?? 0) * 100)}% confidence)`}
+                    className="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300"
                   >
+                    <AlertCircle className="size-2.5 text-amber-700" />
                     Check
                   </span>
                 )}

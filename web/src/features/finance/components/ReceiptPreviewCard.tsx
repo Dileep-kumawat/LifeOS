@@ -196,7 +196,11 @@ export function ReceiptPreviewCard({
                 Merchant / Description
               </label>
               {parsedReceipt.merchant.isLowConfidence ? (
-                <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                <span
+                  aria-label="Low confidence merchant name"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded"
+                >
+                  <AlertCircle className="size-2.5 text-amber-700" />
                   Low Confidence
                 </span>
               ) : (
@@ -227,7 +231,11 @@ export function ReceiptPreviewCard({
                 Total Amount
               </label>
               {parsedReceipt.amount.isLowConfidence || parsedReceipt.amount.value === null ? (
-                <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                <span
+                  aria-label="Uncertain amount requiring check"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded"
+                >
+                  <AlertCircle className="size-2.5 text-amber-700" />
                   Check Amount
                 </span>
               ) : (
@@ -262,7 +270,11 @@ export function ReceiptPreviewCard({
                 Transaction Date
               </label>
               {parsedReceipt.date.isLowConfidence || !parsedReceipt.date.value ? (
-                <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                <span
+                  aria-label="Uncertain transaction date requiring check"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded"
+                >
+                  <AlertCircle className="size-2.5 text-amber-700" />
                   Uncertain Date
                 </span>
               ) : (

@@ -40,15 +40,32 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  * /ocr/extract:
  *   post:
  *     summary: Extract raw text and spatial confidence signals from an image
- *     description: >
- *       Server-side OCR fallback endpoint. Accepts image files via multipart/form-data
- *       or base64 payload. Validates MIME type and enforces a 10MB size limit.
- *       Routes through the BullMQ job queue with synchronous waiting (up to 8s) or
- *       async status polling.
+ *     description: |
+ *       **Shared OCR Extraction Pipeline (FR-5.3, FR-6.2, UC-3)**
  *       
- *       Primary consumers:
- *       1. Notes Module (FR-5.3): "Photographed text → editable note pre-fill", converting extractedText into ProseMirror draft notes.
- *       2. Finance Module (FR-6.2, UC-3): "Photographed receipt → merchant/amount/date extraction → pre-filled transaction for confirmation", parsing structured fields with per-field confidence before user confirmation via standard POST /finance/transactions.
+ *       Server-side OCR fallback and unified text extraction engine powered by Tesseract and BullMQ.
+ *       Accepts image files via `multipart/form-data` or JSON base64 payloads.
+ *       
+ *       ### Specifications & Limitations:
+ *       - **Allowed Image Formats:** `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `image/bmp`, `image/tiff`
+ *       - **Payload Size Limit:** Max 10MB per image upload (enforced by Multer and request body validators)
+ *       - **Rate Limiting:** Gated per subscription tier (Free: 20 calls/day, Pro: 200 calls/day, resets at UTC midnight)
+ *       - **Execution Mode:** Synchronous short-wait (polls up to 8s before falling back) or immediate asynchronous queueing (`async=true`)
+ *       
+ *       ### Architectural Distinction: Raw Extraction vs. Structured Consumers
+ *       1. **Raw Extraction Shape (`OcrExtractionResult`):**
+ *          The endpoint always returns raw concatenated `extractedText`, overall `confidence` (0.0-1.0), `source` (`"server_fallback"`), and structured `blocks` with positional `boundingBox` coordinates (`x`, `y`, `width`, `height`) and line-level confidence scores.
+ *       2. **Notes Consumer (`POST /notes` via `convertOcrToProseMirror`):**
+ *          Consumes the raw text and line items to produce an ephemeral `OcrNoteDraft` containing a valid ProseMirror document, heuristic title, and per-line low-confidence warning flags (<0.7) for inline user editing before saving.
+ *       3. **Finance Consumer (`POST /finance/transactions` via `parseReceiptOcr`):**
+ *          Applies heuristic parsing to extract structured receipt fields (`merchant`, `amount`, `date`, `category`, and line items) wrapped in `ReceiptField<T>` with `confidence` and `isLowConfidence` flags before presenting the user with an editable confirmation form.
+ *       4. **Future Consumers:**
+ *          Any new domain module can consume `OcrExtractionResult` directly from this endpoint or use `@lifeos/shared` utilities to map spatial blocks into domain-specific data structures.
+ *       
+ *       ### Cross-References:
+ *       - See `POST /notes` for creating notes from OCR text drafts.
+ *       - See `POST /finance/transactions` for persisting confirmed receipt expenses with automatic budget recalculations.
+ *       - See `GET /ocr/extract/{jobId}` for polling asynchronous extraction jobs.
  *     tags:
  *       - OCR
  *     security:
@@ -58,9 +75,10 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *         name: async
  *         schema:
  *           type: boolean
- *         description: If true, returns 202 immediately with jobId for asynchronous status polling
+ *         description: If true, immediately enqueues the job and returns HTTP 202 with `jobId` and `pollUrl`.
  *     requestBody:
- *       description: Upload an image file (multipart/form-data) or supply a JSON base64 string
+ *       description: Upload an image file as multipart/form-data (`image` or `file` field) or base64 JSON payload.
+ *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
@@ -69,31 +87,33 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Image file (JPEG, PNG, WebP, GIF, BMP, TIFF, max 10MB)
+ *                 description: Binary image file (JPEG, PNG, WebP, GIF, BMP, TIFF, max 10MB).
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: Alias for image file upload
+ *                 description: Alternative field name alias for image upload.
  *               async:
  *                 type: boolean
- *                 description: If true, returns 202 immediately with jobId
+ *                 description: Set to true to request asynchronous background processing.
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               imageBase64:
  *                 type: string
- *                 description: Base64-encoded image data
+ *                 description: Base64-encoded image data (or data URL scheme `data:image/png;base64,...`).
+ *                 example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
  *               mimeType:
  *                 type: string
  *                 enum: [image/jpeg, image/jpg, image/png, image/webp, image/gif, image/bmp, image/tiff]
- *                 description: MIME type of the base64 image
+ *                 description: MIME type of the base64 image data.
+ *                 example: "image/png"
  *               async:
  *                 type: boolean
- *                 description: If true, returns 202 immediately
+ *                 description: Set to true for asynchronous processing.
  *     responses:
  *       200:
- *         description: OCR text extraction successful
+ *         description: OCR text extraction succeeded synchronously.
  *         content:
  *           application/json:
  *             schema:
@@ -104,24 +124,25 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *               properties:
  *                 extractedText:
  *                   type: string
- *                   example: "COFFEE SHOP\nDate: 2026-08-27\nTotal: $12.50"
+ *                   description: Complete concatenated text extracted from the image.
  *                 confidence:
  *                   type: number
  *                   format: float
- *                   example: 0.94
+ *                   minimum: 0
+ *                   maximum: 1
+ *                   description: Overall extraction confidence score normalized between 0.0 and 1.0.
  *                 source:
  *                   type: string
  *                   enum: [on_device, server_fallback]
- *                   example: "server_fallback"
+ *                   description: Identifier of the engine that performed the extraction.
  *                 blocks:
  *                   type: array
+ *                   description: Parsed text blocks with bounding box geometry and line confidence.
  *                   items:
  *                     type: object
  *                     properties:
- *                       text:
- *                         type: string
- *                       confidence:
- *                         type: number
+ *                       text: { type: string }
+ *                       confidence: { type: number, minimum: 0, maximum: 1 }
  *                       boundingBox:
  *                         type: object
  *                         properties:
@@ -135,16 +156,89 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *                           type: object
  *                           properties:
  *                             text: { type: string }
- *                             confidence: { type: number }
+ *                             confidence: { type: number, minimum: 0, maximum: 1 }
+ *                             boundingBox:
+ *                               type: object
+ *                               properties:
+ *                                 x: { type: number }
+ *                                 y: { type: number }
+ *                                 width: { type: number }
+ *                                 height: { type: number }
  *                 metadata:
  *                   type: object
  *                   properties:
- *                     processingTimeMs: { type: number }
+ *                     processingTimeMs: { type: number, description: "Total OCR processing duration in milliseconds" }
  *                     engine: { type: string, example: "tesseract" }
- *                     fileSize: { type: number }
- *                     mimeType: { type: string }
+ *                     fileSize: { type: number, description: "Size of processed image in bytes" }
+ *                     mimeType: { type: string, example: "image/jpeg" }
+ *             examples:
+ *               note_scan:
+ *                 summary: Worked Example 1 — Note Scan (Whiteboard / Handwritten Note)
+ *                 value:
+ *                   extractedText: "Architecture Meeting Notes\n- Deploy unified OCR pipeline across Web and Mobile\n- Ensure confidence scores are preserved in preview\n- Target release date: 2026-09-01"
+ *                   confidence: 0.94
+ *                   source: "server_fallback"
+ *                   blocks:
+ *                     - text: "Architecture Meeting Notes"
+ *                       confidence: 0.98
+ *                       boundingBox: { x: 42, y: 30, width: 480, height: 40 }
+ *                       lines:
+ *                         - text: "Architecture Meeting Notes"
+ *                           confidence: 0.98
+ *                           boundingBox: { x: 42, y: 30, width: 480, height: 40 }
+ *                     - text: "- Deploy unified OCR pipeline across Web and Mobile\n- Ensure confidence scores are preserved in preview\n- Target release date: 2026-09-01"
+ *                       confidence: 0.92
+ *                       boundingBox: { x: 42, y: 85, width: 520, height: 110 }
+ *                       lines:
+ *                         - text: "- Deploy unified OCR pipeline across Web and Mobile"
+ *                           confidence: 0.95
+ *                         - text: "- Ensure confidence scores are preserved in preview"
+ *                           confidence: 0.93
+ *                         - text: "- Target release date: 2026-09-01"
+ *                           confidence: 0.88
+ *                   metadata:
+ *                     processingTimeMs: 412
+ *                     engine: "tesseract"
+ *                     fileSize: 245120
+ *                     mimeType: "image/jpeg"
+ *               receipt_scan:
+ *                 summary: Worked Example 2 — Receipt Scan (Retail Store Receipt for Finance)
+ *                 value:
+ *                   extractedText: "STARBUCKS STORE #1042\n123 MARKET STREET\nDATE: 2026-08-27\n1 CAFFE LATTE $4.75\n1 BLUEBERRY MUFFIN $3.85\nSUBTOTAL $8.60\nTAX $0.75\nTOTAL $9.35\nTHANK YOU"
+ *                   confidence: 0.95
+ *                   source: "server_fallback"
+ *                   blocks:
+ *                     - text: "STARBUCKS STORE #1042\n123 MARKET STREET\nDATE: 2026-08-27"
+ *                       confidence: 0.96
+ *                       boundingBox: { x: 20, y: 15, width: 320, height: 65 }
+ *                       lines:
+ *                         - text: "STARBUCKS STORE #1042"
+ *                           confidence: 0.97
+ *                         - text: "123 MARKET STREET"
+ *                           confidence: 0.96
+ *                         - text: "DATE: 2026-08-27"
+ *                           confidence: 0.95
+ *                     - text: "1 CAFFE LATTE $4.75\n1 BLUEBERRY MUFFIN $3.85\nSUBTOTAL $8.60\nTAX $0.75\nTOTAL $9.35"
+ *                       confidence: 0.94
+ *                       boundingBox: { x: 20, y: 90, width: 320, height: 140 }
+ *                       lines:
+ *                         - text: "1 CAFFE LATTE $4.75"
+ *                           confidence: 0.96
+ *                         - text: "1 BLUEBERRY MUFFIN $3.85"
+ *                           confidence: 0.94
+ *                         - text: "SUBTOTAL $8.60"
+ *                           confidence: 0.96
+ *                         - text: "TAX $0.75"
+ *                           confidence: 0.92
+ *                         - text: "TOTAL $9.35"
+ *                           confidence: 0.98
+ *                   metadata:
+ *                     processingTimeMs: 530
+ *                     engine: "tesseract"
+ *                     fileSize: 182300
+ *                     mimeType: "image/png"
  *       202:
- *         description: OCR job enqueued for background processing
+ *         description: OCR job enqueued for background asynchronous execution.
  *         content:
  *           application/json:
  *             schema:
@@ -164,34 +258,77 @@ function uploadMiddleware(req: Request, res: Response, next: NextFunction) {
  *                   type: string
  *                   example: "/api/v1/ocr/extract/ocr-job-12345"
  *       400:
- *         description: Invalid file type, missing image, or file size exceeds 10MB limit
+ *         description: Bad Request — missing image, unsupported MIME format, or payload exceeds 10MB limit.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - error
+ *                 - message
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   enum: [InvalidFileType, FileTooLarge, MissingImage, UploadError]
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               oversized_file:
+ *                 summary: File size exceeds 10MB limit
+ *                 value:
+ *                   error: "FileTooLarge"
+ *                   message: "Image size exceeds maximum allowed limit of 10MB"
+ *               invalid_mime:
+ *                 summary: Unsupported file MIME type
+ *                 value:
+ *                   error: "InvalidFileType"
+ *                   message: "Only image files (JPEG, PNG, WebP, GIF, BMP, TIFF) are supported for OCR extraction"
+ *               missing_image:
+ *                 summary: No image provided in request
+ *                 value:
+ *                   error: "MissingImage"
+ *                   message: "An image file (multipart upload) or imageBase64 string is required"
+ *       401:
+ *         description: Unauthorized — missing or invalid JWT bearer token.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- *                   example: "InvalidFileType"
- *                 message:
- *                   type: string
- *                   example: "Only image files (JPEG, PNG, WebP, GIF, BMP, TIFF) are supported for OCR extraction"
- *       401:
- *         description: Unauthorized - missing or invalid JWT
+ *                 error: { type: string, example: "Unauthorized" }
+ *                 message: { type: string, example: "Authentication required" }
  *       429:
- *         description: Rate limit exceeded for subscription tier
+ *         description: Rate limit exceeded for user's subscription tier.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
+ *               required:
+ *                 - error
+ *                 - message
  *               properties:
  *                 error:
  *                   type: string
  *                   example: "RateLimitExceeded"
  *                 message:
  *                   type: string
+ *                   example: "OCR extraction rate limit exceeded for your subscription tier (free). Quota resets at 2026-08-30T00:00:00.000Z."
+ *                 limit:
+ *                   type: number
+ *                   example: 20
+ *                 resetAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2026-08-30T00:00:00.000Z"
  *       500:
- *         description: OCR processing failure
+ *         description: OCR processing or queue failure.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error: { type: string, example: "OcrFailed" }
+ *                 message: { type: string, example: "Tesseract extraction encountered an unexpected error" }
  */
 ocrRouter.post("/ocr/extract", uploadMiddleware, async (req: Request, res: Response) => {
   const userId = req.user!._id.toString();

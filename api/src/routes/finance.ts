@@ -70,6 +70,11 @@ function formatCategory(doc: CategoryDoc) {
  *       Category handling: Category names are normalized (whitespace trimmed and matched case-insensitively against user categories).
  *       If an existing category matches case-insensitively, its canonical casing is preserved; otherwise a new custom category is created inline.
  *       Budget notification: If adding an expense causes the category's monthly spend to exceed its budget limit for the first time in the current period, a one-time overspend alert notification is triggered.
+ *       
+ *       **OCR Receipt Integration (FR-6.2, UC-3):** Photographed receipts route through
+ *       the shared OCR extraction pipeline (`POST /ocr/extract`) and `@lifeos/shared`
+ *       `parseReceiptOcr` helper to pre-fill merchant, amount, date, and suggested category.
+ *       Following user review/editing, confirmed transactions are saved here via standard payload.
  *     requestBody:
  *       required: true
  *       content:

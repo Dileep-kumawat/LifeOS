@@ -78,3 +78,30 @@ export const ReadOnly: Story = {
     className: "max-w-2xl"
   }
 };
+
+const ocrScannedDoc = doc([
+  {
+    type: "paragraph",
+    content: [{ type: "text", text: "Sprint Retrospective Notes" }]
+  },
+  {
+    type: "paragraph",
+    content: [{ type: "text", text: "What went well: Unified OCR pipeline works across Web and Mobile." }]
+  },
+  {
+    type: "paragraph",
+    content: [{ type: "text", text: "What needs improvement: Mobile ML Kit fallback confidence tuning." }]
+  },
+  {
+    type: "paragraph",
+    content: [{ type: "text", text: "Action items: Ship Notes OCR integration to production." }]
+  }
+]);
+
+export const PrefilledFromOcr: Story = {
+  args: {
+    content: ocrScannedDoc,
+    className: "max-w-2xl"
+  }
+};
+
