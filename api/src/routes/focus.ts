@@ -574,7 +574,10 @@ focusRouter.get(
  *   patch:
  *     tags: [Focus]
  *     summary: Pause an active focus session
- *     description: Pauses an active focus session. Accurately accumulates elapsed work time into totalFocusMinutes up to the exact moment of pausing, preventing paused gaps from counting toward focus time.
+ *     description: |
+ *       Pauses an active focus session. Accurately accumulates elapsed work time into `totalFocusMinutes`
+ *       and `accumulatedWorkSeconds` up to the exact moment of pausing (`now - lastResumedAt`), and sets
+ *       `lastResumedAt = null`. This ensures paused gaps are strictly excluded from logged focus time.
  *     parameters:
  *       - in: path
  *         name: id
@@ -582,11 +585,31 @@ focusRouter.get(
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Focus session paused
+ *         description: Focus session paused successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Focus session paused" }
+ *                 session:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e80" }
+ *                     userId: { type: string, example: "662c9f1e9f0b2a001c3d4e0a" }
+ *                     status: { type: string, example: "paused" }
+ *                     currentPhase: { type: string, example: "work" }
+ *                     currentCycle: { type: integer, example: 1 }
+ *                     totalFocusMinutes: { type: number, example: 15 }
+ *                     accumulatedWorkSeconds: { type: number, example: 900 }
+ *                     pausedAt: { type: string, format: date-time, example: "2026-08-30T09:15:00.000Z" }
+ *                     lastResumedAt: { type: string, nullable: true, example: null }
  *       400:
  *         description: Session is not in active state
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Focus session not found
  */
 focusRouter.patch(
   "/focus/sessions/:id/pause",
@@ -640,11 +663,25 @@ focusRouter.patch(
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Focus session resumed
+ *         description: Focus session resumed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Focus session resumed" }
+ *                 session:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e80" }
+ *                     status: { type: string, example: "active" }
+ *                     lastResumedAt: { type: string, format: date-time, example: "2026-08-30T09:20:00.000Z" }
  *       400:
  *         description: Session is not paused
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Focus session not found
  */
 focusRouter.patch(
   "/focus/sessions/:id/resume",
@@ -695,8 +732,23 @@ focusRouter.patch(
  *     responses:
  *       200:
  *         description: Focus session completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Focus session completed" }
+ *                 session:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e80" }
+ *                     status: { type: string, example: "completed" }
+ *                     totalFocusMinutes: { type: number, example: 50 }
+ *                     completedAt: { type: string, format: date-time, example: "2026-08-30T10:00:00.000Z" }
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Focus session not found
  */
 focusRouter.patch(
   "/focus/sessions/:id/complete",
@@ -747,8 +799,23 @@ focusRouter.patch(
  *     responses:
  *       200:
  *         description: Focus session abandoned with partial time preserved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Focus session abandoned" }
+ *                 session:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e80" }
+ *                     status: { type: string, example: "abandoned" }
+ *                     totalFocusMinutes: { type: number, example: 18 }
+ *                     completedAt: { type: string, format: date-time, example: "2026-08-30T09:18:00.000Z" }
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Focus session not found
  */
 focusRouter.patch(
   "/focus/sessions/:id/abandon",
@@ -790,7 +857,10 @@ focusRouter.patch(
  *   post:
  *     tags: [Focus]
  *     summary: Client-timed Pomodoro interval completion transition (FR-8.2)
- *     description: Called by the client countdown when an interval completes (work -> break or break -> work). Accumulates focus work time, advances cycle/phase, and immediately enqueues interval completion alerts via Phase 2 notification infrastructure.
+ *     description: |
+ *       Called by the client countdown when an interval completes (work -> break or break -> work).
+ *       Accumulates focus work time, advances cycle/phase, and immediately enqueues interval completion
+ *       alerts via Phase 2 notification infrastructure (respecting `focusSessionAlerts` preference and DND mode).
  *     parameters:
  *       - in: path
  *         name: id
@@ -810,8 +880,26 @@ focusRouter.patch(
  *     responses:
  *       200:
  *         description: Interval transitioned and notification enqueued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Interval completed successfully" }
+ *                 session:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e80" }
+ *                     currentPhase: { type: string, enum: [work, break, long_break], example: "break" }
+ *                     currentCycle: { type: integer, example: 1 }
+ *                     totalFocusMinutes: { type: number, example: 25 }
+ *                     accumulatedWorkSeconds: { type: number, example: 1500 }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
  *       404:
- *         description: Session not found
+ *         description: Focus session not found
  */
 focusRouter.post(
   "/focus/sessions/:id/interval-complete",

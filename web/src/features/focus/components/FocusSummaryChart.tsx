@@ -268,6 +268,29 @@ export const FocusSummaryChart: React.FC<FocusSummaryChartProps> = ({
               <p className="text-[11px] text-[#615d59]">Focus breakdown by entity</p>
             </div>
 
+            {/* Screen Reader Accessible Table for Breakdown */}
+            <div className="sr-only">
+              <h4>Time Allocation Breakdown</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Entity Type</th>
+                    <th scope="col">Focus Minutes</th>
+                    <th scope="col">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pieChartData.map((item) => (
+                    <tr key={item.linkedType}>
+                      <td>{item.name}</td>
+                      <td>{item.value} mins</td>
+                      <td>{item.percentage}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             {pieChartData.length === 0 ? (
               <div className="h-64 flex items-center justify-center text-xs text-[#a39e98] text-center">
                 No categorized sessions yet

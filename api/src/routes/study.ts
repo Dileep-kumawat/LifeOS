@@ -317,6 +317,17 @@ studyRouter.patch(
  *     responses:
  *       200:
  *         description: Subject and all associated child items deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Subject and all associated topics and flashcards deleted successfully" }
+ *                 deletedSubjectId: { type: string, example: "662c9f1e9f0b2a001c3d4e5f" }
+ *                 deletedTopicsCount: { type: integer, example: 5 }
+ *                 deletedFlashcardsCount: { type: integer, example: 24 }
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Subject not found
  */
@@ -1086,8 +1097,38 @@ studyRouter.delete("/study/flashcards/:id", validate(flashcardParamsSchema, "par
  *     responses:
  *       200:
  *         description: Flashcard state updated with new SM-2 scheduling parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 flashcard:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string, example: "662c9f1e9f0b2a001c3d4e99" }
+ *                     userId: { type: string, example: "662c9f1e9f0b2a001c3d4e0a" }
+ *                     subjectId: { type: string, nullable: true, example: "662c9f1e9f0b2a001c3d4e01" }
+ *                     topicId: { type: string, nullable: true, example: "662c9f1e9f0b2a001c3d4e02" }
+ *                     front: { type: string, example: "What is the average time complexity of QuickSelect?" }
+ *                     back: { type: string, example: "O(n) average case, O(n^2) worst case." }
+ *                     easeFactor: { type: number, example: 2.5 }
+ *                     intervalDays: { type: integer, example: 6 }
+ *                     repetitions: { type: integer, example: 2 }
+ *                     nextReviewDate: { type: string, format: date-time, example: "2026-09-05T09:00:00.000Z" }
+ *                     createdAt: { type: string, format: date-time }
+ *                     updatedAt: { type: string, format: date-time }
+ *                 reviewResult:
+ *                   type: object
+ *                   properties:
+ *                     quality: { type: integer, example: 4 }
+ *                     easeFactor: { type: number, example: 2.5 }
+ *                     intervalDays: { type: integer, example: 6 }
+ *                     repetitions: { type: integer, example: 2 }
+ *                     nextReviewDate: { type: string, format: date-time, example: "2026-09-05T09:00:00.000Z" }
  *       400:
- *         description: Validation error
+ *         description: Validation error (invalid rating score outside 0-5)
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: Flashcard not found
  */

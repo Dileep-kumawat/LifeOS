@@ -33,6 +33,11 @@ const MODULES = [
     description: "Alerts when an expense pushes a category budget over its limit."
   },
   {
+    key: "focusSessionAlerts",
+    title: "Focus session alerts",
+    description: "Interval completion and break transition reminders during Pomodoro sessions."
+  },
+  {
     key: "system",
     title: "System updates",
     description: "Account and product announcements."

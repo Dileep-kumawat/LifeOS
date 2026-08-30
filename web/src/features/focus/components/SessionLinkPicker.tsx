@@ -16,22 +16,29 @@ interface SessionLinkPickerProps {
   selectedId: string | null;
   onSelect: (type: FocusLinkedType, id: string | null, title?: string) => void;
   onClose?: () => void;
+  initialItems?: LinkedItemOption[];
 }
 
 export function SessionLinkPicker({
   selectedType,
   selectedId,
   onSelect,
-  onClose
+  onClose,
+  initialItems
 }: SessionLinkPickerProps) {
   const [activeTab, setActiveTab] = useState<FocusLinkedType>(
     selectedType === "none" ? "topic" : selectedType
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [items, setItems] = useState<LinkedItemOption[]>([]);
+  const [items, setItems] = useState<LinkedItemOption[]>(initialItems || []);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (initialItems) {
+      setItems(initialItems.filter((i) => (activeTab === "none" ? true : i.type === activeTab)));
+      return;
+    }
+
     async function loadData() {
       setLoading(true);
       try {
@@ -84,7 +91,7 @@ export function SessionLinkPicker({
     if (activeTab !== "none") {
       loadData();
     }
-  }, [activeTab]);
+  }, [activeTab, initialItems]);
 
   const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
