@@ -156,11 +156,75 @@ const BACKEND_SCHEMA_SPECS = {
     "createdAt",
     "syncStatus",
     "lastModifiedAt"
+  ],
+  subjects: [
+    "id",
+    "userId",
+    "name",
+    "color",
+    "examDate",
+    "createdAt",
+    "updatedAt",
+    "syncStatus",
+    "lastModifiedAt"
+  ],
+  topics: [
+    "id",
+    "userId",
+    "subjectId",
+    "title",
+    "deadline",
+    "priority",
+    "status",
+    "estimatedMinutes",
+    "createdAt",
+    "updatedAt",
+    "syncStatus",
+    "lastModifiedAt"
+  ],
+  flashcards: [
+    "id",
+    "userId",
+    "subjectId",
+    "topicId",
+    "front",
+    "back",
+    "easeFactor",
+    "intervalDays",
+    "repetitions",
+    "nextReviewDate",
+    "createdAt",
+    "updatedAt",
+    "syncStatus",
+    "lastModifiedAt"
+  ],
+  focus_sessions: [
+    "id",
+    "userId",
+    "workMinutes",
+    "breakMinutes",
+    "longBreakMinutes",
+    "longBreakInterval",
+    "currentCycle",
+    "currentPhase",
+    "linkedType",
+    "linkedId",
+    "status",
+    "startedAt",
+    "completedAt",
+    "pausedAt",
+    "lastResumedAt",
+    "accumulatedWorkSeconds",
+    "totalFocusMinutes",
+    "createdAt",
+    "updatedAt",
+    "syncStatus",
+    "lastModifiedAt"
   ]
 };
 
 describe("Local SQLite Schema Drift Check", () => {
-  it("should contain all 11 required Phase 1-4 models plus NoteVersion in CREATE_TABLES_SQL", () => {
+  it("should contain all required models in CREATE_TABLES_SQL", () => {
     const tableNames = Object.keys(BACKEND_SCHEMA_SPECS);
     for (const table of tableNames) {
       expect(CREATE_TABLES_SQL).toContain(`CREATE TABLE IF NOT EXISTS ${table}`);

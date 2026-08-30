@@ -11,6 +11,10 @@ import { NoteVersion } from "../../models/NoteVersion.js";
 import { Event } from "../../models/Event.js";
 import { Goal } from "../../models/Goal.js";
 import { Category } from "../../models/Category.js";
+import { Subject } from "../../models/Subject.js";
+import { Topic } from "../../models/Topic.js";
+import { Flashcard } from "../../models/Flashcard.js";
+import { FocusSession } from "../../models/FocusSession.js";
 import { SyncTombstone } from "../../models/SyncTombstone.js";
 import * as financeHooks from "../../services/financeHooks.js";
 import * as streakModule from "../../services/streak.js";
@@ -228,6 +232,10 @@ describe("Sync Processor - Pull Changes & Tombstones", () => {
     vi.spyOn(Budget, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
     vi.spyOn(Category, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
     vi.spyOn(NoteVersion, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
+    vi.spyOn(Subject, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
+    vi.spyOn(Topic, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
+    vi.spyOn(Flashcard, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
+    vi.spyOn(FocusSession, "find").mockReturnValue({ lean: vi.fn().mockResolvedValue([]) } as any);
 
     vi.spyOn(SyncTombstone, "find").mockReturnValue({
       lean: vi.fn().mockResolvedValue([

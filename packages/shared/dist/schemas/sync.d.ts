@@ -2,13 +2,13 @@ import { z } from "zod";
 /**
  * Mirrored sync modules in LifeOS
  */
-export declare const syncModules: readonly ["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"];
+export declare const syncModules: readonly ["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"];
 export type SyncModule = (typeof syncModules)[number];
 export declare const syncOperations: readonly ["create", "update", "delete"];
 export type SyncOperation = (typeof syncOperations)[number];
 export declare const syncPushItemSchema: z.ZodObject<{
     id: z.ZodString;
-    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>;
+    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>;
     operation: z.ZodEnum<["create", "update", "delete"]>;
     data: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
     lastModifiedAt: z.ZodNumber;
@@ -17,7 +17,7 @@ export declare const syncPushItemSchema: z.ZodObject<{
     resolutionSource: z.ZodOptional<z.ZodEnum<["keep_local", "keep_server", "manual_merge"]>>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     operation: "create" | "update" | "delete";
     lastModifiedAt: number;
     data?: Record<string, any> | undefined;
@@ -26,7 +26,7 @@ export declare const syncPushItemSchema: z.ZodObject<{
     resolutionSource?: "keep_local" | "keep_server" | "manual_merge" | undefined;
 }, {
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     operation: "create" | "update" | "delete";
     lastModifiedAt: number;
     data?: Record<string, any> | undefined;
@@ -38,7 +38,7 @@ export type SyncPushItem = z.infer<typeof syncPushItemSchema>;
 export declare const syncPushRequestSchema: z.ZodObject<{
     changes: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
-        module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>;
+        module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>;
         operation: z.ZodEnum<["create", "update", "delete"]>;
         data: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
         lastModifiedAt: z.ZodNumber;
@@ -47,7 +47,7 @@ export declare const syncPushRequestSchema: z.ZodObject<{
         resolutionSource: z.ZodOptional<z.ZodEnum<["keep_local", "keep_server", "manual_merge"]>>;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         operation: "create" | "update" | "delete";
         lastModifiedAt: number;
         data?: Record<string, any> | undefined;
@@ -56,7 +56,7 @@ export declare const syncPushRequestSchema: z.ZodObject<{
         resolutionSource?: "keep_local" | "keep_server" | "manual_merge" | undefined;
     }, {
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         operation: "create" | "update" | "delete";
         lastModifiedAt: number;
         data?: Record<string, any> | undefined;
@@ -68,7 +68,7 @@ export declare const syncPushRequestSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     changes: {
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         operation: "create" | "update" | "delete";
         lastModifiedAt: number;
         data?: Record<string, any> | undefined;
@@ -80,7 +80,7 @@ export declare const syncPushRequestSchema: z.ZodObject<{
 }, {
     changes: {
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         operation: "create" | "update" | "delete";
         lastModifiedAt: number;
         data?: Record<string, any> | undefined;
@@ -93,7 +93,7 @@ export declare const syncPushRequestSchema: z.ZodObject<{
 export type SyncPushRequest = z.infer<typeof syncPushRequestSchema>;
 export declare const syncPushItemResultSchema: z.ZodObject<{
     id: z.ZodString;
-    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>;
+    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>;
     status: z.ZodEnum<["applied", "conflict", "error"]>;
     error: z.ZodOptional<z.ZodString>;
     conflictData: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
@@ -103,7 +103,7 @@ export declare const syncPushItemResultSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     status: "applied" | "conflict" | "error";
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     error?: string | undefined;
     conflictData?: Record<string, any> | undefined;
     serverRecord?: Record<string, any> | undefined;
@@ -112,7 +112,7 @@ export declare const syncPushItemResultSchema: z.ZodObject<{
 }, {
     status: "applied" | "conflict" | "error";
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     error?: string | undefined;
     conflictData?: Record<string, any> | undefined;
     serverRecord?: Record<string, any> | undefined;
@@ -122,19 +122,19 @@ export declare const syncPushItemResultSchema: z.ZodObject<{
 export type SyncPushItemResult = z.infer<typeof syncPushItemResultSchema>;
 export declare const syncResolveConflictRequestSchema: z.ZodObject<{
     id: z.ZodString;
-    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>;
+    module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>;
     resolution: z.ZodEnum<["keep_local", "keep_server", "manual_merge"]>;
     resolvedData: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
     deviceId: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     resolution: "keep_local" | "keep_server" | "manual_merge";
     deviceId?: string | undefined;
     resolvedData?: Record<string, any> | undefined;
 }, {
     id: string;
-    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+    module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
     resolution: "keep_local" | "keep_server" | "manual_merge";
     deviceId?: string | undefined;
     resolvedData?: Record<string, any> | undefined;
@@ -144,7 +144,7 @@ export declare const syncPushResponseSchema: z.ZodObject<{
     cursor: z.ZodString;
     results: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
-        module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>;
+        module: z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>;
         status: z.ZodEnum<["applied", "conflict", "error"]>;
         error: z.ZodOptional<z.ZodString>;
         conflictData: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
@@ -154,7 +154,7 @@ export declare const syncPushResponseSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         status: "applied" | "conflict" | "error";
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         error?: string | undefined;
         conflictData?: Record<string, any> | undefined;
         serverRecord?: Record<string, any> | undefined;
@@ -163,7 +163,7 @@ export declare const syncPushResponseSchema: z.ZodObject<{
     }, {
         status: "applied" | "conflict" | "error";
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         error?: string | undefined;
         conflictData?: Record<string, any> | undefined;
         serverRecord?: Record<string, any> | undefined;
@@ -175,7 +175,7 @@ export declare const syncPushResponseSchema: z.ZodObject<{
     results: {
         status: "applied" | "conflict" | "error";
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         error?: string | undefined;
         conflictData?: Record<string, any> | undefined;
         serverRecord?: Record<string, any> | undefined;
@@ -187,7 +187,7 @@ export declare const syncPushResponseSchema: z.ZodObject<{
     results: {
         status: "applied" | "conflict" | "error";
         id: string;
-        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions";
+        module: "events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions";
         error?: string | undefined;
         conflictData?: Record<string, any> | undefined;
         serverRecord?: Record<string, any> | undefined;
@@ -221,7 +221,7 @@ export type SyncModuleChanges = z.infer<typeof syncModuleChangesSchema>;
 export declare const syncPullResponseSchema: z.ZodObject<{
     cursor: z.ZodString;
     serverTime: z.ZodString;
-    changes: z.ZodRecord<z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions"]>, z.ZodObject<{
+    changes: z.ZodRecord<z.ZodEnum<["events", "goals", "habits", "habit_check_ins", "notes", "note_folders", "transactions", "budgets", "categories", "note_versions", "subjects", "topics", "flashcards", "focus_sessions"]>, z.ZodObject<{
         upserted: z.ZodArray<z.ZodRecord<z.ZodString, z.ZodAny>, "many">;
         deleted: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
@@ -232,14 +232,14 @@ export declare const syncPullResponseSchema: z.ZodObject<{
         deleted: string[];
     }>>;
 }, "strip", z.ZodTypeAny, {
-    changes: Partial<Record<"events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions", {
+    changes: Partial<Record<"events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions", {
         upserted: Record<string, any>[];
         deleted: string[];
     }>>;
     cursor: string;
     serverTime: string;
 }, {
-    changes: Partial<Record<"events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions", {
+    changes: Partial<Record<"events" | "goals" | "habits" | "habit_check_ins" | "notes" | "note_folders" | "transactions" | "budgets" | "categories" | "note_versions" | "subjects" | "topics" | "flashcards" | "focus_sessions", {
         upserted: Record<string, any>[];
         deleted: string[];
     }>>;

@@ -16,6 +16,10 @@ import { NoteVersion } from "../../models/NoteVersion.js";
 import { Transaction } from "../../models/Transaction.js";
 import { Budget } from "../../models/Budget.js";
 import { Category } from "../../models/Category.js";
+import { Subject } from "../../models/Subject.js";
+import { Topic } from "../../models/Topic.js";
+import { Flashcard } from "../../models/Flashcard.js";
+import { FocusSession } from "../../models/FocusSession.js";
 import { SyncTombstone } from "../../models/SyncTombstone.js";
 import { calculateHabitStats, formatDateString } from "../streak.js";
 import {
@@ -30,7 +34,10 @@ import { logger } from "../../logger.js";
 /**
  * ARCHITECTURAL DESIGN DECISION (SRS §2.5, FR-14.3, NFR-2.5):
  * Habits use keyed dedup because same-day check-ins are semantically equivalent, not conflicting;
- * Finance uses the same surfaced-conflict treatment as Notes despite being rare, because financial data can't be silently discarded.
+ * Finance uses the same surfaced-conflict treatment as Notes despite being rare, because financial data can't be silently discarded;
+ * Subjects/Topics/Flashcards use dedup / field-level merge (similar to Habits/Check-ins) because spaced repetition reviews
+ * are append-only progress events that dedup on review timestamps without requiring blocking conflict UI;
+ * FocusSessions use Last-Write-Wins with non-blocking notice (matching Calendar) as they are short-lived and rarely edited concurrently.
  */
 
 function normalizeValue(v: any): string {
@@ -190,14 +197,18 @@ function prioritizeChanges(changes: SyncPushItem[]): SyncPushItem[] {
   const modulePriority: Record<SyncModule, number> = {
     categories: 1,
     note_folders: 2,
-    habits: 3,
-    goals: 4,
-    notes: 5,
-    events: 6,
-    budgets: 7,
-    transactions: 8,
-    habit_check_ins: 9,
-    note_versions: 10
+    subjects: 3,
+    topics: 4,
+    flashcards: 5,
+    habits: 6,
+    goals: 7,
+    notes: 8,
+    events: 9,
+    budgets: 10,
+    transactions: 11,
+    habit_check_ins: 12,
+    note_versions: 13,
+    focus_sessions: 14
   };
 
   const opPriority: Record<string, number> = {
@@ -960,6 +971,189 @@ async function processSinglePushItem(
       }
       break;
     }
+
+    case "subjects": {
+      if (operation === "delete") {
+        const subject = await Subject.findOneAndDelete({ _id: id, userId: userObjectId });
+        if (subject) {
+          // Cascade delete child topics and flashcards
+          await Topic.deleteMany({ subjectId: id, userId: userObjectId });
+          await Flashcard.deleteMany({ subjectId: id, userId: userObjectId });
+          await recordTombstone(userId, module, id);
+        }
+        return { id, module, status: "applied" };
+      }
+
+      if (operation === "create" || operation === "update") {
+        const name = (data.name || "").trim();
+        if (!name) {
+          return { id, module, status: "error", error: "Subject name is required" };
+        }
+        const color = data.color || "#0075de";
+        const examDate = data.examDate ? new Date(data.examDate) : null;
+
+        const subject = await Subject.findOneAndUpdate(
+          { _id: id, userId: userObjectId },
+          {
+            $set: {
+              userId: userObjectId,
+              name,
+              color,
+              examDate
+            },
+            $setOnInsert: {
+              _id: id
+            }
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        return { id, module, status: "applied", serverRecord: subject.toObject() };
+      }
+      break;
+    }
+
+    case "topics": {
+      if (operation === "delete") {
+        const topic = await Topic.findOneAndDelete({ _id: id, userId: userObjectId });
+        if (topic) {
+          await Flashcard.deleteMany({ topicId: id, userId: userObjectId });
+          await recordTombstone(userId, module, id);
+        }
+        return { id, module, status: "applied" };
+      }
+
+      if (operation === "create" || operation === "update") {
+        const title = (data.title || "").trim();
+        if (!title) {
+          return { id, module, status: "error", error: "Topic title is required" };
+        }
+        if (!data.subjectId) {
+          return { id, module, status: "error", error: "subjectId is required" };
+        }
+
+        const topic = await Topic.findOneAndUpdate(
+          { _id: id, userId: userObjectId },
+          {
+            $set: {
+              userId: userObjectId,
+              subjectId: new Types.ObjectId(data.subjectId),
+              title,
+              deadline: data.deadline ? new Date(data.deadline) : null,
+              priority: data.priority || "medium",
+              status: data.status || "not_started",
+              estimatedMinutes: data.estimatedMinutes != null ? Number(data.estimatedMinutes) : null
+            },
+            $setOnInsert: {
+              _id: id
+            }
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        return { id, module, status: "applied", serverRecord: topic.toObject() };
+      }
+      break;
+    }
+
+    case "flashcards": {
+      if (operation === "delete") {
+        const card = await Flashcard.findOneAndDelete({ _id: id, userId: userObjectId });
+        if (card) {
+          await recordTombstone(userId, module, id);
+        }
+        return { id, module, status: "applied" };
+      }
+
+      if (operation === "create" || operation === "update") {
+        const front = (data.front || "").trim();
+        const back = (data.back || "").trim();
+        if (!front || !back) {
+          return { id, module, status: "error", error: "Front and back text are required" };
+        }
+
+        const cardData = {
+          userId: userObjectId,
+          subjectId: data.subjectId ? new Types.ObjectId(data.subjectId) : null,
+          topicId: data.topicId ? new Types.ObjectId(data.topicId) : null,
+          front,
+          back,
+          easeFactor: data.easeFactor != null ? Number(data.easeFactor) : 2.5,
+          intervalDays: data.intervalDays != null ? Number(data.intervalDays) : 0,
+          repetitions: data.repetitions != null ? Number(data.repetitions) : 0,
+          nextReviewDate: data.nextReviewDate ? new Date(data.nextReviewDate) : new Date()
+        };
+
+        const existing = await Flashcard.findOne({ _id: id, userId: userObjectId });
+        let doc: any;
+        if (existing) {
+          // Dedup / progress-aware update: if concurrent reviews occur, retain the latest/higher repetitions progress
+          if (cardData.repetitions >= (existing.repetitions || 0)) {
+            Object.assign(existing, cardData);
+          } else {
+            // Keep existing SM-2 state if server was ahead, but update content if modified
+            existing.front = cardData.front;
+            existing.back = cardData.back;
+            existing.subjectId = cardData.subjectId;
+            existing.topicId = cardData.topicId;
+          }
+          doc = await existing.save();
+        } else {
+          doc = await Flashcard.create({ _id: id, ...cardData });
+        }
+
+        return { id, module, status: "applied", serverRecord: doc.toObject() };
+      }
+      break;
+    }
+
+    case "focus_sessions": {
+      if (operation === "delete") {
+        const session = await FocusSession.findOneAndDelete({ _id: id, userId: userObjectId });
+        if (session) {
+          await recordTombstone(userId, module, id);
+        }
+        return { id, module, status: "applied" };
+      }
+
+      if (operation === "create" || operation === "update") {
+        const sessionData = {
+          userId: userObjectId,
+          workMinutes: Number(data.workMinutes) || 25,
+          breakMinutes: Number(data.breakMinutes) || 5,
+          longBreakMinutes: Number(data.longBreakMinutes) || 15,
+          longBreakInterval: Number(data.longBreakInterval) || 4,
+          currentCycle: Number(data.currentCycle) || 1,
+          currentPhase: data.currentPhase || "work",
+          linkedType: data.linkedType || "none",
+          linkedId: data.linkedId || null,
+          status: data.status || "active",
+          startedAt: data.startedAt ? new Date(data.startedAt) : new Date(),
+          completedAt: data.completedAt ? new Date(data.completedAt) : null,
+          pausedAt: data.pausedAt ? new Date(data.pausedAt) : null,
+          lastResumedAt: data.lastResumedAt ? new Date(data.lastResumedAt) : null,
+          accumulatedWorkSeconds: Number(data.accumulatedWorkSeconds) || 0,
+          totalFocusMinutes: Number(data.totalFocusMinutes) || 0
+        };
+
+        const existing = await FocusSession.findOne({ _id: id, userId: userObjectId });
+        let doc: any;
+        let conflictNotice: string | undefined;
+
+        if (existing) {
+          const serverUpdatedTime = new Date(existing.updatedAt || 0).getTime();
+          if (lastModifiedAt && serverUpdatedTime > lastModifiedAt) {
+            conflictNotice =
+              "This focus session was updated on another device and your local change was overwritten";
+          }
+          Object.assign(existing, sessionData);
+          doc = await existing.save();
+        } else {
+          doc = await FocusSession.create({ _id: id, ...sessionData });
+        }
+
+        return { id, module, status: "applied", conflictNotice, serverRecord: doc.toObject() };
+      }
+      break;
+    }
   }
 
   return { id, module, status: "applied" };
@@ -1050,7 +1244,11 @@ export async function processSyncPull(
     transactions,
     budgets,
     categories,
-    noteVersions
+    noteVersions,
+    subjects,
+    topics,
+    flashcards,
+    focusSessions
   ] = await Promise.all([
     Event.find(filter()).lean(),
     Goal.find(filter()).lean(),
@@ -1065,7 +1263,11 @@ export async function processSyncPull(
       sinceDate && !isNaN(sinceDate.getTime())
         ? { userId: userObjectId, createdAt: { $gt: sinceDate } }
         : { userId: userObjectId }
-    ).lean()
+    ).lean(),
+    Subject.find(filter()).lean(),
+    Topic.find(filter()).lean(),
+    Flashcard.find(filter()).lean(),
+    FocusSession.find(filter()).lean()
   ]);
 
   // Fetch tombstones since cursor
@@ -1085,7 +1287,11 @@ export async function processSyncPull(
     transactions: [],
     budgets: [],
     categories: [],
-    note_versions: []
+    note_versions: [],
+    subjects: [],
+    topics: [],
+    flashcards: [],
+    focus_sessions: []
   };
 
   for (const t of tombstones) {
@@ -1099,7 +1305,9 @@ export async function processSyncPull(
       ...d,
       _id: d._id.toString(),
       id: d._id.toString(),
-      userId: d.userId.toString()
+      userId: d.userId.toString(),
+      ...(d.subjectId ? { subjectId: d.subjectId.toString() } : {}),
+      ...(d.topicId ? { topicId: d.topicId.toString() } : {})
     }));
 
   const changes: Record<SyncModule, { upserted: any[]; deleted: string[] }> = {
@@ -1124,6 +1332,13 @@ export async function processSyncPull(
     note_versions: {
       upserted: serializeDocs(noteVersions),
       deleted: tombstonesByModule.note_versions
+    },
+    subjects: { upserted: serializeDocs(subjects), deleted: tombstonesByModule.subjects },
+    topics: { upserted: serializeDocs(topics), deleted: tombstonesByModule.topics },
+    flashcards: { upserted: serializeDocs(flashcards), deleted: tombstonesByModule.flashcards },
+    focus_sessions: {
+      upserted: serializeDocs(focusSessions),
+      deleted: tombstonesByModule.focus_sessions
     }
   };
 

@@ -10,7 +10,9 @@ import {
   FileText,
   DollarSign,
   Settings,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  Timer
 } from "lucide-react-native";
 
 import { useAuthStore } from "../store/authStore";
@@ -27,6 +29,8 @@ import { CalendarScreen } from "../screens/main/CalendarScreen";
 import { HabitsGoalsScreen } from "../screens/main/HabitsGoalsScreen";
 import { NotesScreen } from "../screens/main/NotesScreen";
 import { FinanceScreen } from "../screens/main/FinanceScreen";
+import { StudyScreen } from "../screens/main/StudyScreen";
+import { FocusScreen } from "../screens/main/FocusScreen";
 import { ChatScreen } from "../screens/main/ChatScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
 import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScreen";
@@ -109,6 +113,20 @@ function MainTabNavigator() {
           component={HabitsGoalsScreen}
           options={{
             tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size || 20} />
+          }}
+        />
+        <Tab.Screen
+          name="Study"
+          component={StudyScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <GraduationCap color={color} size={size || 20} />
+          }}
+        />
+        <Tab.Screen
+          name="Focus"
+          component={FocusScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Timer color={color} size={size || 20} />
           }}
         />
         <Tab.Screen

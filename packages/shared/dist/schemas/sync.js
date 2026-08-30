@@ -12,7 +12,11 @@ export const syncModules = [
     "transactions",
     "budgets",
     "categories",
-    "note_versions"
+    "note_versions",
+    "subjects",
+    "topics",
+    "flashcards",
+    "focus_sessions"
 ];
 export const syncOperations = ["create", "update", "delete"];
 export const syncPushItemSchema = z.object({

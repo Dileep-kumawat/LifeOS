@@ -25,7 +25,8 @@ import {
   DollarSign,
   FileText,
   Mic,
-  Square
+  Square,
+  GraduationCap
 } from "lucide-react-native";
 import { ThemedText } from "../../components/ui/ThemedText";
 import { ChatMessage } from "../../components/ai/ChatMessage";
@@ -50,6 +51,13 @@ const SUGGESTIONS: PromptSuggestion[] = [
     title: "Review today's schedule",
     subtitle: "Check events, tasks & upcoming meetings",
     prompt: "What are my scheduled events and meetings for today?"
+  },
+  {
+    id: "study_plan",
+    icon: <GraduationCap size={18} color={colors.primary} />,
+    title: "Generate AI study plan",
+    subtitle: "Create syllabus schedule & calendar sessions",
+    prompt: "Generate an AI study plan for my upcoming exam."
   },
   {
     id: "habits",

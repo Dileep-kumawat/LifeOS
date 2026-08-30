@@ -112,22 +112,26 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xs,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.hairline
+    borderBottomColor: colors.hairline,
+    gap: spacing.sm
   },
   headerTextContainer: {
     flex: 1,
-    marginRight: spacing.md
+    minWidth: 0,
+    marginRight: spacing.xs
   },
   closeButton: {
     padding: spacing.xs,
     borderRadius: radius.full,
-    backgroundColor: colors.canvasSoft
+    backgroundColor: colors.canvasSoft,
+    marginTop: 2,
+    flexShrink: 0
   },
   contentScroll: {
     maxHeight: 560

@@ -22,6 +22,8 @@ export interface ScheduledLocalNotification {
 // In-memory registry of scheduled notifications for platform execution / mocking
 let scheduledTriggers: ScheduledLocalNotification[] = [];
 let deliveredNotificationIds = new Set<string>();
+let dndDuringFocusEnabled = false;
+let isFocusSessionActiveState = false;
 
 export const notificationService = {
   /**
@@ -102,11 +104,61 @@ export const notificationService = {
   },
 
   /**
-   * Deduplicate incoming push vs locally-fired notifications.
-   * Returns true if the notification should be displayed, false if suppressed as duplicate.
+   * Configure whether Do Not Disturb is enabled during active focus sessions (FR-8.4)
    */
-  shouldDeliverNotification(notificationId: string, _timestamp: number = Date.now()): boolean {
+  setDndDuringFocus(enabled: boolean): void {
+    dndDuringFocusEnabled = enabled;
+  },
+
+  /**
+   * Get whether Do Not Disturb during focus is currently enabled
+   */
+  isDndDuringFocusEnabled(): boolean {
+    return dndDuringFocusEnabled;
+  },
+
+  /**
+   * Set whether a Pomodoro focus session is currently actively running on the device
+   */
+  setFocusSessionActive(active: boolean): void {
+    isFocusSessionActiveState = active;
+  },
+
+  /**
+   * Get current focus session active state
+   */
+  isFocusSessionActive(): boolean {
+    return isFocusSessionActiveState;
+  },
+
+  /**
+   * Deduplicate incoming push vs locally-fired notifications,
+   * and apply FR-8.4 Do-Not-Disturb suppression during active focus sessions.
+   * Returns true if the notification should be displayed, false if suppressed.
+   */
+  shouldDeliverNotification(
+    notificationId: string,
+    _timestamp: number = Date.now(),
+    options?: { type?: string; isCritical?: boolean }
+  ): boolean {
     if (!notificationId) return true;
+
+    // FR-8.4: Do-Not-Disturb suppression during active Pomodoro session
+    // If DND is enabled and a session is actively running, suppress non-critical notifications
+    // while preserving Pomodoro interval alerts and critical alerts
+    if (dndDuringFocusEnabled && isFocusSessionActiveState) {
+      const type = options?.type || "";
+      const isIntervalAlert =
+        type.includes("focus") ||
+        type.includes("interval") ||
+        type.includes("pomodoro") ||
+        notificationId.includes("interval");
+      const isCritical = options?.isCritical || false;
+
+      if (!isIntervalAlert && !isCritical) {
+        return false; // Suppressed by FR-8.4 Do Not Disturb
+      }
+    }
 
     // Check if duplicate arrived within 5 minutes
     if (deliveredNotificationIds.has(notificationId)) {

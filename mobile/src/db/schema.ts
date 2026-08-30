@@ -156,6 +156,66 @@ export interface LocalNoteVersion extends SyncableEntity {
   createdAt: string;
 }
 
+export interface LocalSubject extends SyncableEntity {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  examDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LocalTopic extends SyncableEntity {
+  id: string;
+  userId: string;
+  subjectId: string;
+  title: string;
+  deadline: string | null;
+  priority: "low" | "medium" | "high";
+  status: "not_started" | "in_progress" | "completed";
+  estimatedMinutes: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LocalFlashcard extends SyncableEntity {
+  id: string;
+  userId: string;
+  subjectId: string | null;
+  topicId: string | null;
+  front: string;
+  back: string;
+  easeFactor: number;
+  intervalDays: number;
+  repetitions: number;
+  nextReviewDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LocalFocusSession extends SyncableEntity {
+  id: string;
+  userId: string;
+  workMinutes: number;
+  breakMinutes: number;
+  longBreakMinutes: number;
+  longBreakInterval: number;
+  currentCycle: number;
+  currentPhase: "work" | "break" | "long_break";
+  linkedType: "task" | "goal" | "topic" | "none";
+  linkedId: string | null;
+  status: "active" | "paused" | "completed" | "abandoned";
+  startedAt: string;
+  completedAt: string | null;
+  pausedAt: string | null;
+  lastResumedAt: string | null;
+  accumulatedWorkSeconds: number;
+  totalFocusMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LocalSyncConflict {
   id: string;
   entityId: string;
@@ -346,6 +406,80 @@ CREATE TABLE IF NOT EXISTS note_versions (
   lastModifiedAt INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_note_versions_note ON note_versions(noteId, versionNumber);
+
+CREATE TABLE IF NOT EXISTS subjects (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  name TEXT NOT NULL,
+  color TEXT NOT NULL DEFAULT '#0075de',
+  examDate TEXT,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  syncStatus TEXT NOT NULL DEFAULT 'synced',
+  lastModifiedAt INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_subjects_user ON subjects(userId, createdAt);
+
+CREATE TABLE IF NOT EXISTS topics (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  subjectId TEXT NOT NULL,
+  title TEXT NOT NULL,
+  deadline TEXT,
+  priority TEXT NOT NULL DEFAULT 'medium',
+  status TEXT NOT NULL DEFAULT 'not_started',
+  estimatedMinutes INTEGER,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  syncStatus TEXT NOT NULL DEFAULT 'synced',
+  lastModifiedAt INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_topics_user_subject ON topics(userId, subjectId, createdAt);
+
+CREATE TABLE IF NOT EXISTS flashcards (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  subjectId TEXT,
+  topicId TEXT,
+  front TEXT NOT NULL,
+  back TEXT NOT NULL,
+  easeFactor REAL NOT NULL DEFAULT 2.5,
+  intervalDays INTEGER NOT NULL DEFAULT 0,
+  repetitions INTEGER NOT NULL DEFAULT 0,
+  nextReviewDate TEXT NOT NULL,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  syncStatus TEXT NOT NULL DEFAULT 'synced',
+  lastModifiedAt INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_flashcards_user_review ON flashcards(userId, nextReviewDate);
+CREATE INDEX IF NOT EXISTS idx_flashcards_user_topic ON flashcards(userId, topicId);
+
+CREATE TABLE IF NOT EXISTS focus_sessions (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  workMinutes INTEGER NOT NULL DEFAULT 25,
+  breakMinutes INTEGER NOT NULL DEFAULT 5,
+  longBreakMinutes INTEGER NOT NULL DEFAULT 15,
+  longBreakInterval INTEGER NOT NULL DEFAULT 4,
+  currentCycle INTEGER NOT NULL DEFAULT 1,
+  currentPhase TEXT NOT NULL DEFAULT 'work',
+  linkedType TEXT NOT NULL DEFAULT 'none',
+  linkedId TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  startedAt TEXT NOT NULL,
+  completedAt TEXT,
+  pausedAt TEXT,
+  lastResumedAt TEXT,
+  accumulatedWorkSeconds INTEGER NOT NULL DEFAULT 0,
+  totalFocusMinutes INTEGER NOT NULL DEFAULT 0,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  syncStatus TEXT NOT NULL DEFAULT 'synced',
+  lastModifiedAt INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_status ON focus_sessions(userId, status);
+CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_started ON focus_sessions(userId, startedAt);
 
 CREATE TABLE IF NOT EXISTS sync_conflicts (
   id TEXT PRIMARY KEY,

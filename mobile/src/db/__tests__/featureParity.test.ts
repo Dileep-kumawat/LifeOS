@@ -190,4 +190,109 @@ describe("Phase 1–4 Feature Parity Test Suite: SQLite Local Repositories", () 
     expect(foodBudget?.currentSpend).toBe(250);
     expect(foodBudget?.notifiedOverspend).toBe(1); // Overspend detected!
   });
+
+  it("6. Study Planner: creates Subject, Topic, Flashcard and reviews with SM-2 algorithm", async () => {
+    const { subjectRepo } = await import("../repositories/subjectRepo");
+    const { topicRepo } = await import("../repositories/topicRepo");
+    const { flashcardRepo } = await import("../repositories/flashcardRepo");
+
+    const subject = await subjectRepo.createSubject({
+      userId,
+      name: "Computer Science",
+      color: "#0075de",
+      examDate: "2026-10-15T09:00:00.000Z"
+    });
+    expect(subject.id).toBeDefined();
+    expect(subject.name).toBe("Computer Science");
+    expect(subject.syncStatus).toBe("pending");
+
+    const topic = await topicRepo.createTopic({
+      userId,
+      subjectId: subject.id,
+      title: "Binary Search Trees",
+      deadline: "2026-09-01T00:00:00.000Z",
+      priority: "high",
+      status: "in_progress",
+      estimatedMinutes: 60
+    });
+    expect(topic.id).toBeDefined();
+    expect(topic.subjectId).toBe(subject.id);
+    expect(topic.priority).toBe("high");
+
+    const flashcard = await flashcardRepo.createFlashcard({
+      userId,
+      subjectId: subject.id,
+      topicId: topic.id,
+      front: "What is the average lookup time in a balanced BST?",
+      back: "O(log N)",
+      easeFactor: 2.5,
+      intervalDays: 0,
+      repetitions: 0,
+      nextReviewDate: "2026-08-30T00:00:00.000Z"
+    });
+    expect(flashcard.id).toBeDefined();
+    expect(flashcard.easeFactor).toBe(2.5);
+
+    // Query due flashcards
+    const due = await flashcardRepo.getDueFlashcards(userId, new Date("2026-08-30T12:00:00.000Z"));
+    expect(due.length).toBe(1);
+    expect(due[0].id).toBe(flashcard.id);
+
+    // Process SM-2 review with quality 4 (Good)
+    const reviewed = await flashcardRepo.reviewFlashcard(flashcard.id, 4, new Date("2026-08-30T12:00:00.000Z"));
+    expect(reviewed).not.toBeNull();
+    expect(reviewed!.repetitions).toBe(1);
+    expect(reviewed!.intervalDays).toBe(1);
+    expect(reviewed!.syncStatus).toBe("pending");
+
+    // Second review with quality 5 (Easy)
+    const reviewed2 = await flashcardRepo.reviewFlashcard(flashcard.id, 5, new Date("2026-08-31T12:00:00.000Z"));
+    expect(reviewed2!.repetitions).toBe(2);
+    expect(reviewed2!.intervalDays).toBe(6);
+  });
+
+  it("7. Pomodoro Focus: tracks active session, pause, resume, interval transition, and completion", async () => {
+    const { focusRepo } = await import("../repositories/focusRepo");
+
+    const session = await focusRepo.startSession({
+      userId,
+      workMinutes: 25,
+      breakMinutes: 5,
+      longBreakMinutes: 15,
+      longBreakInterval: 4,
+      linkedType: "topic",
+      linkedId: "topic-123"
+    });
+
+    expect(session.id).toBeDefined();
+    expect(session.status).toBe("active");
+    expect(session.currentPhase).toBe("work");
+    expect(session.currentCycle).toBe(1);
+    expect(session.syncStatus).toBe("pending");
+
+    // Pause session
+    const paused = await focusRepo.pauseSession(session.id);
+    expect(paused?.status).toBe("paused");
+    expect(paused?.pausedAt).toBeDefined();
+
+    // Resume session
+    const resumed = await focusRepo.resumeSession(session.id);
+    expect(resumed?.status).toBe("active");
+    expect(resumed?.lastResumedAt).toBeDefined();
+
+    // Complete interval (work -> break)
+    const breakPhase = await focusRepo.intervalComplete(session.id, "work");
+    expect(breakPhase?.currentPhase).toBe("break");
+    expect(breakPhase?.currentCycle).toBe(1);
+
+    // Complete interval (break -> work, cycle becomes 2)
+    const nextWorkPhase = await focusRepo.intervalComplete(session.id, "break");
+    expect(nextWorkPhase?.currentPhase).toBe("work");
+    expect(nextWorkPhase?.currentCycle).toBe(2);
+
+    // Complete session
+    const completed = await focusRepo.completeSession(session.id);
+    expect(completed?.status).toBe("completed");
+    expect(completed?.completedAt).toBeDefined();
+  });
 });

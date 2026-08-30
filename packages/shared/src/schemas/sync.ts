@@ -13,7 +13,11 @@ export const syncModules = [
   "transactions",
   "budgets",
   "categories",
-  "note_versions"
+  "note_versions",
+  "subjects",
+  "topics",
+  "flashcards",
+  "focus_sessions"
 ] as const;
 
 export type SyncModule = (typeof syncModules)[number];

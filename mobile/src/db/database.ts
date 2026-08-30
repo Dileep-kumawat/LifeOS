@@ -86,14 +86,38 @@ class InMemoryDatabaseAdapter implements DatabaseAdapter {
       return { lastInsertRowId: 0, changes: 0 };
     }
 
-    const deleteMatch = sql.match(/DELETE FROM (\w+) WHERE id = \?/i);
+    const deleteMatch = sql.match(/DELETE FROM (\w+)(?:\s+WHERE\s+([^;]+))?/i);
     if (deleteMatch) {
       const tableName = deleteMatch[1];
-      const id = params[0];
+      const whereClause = deleteMatch[2] ? deleteMatch[2].trim() : "";
       const table = this.tables.get(tableName);
-      if (table && table.has(id)) {
-        table.delete(id);
-        return { lastInsertRowId: 0, changes: 1 };
+      if (table) {
+        if (!whereClause) {
+          table.clear();
+          return { lastInsertRowId: 0, changes: 1 };
+        }
+        let paramIdx = 0;
+        const keysToDelete: string[] = [];
+        for (const [key, item] of table.entries()) {
+          let match = true;
+          if (whereClause.includes("id = ?") && item.id !== params[paramIdx]) {
+            match = false;
+          }
+          if (whereClause.includes("subjectId = ?") && item.subjectId !== params[paramIdx]) {
+            match = false;
+          }
+          if (whereClause.includes("topicId = ?") && item.topicId !== params[paramIdx]) {
+            match = false;
+          }
+          if (whereClause.includes("userId = ?") && item.userId !== params[paramIdx]) {
+            match = false;
+          }
+          if (match) {
+            keysToDelete.push(key);
+          }
+        }
+        keysToDelete.forEach((k) => table.delete(k));
+        return { lastInsertRowId: 0, changes: keysToDelete.length };
       }
     }
 
@@ -145,6 +169,30 @@ class InMemoryDatabaseAdapter implements DatabaseAdapter {
       if (whereClause.includes("habitId = ?")) {
         const habitVal = params[paramIdx++];
         items = items.filter((item: any) => item.habitId === habitVal);
+      }
+      if (whereClause.includes("subjectId = ?")) {
+        const subjectVal = params[paramIdx++];
+        items = items.filter((item: any) => item.subjectId === subjectVal);
+      }
+      if (whereClause.includes("topicId = ?")) {
+        const topicVal = params[paramIdx++];
+        items = items.filter((item: any) => item.topicId === topicVal);
+      }
+      if (whereClause.includes("status = ?")) {
+        const statusVal = params[paramIdx++];
+        items = items.filter((item: any) => item.status === statusVal);
+      }
+      if (whereClause.includes("linkedType = ?")) {
+        const linkedTypeVal = params[paramIdx++];
+        items = items.filter((item: any) => item.linkedType === linkedTypeVal);
+      }
+      if (whereClause.includes("linkedId = ?")) {
+        const linkedIdVal = params[paramIdx++];
+        items = items.filter((item: any) => item.linkedId === linkedIdVal);
+      }
+      if (whereClause.includes("nextReviewDate <= ?")) {
+        const maxReviewDate = params[paramIdx++];
+        items = items.filter((item: any) => !item.nextReviewDate || item.nextReviewDate <= maxReviewDate);
       }
     }
 

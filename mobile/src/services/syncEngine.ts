@@ -12,6 +12,9 @@ import type { SyncModule, SyncPushItem, SyncPushResponse, SyncPullResponse } fro
 const SYNC_TABLES: Array<{ tableName: string; module: SyncModule }> = [
   { tableName: "note_folders", module: "note_folders" },
   { tableName: "categories", module: "categories" },
+  { tableName: "subjects", module: "subjects" },
+  { tableName: "topics", module: "topics" },
+  { tableName: "flashcards", module: "flashcards" },
   { tableName: "habits", module: "habits" },
   { tableName: "goals", module: "goals" },
   { tableName: "notes", module: "notes" },
@@ -19,7 +22,8 @@ const SYNC_TABLES: Array<{ tableName: string; module: SyncModule }> = [
   { tableName: "budgets", module: "budgets" },
   { tableName: "transactions", module: "transactions" },
   { tableName: "habit_check_ins", module: "habit_check_ins" },
-  { tableName: "note_versions", module: "note_versions" }
+  { tableName: "note_versions", module: "note_versions" },
+  { tableName: "focus_sessions", module: "focus_sessions" }
 ];
 
 const LAST_SYNC_CURSOR_KEY = "lifeos_last_sync_cursor";
