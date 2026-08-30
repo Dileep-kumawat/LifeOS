@@ -7,7 +7,8 @@ import {
   Clock3,
   Edit2,
   Trash2,
-  Timer
+  Timer,
+  Info
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { getDeadlineProximity } from "./SubjectCard";
@@ -21,6 +22,7 @@ export interface TopicCardProps {
   status?: "not_started" | "in_progress" | "completed";
   estimatedMinutes?: number | null;
   onStatusChange?: (id: string, status: "not_started" | "in_progress" | "completed") => void;
+  onViewDetails?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
@@ -39,6 +41,7 @@ export const TopicCard: React.FC<TopicCardProps> = ({
   status = "not_started",
   estimatedMinutes,
   onStatusChange,
+  onViewDetails,
   onEdit,
   onDelete
 }) => {
@@ -80,8 +83,10 @@ export const TopicCard: React.FC<TopicCardProps> = ({
 
         <div className="min-w-0">
           <h4
+            onClick={() => onViewDetails && onViewDetails(id)}
             className={cn(
               "text-sm font-semibold text-[#000000] leading-snug break-words",
+              onViewDetails && "cursor-pointer hover:text-[#0075de] transition-colors",
               status === "completed" && "line-through text-[#615d59]"
             )}
           >
@@ -135,6 +140,17 @@ export const TopicCard: React.FC<TopicCardProps> = ({
 
       {/* Right: Actions */}
       <div className="flex items-center justify-end gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#e6e6e6]/60">
+        {onViewDetails && (
+          <button
+            type="button"
+            onClick={() => onViewDetails(id)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4] rounded-lg transition-colors"
+            title="View topic details, study plan, focus time, and flashcards"
+          >
+            <Info className="size-3.5" />
+            <span>Details</span>
+          </button>
+        )}
         <a
           href={`/focus?linkedType=topic&linkedId=${id}&linkedTitle=${encodeURIComponent(title)}`}
           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0075de] hover:bg-[#0075de]/10 rounded-lg transition-colors mr-1"
@@ -169,3 +185,4 @@ export const TopicCard: React.FC<TopicCardProps> = ({
     </div>
   );
 };
+

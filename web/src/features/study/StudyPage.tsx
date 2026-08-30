@@ -17,10 +17,20 @@ import { SubjectCard } from "./components/SubjectCard";
 import { SubjectModal } from "./components/SubjectModal";
 import { TopicCard } from "./components/TopicCard";
 import { TopicModal } from "./components/TopicModal";
+import { TopicDetailModal, type TopicDetailData } from "./components/TopicDetailModal";
 import { FlashcardForm } from "./components/FlashcardForm";
 import { DailyReviewQueueScreen } from "./components/DailyReviewQueueScreen";
 import { cn } from "../../lib/utils";
-import type { CreateSubjectInput, CreateTopicInput, CreateFlashcardInput } from "@lifeos/shared";
+import type {
+  CreateSubjectInput,
+  CreateTopicInput,
+  CreateFlashcardInput,
+  TopicFocusTime,
+  FocusSession,
+  TopicPlanEvent,
+  TopicFlashcardStats
+} from "@lifeos/shared";
+
 
 interface SubjectItem {
   id: string;
@@ -70,10 +80,30 @@ export function StudyPage() {
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<TopicItem | null>(null);
 
+  // Topic Detail Modal State
+  const [selectedDetailTopicId, setSelectedDetailTopicId] = useState<string | null>(null);
+
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [editingFlashcard, setEditingFlashcard] = useState<FlashcardItem | null>(null);
 
   // ─── Data Queries ─────────────────────────────────────────────────────────
+
+  const { data: topicDetailRaw } = useQuery<{
+    topic: TopicItem;
+    flashcards: FlashcardItem[];
+    focusTime: TopicFocusTime;
+    focusSessions: FocusSession[];
+    planEvents: TopicPlanEvent[];
+    flashcardStats: TopicFlashcardStats;
+  }>({
+    queryKey: ["study", "topic-detail", selectedDetailTopicId],
+    queryFn: async () => {
+      if (!selectedDetailTopicId) return null as any;
+      const res = await apiClient.get(`/study/topics/${selectedDetailTopicId}`);
+      return res.data;
+    },
+    enabled: Boolean(selectedDetailTopicId)
+  });
 
   const { data: subjectsData, isLoading: isSubjectsLoading } = useQuery<{
     subjects: SubjectItem[];
@@ -84,6 +114,7 @@ export function StudyPage() {
       return res.data;
     }
   });
+
 
   const subjects = subjectsData?.subjects || [];
 
@@ -128,11 +159,31 @@ export function StudyPage() {
   // Subjects & Topics Mapping for lookup
   const subjectsMap = React.useMemo(() => {
     const map: Record<string, { name: string; color?: string }> = {};
-    subjects.forEach((s) => {
+    for (const s of subjects) {
       map[s.id] = { name: s.name, color: s.color };
-    });
+    }
     return map;
   }, [subjects]);
+
+  const topicDetailModalData: TopicDetailData | null = React.useMemo(() => {
+    if (!topicDetailRaw?.topic) return null;
+    return {
+      id: topicDetailRaw.topic.id,
+      subjectId: topicDetailRaw.topic.subjectId,
+      subjectName: subjectsMap[topicDetailRaw.topic.subjectId]?.name,
+      subjectColor: subjectsMap[topicDetailRaw.topic.subjectId]?.color,
+      title: topicDetailRaw.topic.title,
+      deadline: topicDetailRaw.topic.deadline,
+      priority: topicDetailRaw.topic.priority,
+      status: topicDetailRaw.topic.status,
+      estimatedMinutes: topicDetailRaw.topic.estimatedMinutes,
+      focusTime: topicDetailRaw.focusTime,
+      focusSessions: topicDetailRaw.focusSessions,
+      planEvents: topicDetailRaw.planEvents,
+      flashcardStats: topicDetailRaw.flashcardStats
+    };
+  }, [topicDetailRaw, subjectsMap]);
+
 
   const topicsMap = React.useMemo(() => {
     const map: Record<string, { title: string }> = {};
@@ -547,6 +598,7 @@ export function StudyPage() {
                     onStatusChange={(id, status) => {
                       updateTopicMutation.mutate({ id, data: { status } });
                     }}
+                    onViewDetails={(id) => setSelectedDetailTopicId(id)}
                     onEdit={(id) => {
                       const found = topics.find((t) => t.id === id);
                       if (found) {
@@ -560,6 +612,7 @@ export function StudyPage() {
                       }
                     }}
                   />
+
                 ))}
               </div>
             )}
@@ -762,6 +815,22 @@ export function StudyPage() {
           </div>
         </div>
       )}
+
+      {/* Topic Detail View Modal (FR-7.4) */}
+      <TopicDetailModal
+        isOpen={Boolean(selectedDetailTopicId)}
+        onClose={() => setSelectedDetailTopicId(null)}
+        topic={topicDetailModalData}
+        onStartFocus={(topicId, title) => {
+          setSelectedDetailTopicId(null);
+          navigate(`/focus?linkedType=topic&linkedId=${topicId}&linkedTitle=${encodeURIComponent(title)}`);
+        }}
+        onStartReview={() => {
+          setSelectedDetailTopicId(null);
+          setActiveTab("review");
+        }}
+      />
     </div>
   );
 }
+

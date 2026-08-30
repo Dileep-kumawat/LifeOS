@@ -4,8 +4,10 @@ import {
   createFocusSessionSchema,
   focusSessionParamsSchema,
   listFocusSessionsQuerySchema,
+  focusSummaryQuerySchema,
   intervalCompleteSchema,
-  type FocusPhase
+  type FocusPhase,
+  type FocusLinkedType
 } from "@lifeos/shared";
 import { FocusSession, type FocusSessionDoc } from "../models/FocusSession.js";
 import { User } from "../models/User.js";
@@ -44,6 +46,299 @@ function formatFocusSession(doc: any) {
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt ?? new Date().toISOString())
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FOCUS SESSIONS REST API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @openapi
+ * /focus/summary:
+ *   get:
+ *     tags: [Focus]
+ *     summary: Aggregated focus time summary and trend (FR-7.4, FR-8.3)
+ *     description: |
+ *       Returns aggregate focus minutes, completion metrics, and category breakdown by linked item type
+ *       (Topic vs. Goal vs. Task vs. Unlinked), accompanied by a sequential time-series trend dataset.
+ *       
+ *       **API Convention Note (borrowed from Phase 4 Finance):**
+ *       Reuses the `month`, `months`, `range`, and `startDate`/`endDate` query parameter conventions established
+ *       in Phase 4's Finance summary endpoints.
+ *       
+ *       **Downstream Analytics Integration (Phase 9):**
+ *       This endpoint provides high-performance MongoDB server-side aggregation pipelines specifically structured
+ *       to feed the unified Phase 9 cross-domain LifeOS analytics and productivity dashboard.
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         schema: { type: string, enum: [day, week, month] }
+ *         description: Preset range ("day" = today, "week" = past 7 days, "month" = current calendar month)
+ *       - in: query
+ *         name: month
+ *         schema: { type: string, example: "2026-08" }
+ *         description: Target month in YYYY-MM format (overrides range preset)
+ *       - in: query
+ *         name: months
+ *         schema: { type: integer, default: 6, minimum: 1, maximum: 24 }
+ *         description: Number of months to include for multi-month trend analysis
+ *       - in: query
+ *         name: startDate
+ *         schema: { type: string, format: date-time }
+ *         description: Explicit ISO start timestamp boundary
+ *       - in: query
+ *         name: endDate
+ *         schema: { type: string, format: date-time }
+ *         description: Explicit ISO end timestamp boundary
+ *     responses:
+ *       200:
+ *         description: Aggregated focus summary and trend data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 period:
+ *                   type: object
+ *                   properties:
+ *                     range: { type: string, enum: [day, week, month] }
+ *                     startDate: { type: string, format: date-time }
+ *                     endDate: { type: string, format: date-time }
+ *                     label: { type: string, example: "Last 7 Days" }
+ *                 totalFocusMinutes: { type: number, example: 320 }
+ *                 totalSessionsCount: { type: integer, example: 14 }
+ *                 completedSessionsCount: { type: integer, example: 11 }
+ *                 abandonedSessionsCount: { type: integer, example: 3 }
+ *                 activeSessionsCount: { type: integer, example: 0 }
+ *                 averageSessionMinutes: { type: number, example: 22.8 }
+ *                 linkedTypeBreakdown:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       linkedType: { type: string, enum: [topic, goal, task, none] }
+ *                       totalMinutes: { type: number, example: 180 }
+ *                       count: { type: integer, example: 7 }
+ *                       percentage: { type: number, example: 56 }
+ *                 trend:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       date: { type: string, example: "2026-08-28" }
+ *                       totalMinutes: { type: number, example: 50 }
+ *                       count: { type: integer, example: 2 }
+ *                       completedCount: { type: integer, example: 2 }
+ *                       abandonedCount: { type: integer, example: 0 }
+ *       401:
+ *         description: Authentication required
+ */
+focusRouter.get(
+  "/focus/summary",
+  validate(focusSummaryQuerySchema, "query"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id;
+      const { range, month, startDate, endDate } = req.query as any;
+
+
+      const now = new Date();
+      let startBound: Date;
+      let endBound: Date;
+      let periodLabel = "Last 7 Days";
+      let effectiveRange: "day" | "week" | "month" | undefined = range;
+
+      if (startDate && endDate) {
+        startBound = new Date(startDate);
+        endBound = new Date(endDate);
+        periodLabel = `${startBound.toISOString().split("T")[0]} to ${endBound.toISOString().split("T")[0]}`;
+        effectiveRange = undefined;
+      } else if (month) {
+        const [y, m] = month.split("-").map(Number);
+        const targetYear = y;
+        const targetMonth = m - 1; // 0-indexed
+        startBound = new Date(Date.UTC(targetYear, targetMonth, 1, 0, 0, 0, 0));
+        endBound = new Date(Date.UTC(targetYear, targetMonth + 1, 0, 23, 59, 59, 999));
+        periodLabel = month;
+        effectiveRange = "month";
+      } else if (range === "day") {
+        startBound = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+        endBound = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+        periodLabel = "Today";
+        effectiveRange = "day";
+      } else if (range === "month") {
+        startBound = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+        endBound = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+        periodLabel = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+        effectiveRange = "month";
+      } else {
+        // Default: Past 7 days (including today)
+        effectiveRange = "week";
+        periodLabel = "Last 7 Days";
+        endBound = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+        const past7 = new Date(endBound);
+        past7.setUTCDate(past7.getUTCDate() - 6);
+        startBound = new Date(Date.UTC(past7.getUTCFullYear(), past7.getUTCMonth(), past7.getUTCDate(), 0, 0, 0, 0));
+      }
+
+      const overallMatch = {
+        userId,
+        startedAt: { $gte: startBound, $lte: endBound }
+      };
+
+      // 1. Aggregation for overall totals and status counts
+      const statsAggregation = await FocusSession.aggregate([
+        { $match: overallMatch },
+        {
+          $group: {
+            _id: null,
+            totalFocusMinutes: { $sum: "$totalFocusMinutes" },
+            totalSessionsCount: { $sum: 1 },
+            completedSessionsCount: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+            },
+            abandonedSessionsCount: {
+              $sum: { $cond: [{ $eq: ["$status", "abandoned"] }, 1, 0] }
+            },
+            activeSessionsCount: {
+              $sum: { $cond: [{ $in: ["$status", ["active", "paused"]] }, 1, 0] }
+            }
+          }
+        }
+      ]);
+
+      const stats = statsAggregation[0] || {
+        totalFocusMinutes: 0,
+        totalSessionsCount: 0,
+        completedSessionsCount: 0,
+        abandonedSessionsCount: 0,
+        activeSessionsCount: 0
+      };
+
+      const totalFocusMinutes = stats.totalFocusMinutes || 0;
+      const totalSessionsCount = stats.totalSessionsCount || 0;
+      const averageSessionMinutes =
+        totalSessionsCount > 0 ? Number((totalFocusMinutes / totalSessionsCount).toFixed(1)) : 0;
+
+      // 2. Aggregation for linkedType breakdown
+      const linkedTypeAggregation = await FocusSession.aggregate([
+        { $match: overallMatch },
+        {
+          $group: {
+            _id: "$linkedType",
+            totalMinutes: { $sum: "$totalFocusMinutes" },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { totalMinutes: -1 } }
+      ]);
+
+      const allLinkedTypes: FocusLinkedType[] = ["topic", "goal", "task", "none"];
+      const linkedMap = new Map<FocusLinkedType, { totalMinutes: number; count: number }>();
+      for (const t of allLinkedTypes) {
+        linkedMap.set(t, { totalMinutes: 0, count: 0 });
+      }
+
+      for (const item of linkedTypeAggregation) {
+        const t = item._id as FocusLinkedType;
+        if (linkedMap.has(t)) {
+          linkedMap.set(t, {
+            totalMinutes: item.totalMinutes,
+            count: item.count
+          });
+        }
+      }
+
+      const linkedTypeBreakdown = Array.from(linkedMap.entries()).map(([linkedType, val]) => ({
+        linkedType,
+        totalMinutes: val.totalMinutes,
+        count: val.count,
+        percentage: totalFocusMinutes > 0 ? Math.round((val.totalMinutes / totalFocusMinutes) * 100) : 0
+      }));
+
+      // 3. Aggregation for daily trend with zero-filling
+      const trendAggregation = await FocusSession.aggregate([
+        { $match: overallMatch },
+        {
+          $group: {
+            _id: {
+              dateKey: { $dateToString: { format: "%Y-%m-%d", date: "$startedAt" } }
+            },
+            totalMinutes: { $sum: "$totalFocusMinutes" },
+            count: { $sum: 1 },
+            completedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+            },
+            abandonedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "abandoned"] }, 1, 0] }
+            }
+          }
+        },
+        { $sort: { "_id.dateKey": 1 } }
+      ]);
+
+      const trendMap = new Map<
+        string,
+        { totalMinutes: number; count: number; completedCount: number; abandonedCount: number }
+      >();
+
+      // Generate sequential date keys across the entire interval
+      const cursor = new Date(startBound);
+      while (cursor <= endBound) {
+        const dateKey = cursor.toISOString().split("T")[0];
+        trendMap.set(dateKey, {
+          totalMinutes: 0,
+          count: 0,
+          completedCount: 0,
+          abandonedCount: 0
+        });
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+      }
+
+      for (const item of trendAggregation) {
+        const key = item._id.dateKey;
+        if (trendMap.has(key)) {
+          trendMap.set(key, {
+            totalMinutes: item.totalMinutes,
+            count: item.count,
+            completedCount: item.completedCount,
+            abandonedCount: item.abandonedCount
+          });
+        }
+      }
+
+      const trend = Array.from(trendMap.entries()).map(([date, vals]) => ({
+        date,
+        totalMinutes: vals.totalMinutes,
+        count: vals.count,
+        completedCount: vals.completedCount,
+        abandonedCount: vals.abandonedCount
+      }));
+
+      return res.status(200).json({
+        period: {
+          range: effectiveRange,
+          startDate: startBound.toISOString(),
+          endDate: endBound.toISOString(),
+          label: periodLabel
+        },
+        totalFocusMinutes,
+        totalSessionsCount,
+        completedSessionsCount: stats.completedSessionsCount || 0,
+        abandonedSessionsCount: stats.abandonedSessionsCount || 0,
+        activeSessionsCount: stats.activeSessionsCount || 0,
+        averageSessionMinutes,
+        linkedTypeBreakdown,
+        trend
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: err.message || "Failed to generate focus summary"
+      });
+    }
+  }
+);
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FOCUS SESSIONS REST API

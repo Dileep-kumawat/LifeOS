@@ -105,12 +105,16 @@ LifeOS/
 - `/api/v1/notes` - CRUD notes & folders, version history, search, tag filters.
 - `/api/v1/study/subjects` - CRUD subjects with cascade deletion of topics & flashcards.
 - `/api/v1/study/topics` - CRUD syllabus topics, filter by subject, status, due-soon.
+- `/api/v1/study/topics/:id` - Enriched topic view combining metadata, flashcards, focus time aggregates, recent focus sessions, and calendar plan events.
+- `/api/v1/study/topics/:id/focus-time` - Real-time focus time aggregation querying `FocusSession` collection strictly for that topic (FR-7.4).
 - `/api/v1/study/flashcards` - CRUD flashcards, filter by topic/subject.
 - `/api/v1/study/flashcards/due` - Spaced repetition daily review queue (`nextReviewDate <= now`).
 - `/api/v1/study/flashcards/:id/review` - SM-2 self-assessment review (0–5 rating).
 - `/api/v1/focus/sessions` - CRUD focus sessions, pause, resume, complete, abandon, interval-complete.
 - `/api/v1/focus/sessions/active` - Retrieve caller's currently running/paused focus session.
+- `/api/v1/focus/summary` - Aggregated focus time summary, polymorphic `linkedType` breakdown, and sequential trend time-series (FR-7.4, FR-8.3, feeds Phase 9 analytics).
 - `/api/v1/notifications` - Alert feed, push subscriptions (VAPID/Expo push).
+
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
 - `/api/v1/ai/chat` - AI assistant conversational interface (RAG enabled).
 - `/api/v1/ai/summary` - Automated daily & weekly life performance summaries.
@@ -243,6 +247,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
 - [Finance OCR Integration]: Implemented FR-6.2/UC-3 photographed receipt to structured transaction pre-fill — added heuristic receipt parser in @lifeos/shared, Web ReceiptPreviewCard & ReceiptScanModal (with 4 states), Mobile MobileReceiptPreviewCard & ReceiptScanModal, extended TransactionForm/TransactionFormModal with prefill & confidence cues, Storybook stories, and integration test suites.
 - [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
+- [Focus & Study Planner Aggregation Layer (FR-7.4, FR-8.3)]: Implemented multi-stage MongoDB aggregations for focus summaries, polymorphic entity breakdowns, and sequential time-series trends; enriched topic detail view unifying accumulated focus time, scheduled AI plan events, and SM-2 flashcard deck metrics without redundant counters on Topic models.
 - [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
 - [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
 - [DashboardScreen]: Added `flexWrap` and `gap` to `DailySummaryCard` badges/items — fixed scheduled item layout overflow on narrow device widths.
@@ -258,7 +263,14 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
 
+- **Focus Time Aggregations & Downstream Analytics Protocol (FR-7.4, FR-8.3)**:
+  - Aggregations (`GET /api/v1/focus/summary`) reuse Finance Phase 4 conventions (`range=day|week|month`, `month=YYYY-MM`, `startDate`, `endDate`) and compute server-side MongoDB aggregations across `FocusSession` documents (`$group` on `linkedType`, sum on `$totalFocusMinutes`, count on status).
+  - Time-series trend generation fills sequential zero-minute dates across the entire selected date boundary `[startBound, endBound]` so frontend charts and Phase 9 downstream analytics consumers receive contiguous, gap-free data series without client-side imputation.
+  - Polymorphic focus linkage (`linkedType: "topic" | "goal" | "task" | "none"` and string `linkedId`) is kept isolated; topic-specific focus time (`GET /api/v1/study/topics/:id/focus-time`) runs pure aggregations over `FocusSession` at read time without duplicate or denormalized counter fields on the `Topic` model.
+  - Enriched Topic detail view (`GET /api/v1/study/topics/:id`) queries `Flashcard`, `FocusSession`, and `Event` (via `linkedTopicId`) in parallel (`Promise.all`), surfacing AI study plan events alongside actual logged focus sessions and flashcard review queues in a unified view (`TopicDetailModal`).
+
 - **Pomodoro Focus Timer & Time Tracking Semantics (FR-8.1, FR-8.2, FR-8.4)**:
+
   - `accumulatedWorkSeconds` tracks raw seconds spent strictly in the `"work"` phase. When active in work phase, active elapsed duration is `(now - lastResumedAt) / 1000`. Pausing a session commits pending work time and clears `lastResumedAt` to `null`; resuming sets `lastResumedAt = new Date()`. Paused durations and break intervals are strictly excluded from `totalFocusMinutes`.
   - Abandoning a session early preserves partial accumulated focus time and records `completedAt = new Date()`, ensuring accurate historical productivity accounting without data loss.
   - Standard Pomodoro progression follows 25m work / 5m break cycles, switching to a 15m `long_break` on every 4th cycle. Break completions transition back to `"work"` on cycle `N + 1`.

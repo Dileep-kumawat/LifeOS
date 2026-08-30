@@ -104,3 +104,70 @@ export const focusSessionSchema = z.object({
   updatedAt: z.string()
 });
 export type FocusSession = z.infer<typeof focusSessionSchema>;
+
+/**
+ * Query schema for focus time aggregation summary (FR-7.4, FR-8.3).
+ * Reuses Finance Phase 4's summary & trend query param convention.
+ */
+export const focusSummaryQuerySchema = z.object({
+  /** Presets: "day", "week", "month" */
+  range: z.enum(["day", "week", "month"]).optional(),
+  /** Specific month in YYYY-MM format */
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Invalid month format (YYYY-MM)")
+    .optional(),
+  /** Number of months for multi-month trend analysis (default: 6) */
+  months: z.coerce.number().int().min(1).max(24).optional(),
+  /** Explicit ISO start date/time override */
+  startDate: z.string().optional(),
+  /** Explicit ISO end date/time override */
+  endDate: z.string().optional()
+});
+export type FocusSummaryQuery = z.input<typeof focusSummaryQuerySchema>;
+
+
+/**
+ * Breakdown of focus time categorized by linked entity type.
+ */
+export const focusLinkedTypeBreakdownItemSchema = z.object({
+  linkedType: focusLinkedTypeSchema,
+  totalMinutes: z.number(),
+  count: z.number(),
+  percentage: z.number()
+});
+export type FocusLinkedTypeBreakdownItem = z.infer<typeof focusLinkedTypeBreakdownItemSchema>;
+
+/**
+ * Time series trend item for focus duration charts.
+ */
+export const focusTrendItemSchema = z.object({
+  date: z.string(),
+  totalMinutes: z.number(),
+  count: z.number(),
+  completedCount: z.number(),
+  abandonedCount: z.number()
+});
+export type FocusTrendItem = z.infer<typeof focusTrendItemSchema>;
+
+/**
+ * Aggregated summary response designed for Focus dashboard and downstream Phase 9 analytics.
+ */
+export const focusSummaryResponseSchema = z.object({
+  period: z.object({
+    range: z.enum(["day", "week", "month"]).optional(),
+    startDate: z.string(),
+    endDate: z.string(),
+    label: z.string()
+  }),
+  totalFocusMinutes: z.number(),
+  totalSessionsCount: z.number(),
+  completedSessionsCount: z.number(),
+  abandonedSessionsCount: z.number(),
+  activeSessionsCount: z.number().optional().default(0),
+  averageSessionMinutes: z.number(),
+  linkedTypeBreakdown: z.array(focusLinkedTypeBreakdownItemSchema),
+  trend: z.array(focusTrendItemSchema)
+});
+export type FocusSummaryResponse = z.infer<typeof focusSummaryResponseSchema>;
+

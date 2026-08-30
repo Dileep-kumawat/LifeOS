@@ -19,12 +19,37 @@ import {
 import { Subject, type SubjectDoc } from "../models/Subject.js";
 import { Topic, type TopicDoc } from "../models/Topic.js";
 import { Flashcard, type FlashcardDoc } from "../models/Flashcard.js";
+import { FocusSession } from "../models/FocusSession.js";
+import { Event } from "../models/Event.js";
 import { validate } from "../middleware/validate.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 export const studyRouter = Router();
 
 studyRouter.use(requireAuth);
+
+function formatFocusSession(doc: any) {
+  return {
+    id: doc._id.toString(),
+    userId: doc.userId.toString(),
+    workMinutes: doc.workMinutes,
+    breakMinutes: doc.breakMinutes,
+    longBreakMinutes: doc.longBreakMinutes,
+    longBreakInterval: doc.longBreakInterval,
+    currentCycle: doc.currentCycle,
+    currentPhase: doc.currentPhase,
+    linkedType: doc.linkedType,
+    linkedId: doc.linkedId ?? null,
+    status: doc.status,
+    startedAt: doc.startedAt instanceof Date ? doc.startedAt.toISOString() : doc.startedAt,
+    completedAt: doc.completedAt ? (doc.completedAt instanceof Date ? doc.completedAt.toISOString() : doc.completedAt) : null,
+    totalFocusMinutes: doc.totalFocusMinutes ?? 0,
+    accumulatedWorkSeconds: doc.accumulatedWorkSeconds ?? 0,
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt,
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : doc.updatedAt
+  };
+}
+
 
 function formatSubject(doc: SubjectDoc, extra?: { topicsCount?: number; completedTopicsCount?: number; dueFlashcardsCount?: number }) {
   return {
@@ -455,11 +480,14 @@ studyRouter.get("/study/topics", validate(listTopicsQuerySchema, "query"), async
 
 /**
  * @openapi
- * /study/topics/{id}:
+ * /study/topics/{id}/focus-time:
  *   get:
  *     tags: [StudyPlanner]
- *     summary: Get topic details
- *     description: Retrieves a single topic by ID with its flashcards.
+ *     summary: Get aggregated focus time for a topic (FR-7.4)
+ *     description: |
+ *       Aggregates all Pomodoro FocusSession documents linked to this topic (`linkedType: "topic"`, `linkedId: id`).
+ *       Calculates total focus minutes, total sessions, completed counts, and abandoned counts in real time via
+ *       MongoDB aggregation without maintaining denormalized duplicate counters on Topic.
  *     parameters:
  *       - in: path
  *         name: id
@@ -467,7 +495,94 @@ studyRouter.get("/study/topics", validate(listTopicsQuerySchema, "query"), async
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Topic details
+ *         description: Aggregated focus time metrics for the specified topic
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 topicId: { type: string, example: "662c9f1e9f0b2a001c3d4e60" }
+ *                 totalFocusMinutes: { type: number, example: 125 }
+ *                 sessionCount: { type: integer, example: 5 }
+ *                 completedCount: { type: integer, example: 4 }
+ *                 abandonedCount: { type: integer, example: 1 }
+ *       404:
+ *         description: Topic not found
+ */
+studyRouter.get(
+  "/study/topics/:id/focus-time",
+  validate(topicParamsSchema, "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!._id;
+      const { id } = req.params;
+
+      const topic = await Topic.findOne({ _id: id, userId });
+      if (!topic) {
+        return res.status(404).json({ error: "NotFound", message: "Topic not found" });
+      }
+
+      const focusAggregation = await FocusSession.aggregate([
+        {
+          $match: {
+            userId,
+            linkedType: "topic",
+            linkedId: id
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalFocusMinutes: { $sum: "$totalFocusMinutes" },
+            sessionCount: { $sum: 1 },
+            completedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+            },
+            abandonedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "abandoned"] }, 1, 0] }
+            }
+          }
+        }
+      ]);
+
+      const stats = focusAggregation[0] || {
+        totalFocusMinutes: 0,
+        sessionCount: 0,
+        completedCount: 0,
+        abandonedCount: 0
+      };
+
+      return res.json({
+        topicId: id,
+        totalFocusMinutes: stats.totalFocusMinutes || 0,
+        sessionCount: stats.sessionCount || 0,
+        completedCount: stats.completedCount || 0,
+        abandonedCount: stats.abandonedCount || 0
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: "ServerError", message: err.message });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /study/topics/{id}:
+ *   get:
+ *     tags: [StudyPlanner]
+ *     summary: Get topic details with combined focus and study plan linkages (FR-7.4)
+ *     description: |
+ *       Retrieves comprehensive topic details including child flashcards, real-time aggregated focus time,
+ *       recent focus sessions, linked calendar study plan events (`linkedTopicId`), and flashcard review status.
+ *       Enables side-by-side comparison of planned study sessions vs. actual logged Pomodoro focus time.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Topic details with combined focus, plan events, and flashcards
  *       404:
  *         description: Topic not found
  */
@@ -481,16 +596,79 @@ studyRouter.get("/study/topics/:id", validate(topicParamsSchema, "params"), asyn
       return res.status(404).json({ error: "NotFound", message: "Topic not found" });
     }
 
-    const flashcards = await Flashcard.find({ topicId: topic._id, userId }).sort({ createdAt: -1 });
+    const [flashcards, focusAggregation, recentFocusSessions, planEvents] = await Promise.all([
+      Flashcard.find({ topicId: topic._id, userId }).sort({ createdAt: -1 }),
+      FocusSession.aggregate([
+        {
+          $match: {
+            userId,
+            linkedType: "topic",
+            linkedId: id
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalFocusMinutes: { $sum: "$totalFocusMinutes" },
+            sessionCount: { $sum: 1 },
+            completedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+            },
+            abandonedCount: {
+              $sum: { $cond: [{ $eq: ["$status", "abandoned"] }, 1, 0] }
+            }
+          }
+        }
+      ]),
+      FocusSession.find({ userId, linkedType: "topic", linkedId: id })
+        .sort({ startedAt: -1 })
+        .limit(10),
+      Event.find({ userId, linkedTopicId: topic._id }).sort({ startTime: 1 })
+    ]);
+
+    const focusStats = focusAggregation[0] || {
+      totalFocusMinutes: 0,
+      sessionCount: 0,
+      completedCount: 0,
+      abandonedCount: 0
+    };
+
+    const now = new Date();
+    const totalCards = flashcards.length;
+    const dueCards = flashcards.filter((f) => new Date(f.nextReviewDate) <= now).length;
+    const masteredCards = flashcards.filter((f) => f.repetitions >= 3 && f.easeFactor >= 2.3).length;
+    const learningCards = totalCards - masteredCards;
 
     return res.json({
       topic: formatTopic(topic),
-      flashcards: flashcards.map(formatFlashcard)
+      flashcards: flashcards.map(formatFlashcard),
+      focusTime: {
+        topicId: id,
+        totalFocusMinutes: focusStats.totalFocusMinutes || 0,
+        sessionCount: focusStats.sessionCount || 0,
+        completedCount: focusStats.completedCount || 0,
+        abandonedCount: focusStats.abandonedCount || 0
+      },
+      focusSessions: recentFocusSessions.map(formatFocusSession),
+      planEvents: planEvents.map((e) => ({
+        id: e._id.toString(),
+        title: e.title,
+        startTime: e.startTime.toISOString(),
+        endTime: e.endTime.toISOString(),
+        status: (e as any).status || "scheduled"
+      })),
+      flashcardStats: {
+        total: totalCards,
+        due: dueCards,
+        mastered: masteredCards,
+        learning: learningCards
+      }
     });
   } catch (err: any) {
     return res.status(500).json({ error: "ServerError", message: err.message });
   }
 });
+
 
 /**
  * @openapi

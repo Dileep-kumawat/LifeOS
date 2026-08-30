@@ -182,3 +182,69 @@ export declare const reviewFlashcardSchema: z.ZodObject<{
     quality: number;
 }>;
 export type ReviewFlashcardInput = z.infer<typeof reviewFlashcardSchema>;
+/**
+ * Topic focus time aggregated metrics.
+ */
+export declare const topicFocusTimeSchema: z.ZodObject<{
+    topicId: z.ZodString;
+    totalFocusMinutes: z.ZodNumber;
+    sessionCount: z.ZodNumber;
+    completedCount: z.ZodNumber;
+    abandonedCount: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    topicId: string;
+    totalFocusMinutes: number;
+    sessionCount: number;
+    completedCount: number;
+    abandonedCount: number;
+}, {
+    topicId: string;
+    totalFocusMinutes: number;
+    sessionCount: number;
+    completedCount: number;
+    abandonedCount: number;
+}>;
+export type TopicFocusTime = z.infer<typeof topicFocusTimeSchema>;
+/**
+ * Topic Plan Event item from calendar linkage (Prompt 2).
+ */
+export declare const topicPlanEventSchema: z.ZodObject<{
+    id: z.ZodString;
+    title: z.ZodString;
+    startTime: z.ZodString;
+    endTime: z.ZodString;
+    status: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    status?: string | undefined;
+}, {
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    status?: string | undefined;
+}>;
+export type TopicPlanEvent = z.infer<typeof topicPlanEventSchema>;
+/**
+ * Flashcard stats breakdown for a topic.
+ */
+export declare const topicFlashcardStatsSchema: z.ZodObject<{
+    total: z.ZodNumber;
+    due: z.ZodNumber;
+    mastered: z.ZodNumber;
+    learning: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    total: number;
+    due: number;
+    mastered: number;
+    learning: number;
+}, {
+    total: number;
+    due: number;
+    mastered: number;
+    learning: number;
+}>;
+export type TopicFlashcardStats = z.infer<typeof topicFlashcardStatsSchema>;

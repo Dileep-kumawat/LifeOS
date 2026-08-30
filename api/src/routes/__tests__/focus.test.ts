@@ -130,6 +130,95 @@ vi.mock("../../models/FocusSession.js", () => {
           return true;
         });
         return Promise.resolve(results.length);
+      }),
+      aggregate: vi.fn().mockImplementation((pipeline: any[]) => {
+        let docs = [...sessionsStore];
+        for (const stage of pipeline) {
+          if (stage.$match) {
+            const match = stage.$match;
+            docs = docs.filter((s) => {
+              if (match.userId && !s.userId.equals(match.userId)) return false;
+              if (match.linkedType && s.linkedType !== match.linkedType) return false;
+              if (match.linkedId && s.linkedId !== match.linkedId) return false;
+              if (match.startedAt) {
+                const t = s.startedAt.getTime();
+                if (match.startedAt.$gte && t < new Date(match.startedAt.$gte).getTime()) return false;
+                if (match.startedAt.$lte && t > new Date(match.startedAt.$lte).getTime()) return false;
+              }
+              return true;
+            });
+          } else if (stage.$group) {
+            const group = stage.$group;
+            if (group._id === null) {
+              let totalFocusMinutes = 0;
+              let totalSessionsCount = docs.length;
+              let completedSessionsCount = 0;
+              let abandonedSessionsCount = 0;
+              let activeSessionsCount = 0;
+              for (const s of docs) {
+                totalFocusMinutes += s.totalFocusMinutes || 0;
+                if (s.status === "completed") completedSessionsCount++;
+                if (s.status === "abandoned") abandonedSessionsCount++;
+                if (["active", "paused"].includes(s.status)) activeSessionsCount++;
+              }
+              return Promise.resolve(
+                docs.length > 0
+                  ? [
+                      {
+                        _id: null,
+                        totalFocusMinutes,
+                        totalSessionsCount,
+                        completedSessionsCount,
+                        abandonedSessionsCount,
+                        activeSessionsCount,
+                        sessionCount: totalSessionsCount,
+                        completedCount: completedSessionsCount,
+                        abandonedCount: abandonedSessionsCount
+                      }
+                    ]
+                  : []
+              );
+            } else if (group._id === "$linkedType") {
+              const groups: Record<string, { totalMinutes: number; count: number }> = {};
+              for (const s of docs) {
+                const key = s.linkedType || "none";
+                if (!groups[key]) groups[key] = { totalMinutes: 0, count: 0 };
+                groups[key].totalMinutes += s.totalFocusMinutes || 0;
+                groups[key].count += 1;
+              }
+              return Promise.resolve(
+                Object.entries(groups).map(([k, v]) => ({
+                  _id: k,
+                  totalMinutes: v.totalMinutes,
+                  count: v.count
+                }))
+              );
+            } else if (group._id && group._id.dateKey) {
+              const groups: Record<
+                string,
+                { totalMinutes: number; count: number; completedCount: number; abandonedCount: number }
+              > = {};
+              for (const s of docs) {
+                const key = s.startedAt.toISOString().split("T")[0];
+                if (!groups[key]) groups[key] = { totalMinutes: 0, count: 0, completedCount: 0, abandonedCount: 0 };
+                groups[key].totalMinutes += s.totalFocusMinutes || 0;
+                groups[key].count += 1;
+                if (s.status === "completed") groups[key].completedCount += 1;
+                if (s.status === "abandoned") groups[key].abandonedCount += 1;
+              }
+              return Promise.resolve(
+                Object.entries(groups).map(([k, v]) => ({
+                  _id: { dateKey: k },
+                  totalMinutes: v.totalMinutes,
+                  count: v.count,
+                  completedCount: v.completedCount,
+                  abandonedCount: v.abandonedCount
+                }))
+              );
+            }
+          }
+        }
+        return Promise.resolve(docs);
       })
     }
   };
@@ -482,4 +571,197 @@ describe("Focus Timer API (/api/v1/focus)", () => {
       expect(res.body.session).toBeNull();
     });
   });
+
+  describe("6. Aggregated Focus Summary & Trends (FR-7.4, FR-8.3)", () => {
+    it("returns empty stats and zero-filled trend when no sessions exist", async () => {
+      const res = await request(app).get("/focus/summary?range=week");
+
+      expect(res.status).toBe(200);
+      expect(res.body.totalFocusMinutes).toBe(0);
+      expect(res.body.totalSessionsCount).toBe(0);
+      expect(res.body.completedSessionsCount).toBe(0);
+      expect(res.body.abandonedSessionsCount).toBe(0);
+      expect(res.body.averageSessionMinutes).toBe(0);
+      expect(res.body.linkedTypeBreakdown).toHaveLength(4);
+      expect(res.body.trend.length).toBeGreaterThanOrEqual(7);
+      expect(res.body.trend.every((t: any) => t.totalMinutes === 0)).toBe(true);
+    });
+
+    it("aggregates focus minutes, completion stats, and linkedType breakdown across date ranges", async () => {
+      const now = new Date();
+
+      // Session 1: Today, completed, linked to Study Topic, 50 mins
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 2,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: "topic-101",
+        status: "completed",
+        startedAt: now,
+        completedAt: now,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 3000,
+        totalFocusMinutes: 50,
+        createdAt: now,
+        updatedAt: now,
+        save: async function () { return this; }
+      });
+
+      // Session 2: Today, abandoned with partial time preserved, linked to Goal, 15 mins
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "goal",
+        linkedId: "goal-201",
+        status: "abandoned",
+        startedAt: now,
+        completedAt: now,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 900,
+        totalFocusMinutes: 15,
+        createdAt: now,
+        updatedAt: now,
+        save: async function () { return this; }
+      });
+
+      // Session 3: 2 days ago, completed, unlinked (none), 25 mins
+      const twoDaysAgo = new Date(now);
+      twoDaysAgo.setUTCDate(twoDaysAgo.getUTCDate() - 2);
+
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "none",
+        linkedId: null,
+        status: "completed",
+        startedAt: twoDaysAgo,
+        completedAt: twoDaysAgo,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: twoDaysAgo,
+        updatedAt: twoDaysAgo,
+        save: async function () { return this; }
+      });
+
+      const res = await request(app).get("/focus/summary?range=week");
+
+      expect(res.status).toBe(200);
+      expect(res.body.totalFocusMinutes).toBe(90); // 50 + 15 + 25
+      expect(res.body.totalSessionsCount).toBe(3);
+      expect(res.body.completedSessionsCount).toBe(2);
+      expect(res.body.abandonedSessionsCount).toBe(1);
+      expect(res.body.averageSessionMinutes).toBe(30);
+
+      // Verify linkedType breakdown
+      const topicItem = res.body.linkedTypeBreakdown.find((b: any) => b.linkedType === "topic");
+      const goalItem = res.body.linkedTypeBreakdown.find((b: any) => b.linkedType === "goal");
+      const noneItem = res.body.linkedTypeBreakdown.find((b: any) => b.linkedType === "none");
+
+      expect(topicItem).toBeDefined();
+      expect(topicItem.totalMinutes).toBe(50);
+      expect(topicItem.count).toBe(1);
+      expect(topicItem.percentage).toBe(56); // 50/90 = 55.55% -> 56%
+
+      expect(goalItem).toBeDefined();
+      expect(goalItem.totalMinutes).toBe(15);
+      expect(goalItem.count).toBe(1);
+      expect(goalItem.percentage).toBe(17); // 15/90 = 16.66% -> 17%
+
+      expect(noneItem).toBeDefined();
+      expect(noneItem.totalMinutes).toBe(25);
+      expect(noneItem.count).toBe(1);
+      expect(noneItem.percentage).toBe(28); // 25/90 = 27.77% -> 28%
+
+      // Verify daily trend
+      const todayKey = now.toISOString().split("T")[0];
+      const todayTrend = res.body.trend.find((t: any) => t.date === todayKey);
+      expect(todayTrend).toBeDefined();
+      expect(todayTrend.totalMinutes).toBe(65); // 50 + 15
+      expect(todayTrend.count).toBe(2);
+      expect(todayTrend.completedCount).toBe(1);
+      expect(todayTrend.abandonedCount).toBe(1);
+    });
+
+    it("respects explicit date range filters without boundary leaks", async () => {
+      const today = new Date("2026-08-15T12:00:00.000Z");
+      const outside = new Date("2026-08-01T12:00:00.000Z");
+
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: "topic-101",
+        status: "completed",
+        startedAt: today,
+        completedAt: today,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: today,
+        updatedAt: today,
+        save: async function () { return this; }
+      });
+
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: "topic-101",
+        status: "completed",
+        startedAt: outside,
+        completedAt: outside,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: outside,
+        updatedAt: outside,
+        save: async function () { return this; }
+      });
+
+      const res = await request(app).get(
+        "/focus/summary?startDate=2026-08-10T00:00:00.000Z&endDate=2026-08-20T23:59:59.999Z"
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.totalFocusMinutes).toBe(25);
+      expect(res.body.totalSessionsCount).toBe(1);
+    });
+  });
 });
+

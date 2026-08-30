@@ -96,3 +96,33 @@ export const reviewFlashcardSchema = z.object({
         .min(0, "Minimum quality is 0 (complete blackout)")
         .max(5, "Maximum quality is 5 (perfect response)")
 });
+// ─── Topic Focus & Detail Linkage Schemas (FR-7.4) ──────────────────────────
+/**
+ * Topic focus time aggregated metrics.
+ */
+export const topicFocusTimeSchema = z.object({
+    topicId: z.string(),
+    totalFocusMinutes: z.number(),
+    sessionCount: z.number(),
+    completedCount: z.number(),
+    abandonedCount: z.number()
+});
+/**
+ * Topic Plan Event item from calendar linkage (Prompt 2).
+ */
+export const topicPlanEventSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    startTime: z.string(),
+    endTime: z.string(),
+    status: z.string().optional()
+});
+/**
+ * Flashcard stats breakdown for a topic.
+ */
+export const topicFlashcardStatsSchema = z.object({
+    total: z.number(),
+    due: z.number(),
+    mastered: z.number(),
+    learning: z.number()
+});

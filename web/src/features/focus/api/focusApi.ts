@@ -2,7 +2,9 @@ import { apiClient } from "../../../lib/apiClient";
 import type {
   FocusSession,
   CreateFocusSessionInput,
-  ListFocusSessionsQuery
+  ListFocusSessionsQuery,
+  FocusSummaryQuery,
+  FocusSummaryResponse
 } from "@lifeos/shared";
 
 export const focusApi = {
@@ -74,5 +76,14 @@ export const focusApi = {
   }> {
     const res = await apiClient.get("/focus/sessions", { params });
     return res.data;
+  },
+
+  /**
+   * Get aggregated focus summary and trend (FR-7.4, FR-8.3)
+   */
+  async getFocusSummary(params?: FocusSummaryQuery): Promise<FocusSummaryResponse> {
+    const res = await apiClient.get("/focus/summary", { params });
+    return res.data;
   }
 };
+

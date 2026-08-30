@@ -63,6 +63,40 @@ let subjectsStore: MockSubject[] = [];
 let topicsStore: MockTopic[] = [];
 let flashcardsStore: MockFlashcard[] = [];
 
+interface MockStudyFocusSession {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  workMinutes: number;
+  breakMinutes: number;
+  longBreakMinutes: number;
+  longBreakInterval: number;
+  currentCycle: number;
+  currentPhase: "work" | "break" | "long_break";
+  linkedType: "task" | "goal" | "topic" | "none";
+  linkedId: string | null;
+  status: "active" | "paused" | "completed" | "abandoned";
+  startedAt: Date;
+  completedAt: Date | null;
+  accumulatedWorkSeconds: number;
+  totalFocusMinutes: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface MockStudyEvent {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  linkedTopicId: Types.ObjectId | null;
+  status?: string;
+}
+
+let focusSessionsStore: MockStudyFocusSession[] = [];
+let eventsStore: MockStudyEvent[] = [];
+
+
 function createMockQuery<T>(results: T[]) {
   const promise = Promise.resolve(results);
   return {
@@ -74,9 +108,16 @@ function createMockQuery<T>(results: T[]) {
         sorted.sort((a: any, b: any) => a.nextReviewDate.getTime() - b.nextReviewDate.getTime());
       }
       return createMockQuery(sorted);
+    }),
+    limit: vi.fn().mockImplementation((limitNum: number) => {
+      return createMockQuery(results.slice(0, limitNum));
+    }),
+    skip: vi.fn().mockImplementation((skipNum: number) => {
+      return createMockQuery(results.slice(skipNum));
     })
   };
 }
+
 
 // Mock Mongoose models
 vi.mock("../../models/Subject.js", () => ({
@@ -319,6 +360,79 @@ vi.mock("../../models/Flashcard.js", () => ({
   }
 }));
 
+vi.mock("../../models/FocusSession.js", () => ({
+  FocusSession: {
+    find: vi.fn().mockImplementation((query: any) => {
+      let results = focusSessionsStore.filter(
+        (s) => s.userId.toString() === (query.userId?.toString() ?? query.userId)
+      );
+      if (query.linkedType) {
+        results = results.filter((s) => s.linkedType === query.linkedType);
+      }
+      if (query.linkedId) {
+        results = results.filter((s) => s.linkedId === query.linkedId);
+      }
+      return createMockQuery(results);
+    }),
+    aggregate: vi.fn().mockImplementation((pipeline: any[]) => {
+      let docs = [...focusSessionsStore];
+      for (const stage of pipeline) {
+        if (stage.$match) {
+          const match = stage.$match;
+          docs = docs.filter((s) => {
+            if (match.userId && s.userId.toString() !== match.userId.toString()) return false;
+            if (match.linkedType && s.linkedType !== match.linkedType) return false;
+            if (match.linkedId && s.linkedId !== match.linkedId) return false;
+            return true;
+          });
+        } else if (stage.$group) {
+          if (stage.$group._id === null) {
+            let totalFocusMinutes = 0;
+            let sessionCount = docs.length;
+            let completedCount = 0;
+            let abandonedCount = 0;
+            for (const s of docs) {
+              totalFocusMinutes += s.totalFocusMinutes || 0;
+              if (s.status === "completed") completedCount++;
+              if (s.status === "abandoned") abandonedCount++;
+            }
+            return Promise.resolve(
+              docs.length > 0
+                ? [
+                    {
+                      _id: null,
+                      totalFocusMinutes,
+                      sessionCount,
+                      completedCount,
+                      abandonedCount
+                    }
+                  ]
+                : []
+            );
+          }
+        }
+      }
+      return Promise.resolve(docs);
+    })
+  }
+}));
+
+vi.mock("../../models/Event.js", () => ({
+  Event: {
+    find: vi.fn().mockImplementation((query: any) => {
+      let results = eventsStore.filter(
+        (e) => e.userId.toString() === (query.userId?.toString() ?? query.userId)
+      );
+      if (query.linkedTopicId) {
+        results = results.filter(
+          (e) => e.linkedTopicId && e.linkedTopicId.toString() === query.linkedTopicId.toString()
+        );
+      }
+      return createMockQuery(results);
+    })
+  }
+}));
+
 import { studyRouter } from "../study.js";
 
 const app = express();
@@ -330,8 +444,11 @@ describe("Study Planner Endpoints Integration Suite", () => {
     subjectsStore = [];
     topicsStore = [];
     flashcardsStore = [];
+    focusSessionsStore = [];
+    eventsStore = [];
     vi.clearAllMocks();
   });
+
 
   describe("Subject CRUD & Cascade Deletion", () => {
     it("creates a subject and returns 201 with default color", async () => {
@@ -597,4 +714,179 @@ describe("Study Planner Endpoints Integration Suite", () => {
       expect(badScoreRes.body.error).toBe("ValidationError");
     });
   });
+
+  describe("Topic Focus Time & Combined Detail Linkage (FR-7.4)", () => {
+    it("sums only sessions linked to that specific topic, ignoring sibling topics under the same subject", async () => {
+      // Create a Subject
+      const subj = await request(app)
+        .post("/api/v1/study/subjects")
+        .send({ name: "Computer Science" });
+      const subjectId = subj.body.subject.id;
+
+      // Create Topic A and Topic B under the same Subject
+      const topARes = await request(app)
+        .post("/api/v1/study/topics")
+        .send({ subjectId, title: "Topic A - Graphs" });
+      const topicAId = topARes.body.topic.id;
+
+      const topBRes = await request(app)
+        .post("/api/v1/study/topics")
+        .send({ subjectId, title: "Topic B - Dynamic Programming" });
+      const topicBId = topBRes.body.topic.id;
+
+      // Seed 2 completed sessions for Topic A (25m + 50m = 75m)
+      focusSessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: topicAId,
+        status: "completed",
+        startedAt: new Date(),
+        completedAt: new Date(),
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      focusSessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 2,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: topicAId,
+        status: "completed",
+        startedAt: new Date(),
+        completedAt: new Date(),
+        accumulatedWorkSeconds: 3000,
+        totalFocusMinutes: 50,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Seed 1 session for sibling Topic B (60m)
+      focusSessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 3,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: topicBId,
+        status: "completed",
+        startedAt: new Date(),
+        completedAt: new Date(),
+        accumulatedWorkSeconds: 3600,
+        totalFocusMinutes: 60,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Query Topic A focus-time
+      const resA = await request(app).get(`/api/v1/study/topics/${topicAId}/focus-time`);
+      expect(resA.status).toBe(200);
+      expect(resA.body.topicId).toBe(topicAId);
+      expect(resA.body.totalFocusMinutes).toBe(75); // 25 + 50, does NOT include Topic B's 60
+      expect(resA.body.sessionCount).toBe(2);
+      expect(resA.body.completedCount).toBe(2);
+      expect(resA.body.abandonedCount).toBe(0);
+
+      // Query Topic B focus-time
+      const resB = await request(app).get(`/api/v1/study/topics/${topicBId}/focus-time`);
+      expect(resB.status).toBe(200);
+      expect(resB.body.topicId).toBe(topicBId);
+      expect(resB.body.totalFocusMinutes).toBe(60);
+      expect(resB.body.sessionCount).toBe(1);
+    });
+
+    it("surfaces combined topic details with plan events, focus sessions, and flashcard metrics without cross-contamination", async () => {
+      // Create Subject & Topic
+      const subj = await request(app)
+        .post("/api/v1/study/subjects")
+        .send({ name: "Algorithms" });
+      const subjectId = subj.body.subject.id;
+
+      const topRes = await request(app)
+        .post("/api/v1/study/topics")
+        .send({ subjectId, title: "Graph Theory" });
+      const topicId = topRes.body.topic.id;
+
+      // Seed 2 Flashcards for this Topic
+      await request(app)
+        .post("/api/v1/study/flashcards")
+        .send({ subjectId, topicId, front: "What is Dijkstra's algorithm?", back: "Shortest path in weighted graph" });
+
+      await request(app)
+        .post("/api/v1/study/flashcards")
+        .send({ subjectId, topicId, front: "What is A* search?", back: "Heuristic search algorithm" });
+
+      // Seed a focus session linked to this topic
+      focusSessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: topicId,
+        status: "completed",
+        startedAt: new Date(),
+        completedAt: new Date(),
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Seed an AI-generated study plan event linked to this topic
+      eventsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        title: "Study: Graph Theory",
+        startTime: new Date("2026-08-30T10:00:00.000Z"),
+        endTime: new Date("2026-08-30T11:30:00.000Z"),
+        linkedTopicId: new Types.ObjectId(topicId),
+        status: "scheduled"
+      });
+
+      // Request enriched topic details
+      const detailRes = await request(app).get(`/api/v1/study/topics/${topicId}`);
+
+      expect(detailRes.status).toBe(200);
+      expect(detailRes.body.topic.id).toBe(topicId);
+      expect(detailRes.body.topic.title).toBe("Graph Theory");
+
+      // Flashcards
+      expect(detailRes.body.flashcards).toHaveLength(2);
+      expect(detailRes.body.flashcardStats.total).toBe(2);
+
+      // Focus Time
+      expect(detailRes.body.focusTime.totalFocusMinutes).toBe(25);
+      expect(detailRes.body.focusTime.sessionCount).toBe(1);
+      expect(detailRes.body.focusSessions).toHaveLength(1);
+      expect(detailRes.body.focusSessions[0].totalFocusMinutes).toBe(25);
+
+      // Plan Events
+      expect(detailRes.body.planEvents).toHaveLength(1);
+      expect(detailRes.body.planEvents[0].title).toBe("Study: Graph Theory");
+    });
+  });
 });
+

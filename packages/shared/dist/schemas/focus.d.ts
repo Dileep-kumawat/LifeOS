@@ -140,6 +140,7 @@ export declare const focusSessionSchema: z.ZodObject<{
     userId: string;
     updatedAt: string;
     completedAt: string | null;
+    totalFocusMinutes: number;
     workMinutes: number;
     breakMinutes: number;
     longBreakMinutes: number;
@@ -151,7 +152,6 @@ export declare const focusSessionSchema: z.ZodObject<{
     startedAt: string;
     pausedAt: string | null;
     lastResumedAt: string | null;
-    totalFocusMinutes: number;
     accumulatedWorkSeconds: number;
 }, {
     status: "active" | "completed" | "paused" | "abandoned";
@@ -160,6 +160,7 @@ export declare const focusSessionSchema: z.ZodObject<{
     userId: string;
     updatedAt: string;
     completedAt: string | null;
+    totalFocusMinutes: number;
     workMinutes: number;
     breakMinutes: number;
     longBreakMinutes: number;
@@ -171,7 +172,193 @@ export declare const focusSessionSchema: z.ZodObject<{
     startedAt: string;
     pausedAt: string | null;
     lastResumedAt: string | null;
-    totalFocusMinutes: number;
     accumulatedWorkSeconds: number;
 }>;
 export type FocusSession = z.infer<typeof focusSessionSchema>;
+/**
+ * Query schema for focus time aggregation summary (FR-7.4, FR-8.3).
+ * Reuses Finance Phase 4's summary & trend query param convention.
+ */
+export declare const focusSummaryQuerySchema: z.ZodObject<{
+    /** Presets: "day", "week", "month" */
+    range: z.ZodOptional<z.ZodEnum<["day", "week", "month"]>>;
+    /** Specific month in YYYY-MM format */
+    month: z.ZodOptional<z.ZodString>;
+    /** Number of months for multi-month trend analysis (default: 6) */
+    months: z.ZodOptional<z.ZodNumber>;
+    /** Explicit ISO start date/time override */
+    startDate: z.ZodOptional<z.ZodString>;
+    /** Explicit ISO end date/time override */
+    endDate: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    month?: string | undefined;
+    startDate?: string | undefined;
+    endDate?: string | undefined;
+    months?: number | undefined;
+    range?: "day" | "week" | "month" | undefined;
+}, {
+    month?: string | undefined;
+    startDate?: string | undefined;
+    endDate?: string | undefined;
+    months?: number | undefined;
+    range?: "day" | "week" | "month" | undefined;
+}>;
+export type FocusSummaryQuery = z.input<typeof focusSummaryQuerySchema>;
+/**
+ * Breakdown of focus time categorized by linked entity type.
+ */
+export declare const focusLinkedTypeBreakdownItemSchema: z.ZodObject<{
+    linkedType: z.ZodEnum<["task", "goal", "topic", "none"]>;
+    totalMinutes: z.ZodNumber;
+    count: z.ZodNumber;
+    percentage: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    count: number;
+    linkedType: "task" | "goal" | "topic" | "none";
+    totalMinutes: number;
+    percentage: number;
+}, {
+    count: number;
+    linkedType: "task" | "goal" | "topic" | "none";
+    totalMinutes: number;
+    percentage: number;
+}>;
+export type FocusLinkedTypeBreakdownItem = z.infer<typeof focusLinkedTypeBreakdownItemSchema>;
+/**
+ * Time series trend item for focus duration charts.
+ */
+export declare const focusTrendItemSchema: z.ZodObject<{
+    date: z.ZodString;
+    totalMinutes: z.ZodNumber;
+    count: z.ZodNumber;
+    completedCount: z.ZodNumber;
+    abandonedCount: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    date: string;
+    count: number;
+    completedCount: number;
+    abandonedCount: number;
+    totalMinutes: number;
+}, {
+    date: string;
+    count: number;
+    completedCount: number;
+    abandonedCount: number;
+    totalMinutes: number;
+}>;
+export type FocusTrendItem = z.infer<typeof focusTrendItemSchema>;
+/**
+ * Aggregated summary response designed for Focus dashboard and downstream Phase 9 analytics.
+ */
+export declare const focusSummaryResponseSchema: z.ZodObject<{
+    period: z.ZodObject<{
+        range: z.ZodOptional<z.ZodEnum<["day", "week", "month"]>>;
+        startDate: z.ZodString;
+        endDate: z.ZodString;
+        label: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        startDate: string;
+        endDate: string;
+        label: string;
+        range?: "day" | "week" | "month" | undefined;
+    }, {
+        startDate: string;
+        endDate: string;
+        label: string;
+        range?: "day" | "week" | "month" | undefined;
+    }>;
+    totalFocusMinutes: z.ZodNumber;
+    totalSessionsCount: z.ZodNumber;
+    completedSessionsCount: z.ZodNumber;
+    abandonedSessionsCount: z.ZodNumber;
+    activeSessionsCount: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
+    averageSessionMinutes: z.ZodNumber;
+    linkedTypeBreakdown: z.ZodArray<z.ZodObject<{
+        linkedType: z.ZodEnum<["task", "goal", "topic", "none"]>;
+        totalMinutes: z.ZodNumber;
+        count: z.ZodNumber;
+        percentage: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        count: number;
+        linkedType: "task" | "goal" | "topic" | "none";
+        totalMinutes: number;
+        percentage: number;
+    }, {
+        count: number;
+        linkedType: "task" | "goal" | "topic" | "none";
+        totalMinutes: number;
+        percentage: number;
+    }>, "many">;
+    trend: z.ZodArray<z.ZodObject<{
+        date: z.ZodString;
+        totalMinutes: z.ZodNumber;
+        count: z.ZodNumber;
+        completedCount: z.ZodNumber;
+        abandonedCount: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        date: string;
+        count: number;
+        completedCount: number;
+        abandonedCount: number;
+        totalMinutes: number;
+    }, {
+        date: string;
+        count: number;
+        completedCount: number;
+        abandonedCount: number;
+        totalMinutes: number;
+    }>, "many">;
+}, "strip", z.ZodTypeAny, {
+    period: {
+        startDate: string;
+        endDate: string;
+        label: string;
+        range?: "day" | "week" | "month" | undefined;
+    };
+    totalFocusMinutes: number;
+    totalSessionsCount: number;
+    completedSessionsCount: number;
+    abandonedSessionsCount: number;
+    activeSessionsCount: number;
+    averageSessionMinutes: number;
+    linkedTypeBreakdown: {
+        count: number;
+        linkedType: "task" | "goal" | "topic" | "none";
+        totalMinutes: number;
+        percentage: number;
+    }[];
+    trend: {
+        date: string;
+        count: number;
+        completedCount: number;
+        abandonedCount: number;
+        totalMinutes: number;
+    }[];
+}, {
+    period: {
+        startDate: string;
+        endDate: string;
+        label: string;
+        range?: "day" | "week" | "month" | undefined;
+    };
+    totalFocusMinutes: number;
+    totalSessionsCount: number;
+    completedSessionsCount: number;
+    abandonedSessionsCount: number;
+    averageSessionMinutes: number;
+    linkedTypeBreakdown: {
+        count: number;
+        linkedType: "task" | "goal" | "topic" | "none";
+        totalMinutes: number;
+        percentage: number;
+    }[];
+    trend: {
+        date: string;
+        count: number;
+        completedCount: number;
+        abandonedCount: number;
+        totalMinutes: number;
+    }[];
+    activeSessionsCount?: number | undefined;
+}>;
+export type FocusSummaryResponse = z.infer<typeof focusSummaryResponseSchema>;
