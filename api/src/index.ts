@@ -21,6 +21,7 @@ import { financeRouter } from "./routes/finance.js";
 import { syncRouter } from "./routes/sync.js";
 import { ocrRouter } from "./routes/ocr.js";
 import { studyRouter } from "./routes/study.js";
+import { focusRouter } from "./routes/focus.js";
 import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
 import { setupChatSocket } from "./services/ai/chatSocket.js";
@@ -60,6 +61,7 @@ async function main() {
   v1.use(syncRouter);
   v1.use(ocrRouter);
   v1.use(studyRouter);
+  v1.use(focusRouter);
   app.use("/api/v1", v1);
 
   // Start the single background job worker (queued deliveries, later OCR,

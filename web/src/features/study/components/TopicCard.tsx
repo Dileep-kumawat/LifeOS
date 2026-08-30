@@ -135,6 +135,14 @@ export const TopicCard: React.FC<TopicCardProps> = ({
 
       {/* Right: Actions */}
       <div className="flex items-center justify-end gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#e6e6e6]/60">
+        <a
+          href={`/focus?linkedType=topic&linkedId=${id}&linkedTitle=${encodeURIComponent(title)}`}
+          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0075de] hover:bg-[#0075de]/10 rounded-lg transition-colors mr-1"
+          title="Start Pomodoro Focus on this topic"
+        >
+          <Timer className="size-3.5" />
+          <span>Focus</span>
+        </a>
         {onEdit && (
           <button
             type="button"

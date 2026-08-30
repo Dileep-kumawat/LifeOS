@@ -29,11 +29,12 @@ export function SettingsScreen({ navigation }: any) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
 
-  // Daily Summary Preferences State
+  // Daily Summary & Focus Preferences State
   const [deliveryTime, setDeliveryTime] = useState("07:00");
   const [channelPush, setChannelPush] = useState(true);
   const [channelInApp, setChannelInApp] = useState(true);
   const [channelEmail, setChannelEmail] = useState(false);
+  const [dndDuringFocus, setDndDuringFocus] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -62,6 +63,9 @@ export function SettingsScreen({ navigation }: any) {
             setChannelInApp(channels.includes("in_app"));
             setChannelEmail(channels.includes("email"));
           }
+          if (typeof preferences?.dndDuringFocus === "boolean") {
+            setDndDuringFocus(preferences.dndDuringFocus);
+          }
         } catch {
           /* use defaults */
         }
@@ -84,7 +88,8 @@ export function SettingsScreen({ navigation }: any) {
           deliveryTime,
           channels,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
-        }
+        },
+        dndDuringFocus
       });
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 2500);
@@ -375,6 +380,28 @@ export function SettingsScreen({ navigation }: any) {
           <Switch
             value={channelEmail}
             onValueChange={setChannelEmail}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        {/* Focus DND Mode (FR-8.4) */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              Focus Do Not Disturb
+            </ThemedText>
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              Mute non-critical alerts during timer
+            </ThemedText>
+          </View>
+          <Switch
+            value={dndDuringFocus}
+            onValueChange={setDndDuringFocus}
             trackColor={{ false: colors.hairline, true: colors.primary }}
           />
         </View>

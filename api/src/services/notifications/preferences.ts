@@ -6,13 +6,19 @@ import type { NotificationChannel, NotificationPreferences } from "@lifeos/share
  * later = add a key here and to the User model; nothing else changes.
  */
 export type PreferenceModule =
-  "calendarReminders" | "habitReminders" | "system" | "financeBudgetAlerts" | "dailySummary";
+  | "calendarReminders"
+  | "habitReminders"
+  | "system"
+  | "financeBudgetAlerts"
+  | "focusSessionAlerts"
+  | "dailySummary";
 
 export const NOTIFICATION_PREFERENCE_MODULES: PreferenceModule[] = [
   "calendarReminders",
   "habitReminders",
   "system",
   "financeBudgetAlerts",
+  "focusSessionAlerts",
   "dailySummary"
 ];
 
@@ -22,7 +28,9 @@ export const DEFAULT_PREFERENCES: NotificationPreferences = {
   habitReminders: { push: true, inApp: true },
   system: { push: true, inApp: true },
   financeBudgetAlerts: { push: true, inApp: true },
-  dailySummary: { deliveryTime: "07:00", channels: ["push", "in_app"] }
+  focusSessionAlerts: { push: true, inApp: true },
+  dailySummary: { deliveryTime: "07:00", channels: ["push", "in_app"] },
+  dndDuringFocus: false
 };
 
 /**
@@ -37,6 +45,8 @@ export function preferenceModuleForType(type: string): PreferenceModule {
       return "habitReminders";
     case "budget_alert":
       return "financeBudgetAlerts";
+    case "focus_session_alert":
+      return "focusSessionAlerts";
     case "daily_summary":
       return "dailySummary";
     default:
@@ -88,7 +98,9 @@ export function applyPreferenceUpdates(
     habitReminders: { ...current.habitReminders },
     system: { ...current.system },
     financeBudgetAlerts: { ...current.financeBudgetAlerts },
-    dailySummary: { ...current.dailySummary }
+    focusSessionAlerts: { ...current.focusSessionAlerts },
+    dailySummary: { ...current.dailySummary },
+    dndDuringFocus: updates.dndDuringFocus ?? current.dndDuringFocus ?? false
   };
 
   for (const module of NOTIFICATION_PREFERENCE_MODULES) {

@@ -83,6 +83,8 @@ LifeOS/
   - `Subject`: Name, color accent, optional exam deadline.
   - `Topic`: Subject ref, title, deadline, priority (`low`/`medium`/`high`), status (`not_started`/`in_progress`/`completed`), duration estimate.
   - `Flashcard`: Front, back, optional topic/subject refs, SM-2 state (`easeFactor`, `intervalDays`, `repetitions`, `nextReviewDate`).
+- **Focus & Pomodoro Timer**:
+  - `FocusSession`: Pomodoro session state (`workMinutes`, `breakMinutes`, `longBreakMinutes`, `longBreakInterval`, `currentCycle`, `currentPhase`: `work`/`break`/`long_break`, `linkedType`: `task`/`goal`/`topic`/`none`, `linkedId`, `status`: `active`/`paused`/`completed`/`abandoned`, `accumulatedWorkSeconds`, `totalFocusMinutes`).
 - **AI & Notifications**:
   - `AiRequestLog`: Token usage & prompt history log.
   - `Conversation` & `Message`: Chat history with AI assistant.
@@ -106,6 +108,8 @@ LifeOS/
 - `/api/v1/study/flashcards` - CRUD flashcards, filter by topic/subject.
 - `/api/v1/study/flashcards/due` - Spaced repetition daily review queue (`nextReviewDate <= now`).
 - `/api/v1/study/flashcards/:id/review` - SM-2 self-assessment review (0–5 rating).
+- `/api/v1/focus/sessions` - CRUD focus sessions, pause, resume, complete, abandon, interval-complete.
+- `/api/v1/focus/sessions/active` - Retrieve caller's currently running/paused focus session.
 - `/api/v1/notifications` - Alert feed, push subscriptions (VAPID/Expo push).
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
 - `/api/v1/ai/chat` - AI assistant conversational interface (RAG enabled).
@@ -232,6 +236,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Pomodoro Focus Timer & Notification Integration (Phase 7 - Prompt 3)]: Implemented FR-8.1, FR-8.2, FR-8.4 Pomodoro focus session engine with accurate time accumulation math (excluding paused durations and preserving partial focus time on abandon), 4th cycle 15-min long break progression, client-triggered interval-completion notifications via Phase 2 notification engine, opt-in Do Not Disturb during active sessions, full Web FocusPage & PomodoroTimer (supporting idle, working, break, paused states), Storybook stories, and Mobile settings DND toggle.
 - [AI Study Plan Generation & Tool Calling (Phase 7 - Prompt 2)]: Implemented FR-7.2/UC-2 AI study planner composing Phase 3's tool-calling pipeline with Calendar free-time detection (8am–10pm window) and prioritized topics; added generate_study_plan tool, confirm-before-write Calendar event generation with linkedTopicId, Web StudyPlanCard, Storybook stories, and end-to-end test suites.
 - [Study Planner & SM-2 Spaced Repetition (Phase 7 - Prompt 1)]: Implemented core Subject/Topic/Flashcard data models, pure SuperMemo SM-2 spaced repetition scheduler in @lifeos/shared, cascade-deletion behavior on subjects, RESTful CRUD endpoints under /study, daily review queue, Web UI components, and Storybook stories.
 - [Phase 6 OCR Audit & Fix]: Completed documentation and quality audit pass — enriched Swagger/OpenAPI annotations with supported MIME types, 10MB limit, raw vs structured extraction architecture, dual worked examples, error schemas, and cross-references; updated Storybook coverage with TransactionForm OCR prefill stories, NoteEditor OCR stories, and non-color warning cues for A11y.
@@ -246,13 +251,19 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [FloatingDock]: Added animated transient title pill with 1.3s hold and 280ms auto-fade — fixed permanently visible black tooltip pill obstructing screen content.
 - [FloatingDock]: Guarded programmatic `scrollTo` with `isProgrammaticScrollRef` and timeout fallback — fixed rapid intermediate screen flashing/flickering when tapping distant dock icons.
 - [Auth Screens]: Switched root container styling to `contentContainerStyle: { flexGrow: 1, justifyContent: "center" }` — fixed login/register forms top-aligning instead of vertically centering across devices.
-- [ScreenContainer / Tab Screens]: Integrated `useDockHeight()` dynamic bottom clearance hook across all main tabs — fixed bottom cards and list items occluded behind floating dock overlay.
 
 ---
 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Pomodoro Focus Timer & Time Tracking Semantics (FR-8.1, FR-8.2, FR-8.4)**:
+  - `accumulatedWorkSeconds` tracks raw seconds spent strictly in the `"work"` phase. When active in work phase, active elapsed duration is `(now - lastResumedAt) / 1000`. Pausing a session commits pending work time and clears `lastResumedAt` to `null`; resuming sets `lastResumedAt = new Date()`. Paused durations and break intervals are strictly excluded from `totalFocusMinutes`.
+  - Abandoning a session early preserves partial accumulated focus time and records `completedAt = new Date()`, ensuring accurate historical productivity accounting without data loss.
+  - Standard Pomodoro progression follows 25m work / 5m break cycles, switching to a 15m `long_break` on every 4th cycle. Break completions transition back to `"work"` on cycle `N + 1`.
+  - Interval-completion alerts (FR-8.2) are client-timed triggers calling `POST /api/v1/focus/sessions/:id/interval-complete` when countdown reaches 0, which enqueues notifications through Phase 2's `enqueueJob` and the `focusSessionAlerts` preference module.
+  - Opt-in Do Not Disturb (`dndDuringFocus: true` in user notification preferences or session configuration) suppresses non-critical notification delivery (e.g. general calendar reminders, habit nudges) strictly while an active focus session is running, while preserving focus session interval alerts and critical system messages.
 
 - **AI-Generated Study Plan & Free-Time Allocation (FR-7.2, UC-2)**:
   - Study plan generation computes free time gaps within an 8am–10pm working hours window using Calendar's read-time recurrence expansion (`expandRange`), combines them with active topics pre-sorted by deadline proximity and priority, and leverages `callAI()` for structured JSON allocation with deterministic heuristic fallback.

@@ -21,6 +21,7 @@ import { ChatPage } from "./features/ai/ChatPage";
 import { FinancePage } from "./features/finance/FinancePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { StudyPage } from "./features/study/StudyPage";
+import { FocusPage } from "./features/focus/FocusPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -105,6 +106,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <StudyPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "focus",
+        element: (
+          <ProtectedRoute>
+            <FocusPage />
           </ProtectedRoute>
         )
       },

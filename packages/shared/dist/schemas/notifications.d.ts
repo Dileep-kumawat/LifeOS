@@ -6,8 +6,8 @@ import { z } from "zod";
  * `budget_alert`) are added by extending this list and registering a handler
  * in the jobs worker; nothing in the queue wrapper or model changes.
  */
-export declare const KNOWN_NOTIFICATION_TYPES: readonly ["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary"];
-export declare const knownNotificationTypeSchema: z.ZodEnum<["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary"]>;
+export declare const KNOWN_NOTIFICATION_TYPES: readonly ["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert"];
+export declare const knownNotificationTypeSchema: z.ZodEnum<["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert"]>;
 export type KnownNotificationType = z.infer<typeof knownNotificationTypeSchema>;
 /** Delivery channel for a single Notification document. */
 export declare const notificationChannelSchema: z.ZodEnum<["push", "in_app", "email"]>;
@@ -248,6 +248,16 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     }>>;
+    focusSessionAlerts: z.ZodDefault<z.ZodObject<{
+        push: z.ZodDefault<z.ZodBoolean>;
+        inApp: z.ZodDefault<z.ZodBoolean>;
+    }, "strip", z.ZodTypeAny, {
+        push: boolean;
+        inApp: boolean;
+    }, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }>>;
     dailySummary: z.ZodDefault<z.ZodObject<{
         deliveryTime: z.ZodDefault<z.ZodString>;
         channels: z.ZodDefault<z.ZodArray<z.ZodEnum<["push", "in_app", "email"]>, "many">>;
@@ -261,6 +271,8 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         deliveryTime?: string | undefined;
         channels?: ("email" | "push" | "in_app")[] | undefined;
     }>>;
+    /** Opt-in DND: suppresses non-critical notifications while a focus session is active (FR-8.4) */
+    dndDuringFocus: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     system: {
         push: boolean;
@@ -278,11 +290,16 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         push: boolean;
         inApp: boolean;
     };
+    focusSessionAlerts: {
+        push: boolean;
+        inApp: boolean;
+    };
     dailySummary: {
         deliveryTime: string;
         channels: ("email" | "push" | "in_app")[];
         timezone?: string | undefined;
     };
+    dndDuringFocus: boolean;
 }, {
     system?: {
         push?: boolean | undefined;
@@ -300,11 +317,16 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;
+    focusSessionAlerts?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
     dailySummary?: {
         timezone?: string | undefined;
         deliveryTime?: string | undefined;
         channels?: ("email" | "push" | "in_app")[] | undefined;
     } | undefined;
+    dndDuringFocus?: boolean | undefined;
 }>;
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 /** PATCH body — every module and every toggle is optional. */
@@ -349,6 +371,16 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     }>>;
+    focusSessionAlerts: z.ZodOptional<z.ZodObject<{
+        push: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+        inApp: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+    }, "strip", z.ZodTypeAny, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }>>;
     dailySummary: z.ZodOptional<z.ZodObject<{
         deliveryTime: z.ZodOptional<z.ZodDefault<z.ZodString>>;
         channels: z.ZodOptional<z.ZodDefault<z.ZodArray<z.ZodEnum<["push", "in_app", "email"]>, "many">>>;
@@ -362,6 +394,7 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         deliveryTime?: string | undefined;
         channels?: ("email" | "push" | "in_app")[] | undefined;
     }>>;
+    dndDuringFocus: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     system?: {
         push?: boolean | undefined;
@@ -379,11 +412,16 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;
+    focusSessionAlerts?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
     dailySummary?: {
         timezone?: string | undefined;
         deliveryTime?: string | undefined;
         channels?: ("email" | "push" | "in_app")[] | undefined;
     } | undefined;
+    dndDuringFocus?: boolean | undefined;
 }, {
     system?: {
         push?: boolean | undefined;
@@ -401,11 +439,16 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;
+    focusSessionAlerts?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
     dailySummary?: {
         timezone?: string | undefined;
         deliveryTime?: string | undefined;
         channels?: ("email" | "push" | "in_app")[] | undefined;
     } | undefined;
+    dndDuringFocus?: boolean | undefined;
 }>;
 export type UpdateNotificationPreferencesInput = z.infer<typeof updateNotificationPreferencesSchema>;
 export declare const summaryCompletedItemSchema: z.ZodObject<{

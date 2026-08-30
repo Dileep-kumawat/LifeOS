@@ -35,6 +35,17 @@ export interface DeliveryDeps {
   markDelivered(id: string, sentAt: Date): Promise<void>;
   sendEmail?(args: { toEmail: string; subject: string; text: string }): Promise<void>;
   prefsUserEmail?: string;
+  hasActiveFocusSession?(userId: string): Promise<boolean>;
+}
+
+async function checkActiveFocusSessionDefault(userId: string): Promise<boolean> {
+  try {
+    const { FocusSession } = await import("../../models/FocusSession.js");
+    const doc = await FocusSession.findOne({ userId, status: "active" }).select("_id");
+    return !!doc;
+  } catch {
+    return false;
+  }
 }
 
 export interface DispatchOutcome {
@@ -79,6 +90,21 @@ export async function dispatchNotification(
   // Preference gate: a disabled preference makes this a no-op, NOT a send.
   if (!isPreferenceEnabled(preferences, module, notification.channel)) {
     return { outcome: "skipped_preference", reason: module };
+  }
+
+  // Focus DND gate (FR-8.4): opt-in suppression of non-critical notifications during active focus sessions
+  if (
+    preferences?.dndDuringFocus &&
+    notification.type !== "focus_session_alert" &&
+    notification.type !== "system"
+  ) {
+    const hasActiveSession = deps.hasActiveFocusSession
+      ? await deps.hasActiveFocusSession(notification.userId)
+      : await checkActiveFocusSessionDefault(notification.userId);
+
+    if (hasActiveSession) {
+      return { outcome: "skipped_preference", reason: "focus_session_dnd" };
+    }
   }
 
   if (notification.deliveryStatus === "sent") {

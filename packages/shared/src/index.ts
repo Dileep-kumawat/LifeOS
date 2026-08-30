@@ -7,6 +7,7 @@ export * from "./schemas/finance.js";
 export * from "./schemas/sync.js";
 export * from "./schemas/ocr.js";
 export * from "./schemas/study.js";
+export * from "./schemas/focus.js";
 export * from "./tokens/index.js";
 export { buildRruleString } from "./lib/rruleBuilder.js";
 export * from "./lib/ocrNoteConverter.js";

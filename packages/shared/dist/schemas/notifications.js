@@ -11,7 +11,8 @@ export const KNOWN_NOTIFICATION_TYPES = [
     "habit_reminder",
     "system",
     "budget_alert",
-    "daily_summary"
+    "daily_summary",
+    "focus_session_alert"
 ];
 export const knownNotificationTypeSchema = z.enum(KNOWN_NOTIFICATION_TYPES);
 /** Delivery channel for a single Notification document. */
@@ -83,10 +84,13 @@ export const notificationPreferencesSchema = z.object({
     habitReminders: modulePreferenceSchema.default({ push: true, inApp: true }),
     system: modulePreferenceSchema.default({ push: true, inApp: true }),
     financeBudgetAlerts: modulePreferenceSchema.default({ push: true, inApp: true }),
+    focusSessionAlerts: modulePreferenceSchema.default({ push: true, inApp: true }),
     dailySummary: dailySummaryPreferenceSchema.default({
         deliveryTime: "07:00",
         channels: ["push", "in_app"]
-    })
+    }),
+    /** Opt-in DND: suppresses non-critical notifications while a focus session is active (FR-8.4) */
+    dndDuringFocus: z.boolean().default(false)
 });
 /** PATCH body — every module and every toggle is optional. */
 export const updateNotificationPreferencesSchema = z.object({
@@ -94,7 +98,9 @@ export const updateNotificationPreferencesSchema = z.object({
     habitReminders: modulePreferenceSchema.partial().optional(),
     system: modulePreferenceSchema.partial().optional(),
     financeBudgetAlerts: modulePreferenceSchema.partial().optional(),
-    dailySummary: dailySummaryPreferenceSchema.partial().optional()
+    focusSessionAlerts: modulePreferenceSchema.partial().optional(),
+    dailySummary: dailySummaryPreferenceSchema.partial().optional(),
+    dndDuringFocus: z.boolean().optional()
 });
 export const summaryCompletedItemSchema = z.object({
     id: z.string().optional(),

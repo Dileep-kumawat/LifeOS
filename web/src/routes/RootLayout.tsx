@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   LogOut,
-  GraduationCap
+  GraduationCap,
+  Timer
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { apiClient } from "../lib/apiClient";
@@ -176,6 +177,10 @@ export function RootLayout() {
                 <GraduationCap className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                 <span>Study</span>
               </NavLink>
+              <NavLink to="/focus" className={getDrawerNavLinkClass}>
+                <Timer className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110" />
+                <span>Focus</span>
+              </NavLink>
 
               <div className="border-t border-[#c1c6d5]/60 my-2 pt-2">
                 <span className="text-[11px] font-semibold text-[#717784] px-3 uppercase tracking-wider mb-1">
@@ -262,6 +267,10 @@ export function RootLayout() {
           <NavLink to="/study" className={getNavLinkClass}>
             <GraduationCap className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Study</span>
+          </NavLink>
+          <NavLink to="/focus" className={getNavLinkClass}>
+            <Timer className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
+            <span>Focus</span>
           </NavLink>
         </div>
 

@@ -9,11 +9,13 @@ const defaultPrefs: NotificationPreferences = {
   habitReminders: { push: true, inApp: true },
   system: { push: true, inApp: true },
   financeBudgetAlerts: { push: true, inApp: true },
+  focusSessionAlerts: { push: true, inApp: true },
   dailySummary: {
     deliveryTime: "07:00",
     channels: ["push", "in_app"],
     timezone: "America/New_York"
-  }
+  },
+  dndDuringFocus: false
 };
 
 function prefsWrap(data?: NotificationPreferences | null, isError = false): Decorator {

@@ -77,10 +77,15 @@ const userSchema = new Schema(
         type: modulePreferenceSchema,
         default: () => ({ push: true, inApp: true })
       },
+      focusSessionAlerts: {
+        type: modulePreferenceSchema,
+        default: () => ({ push: true, inApp: true })
+      },
       dailySummary: {
         type: dailySummaryPreferenceSchema,
         default: () => ({ deliveryTime: "07:00", channels: ["push", "in_app"], timezone: "UTC" })
-      }
+      },
+      dndDuringFocus: { type: Boolean, default: false }
     }
   },
   { timestamps: true }
