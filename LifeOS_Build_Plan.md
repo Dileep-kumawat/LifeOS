@@ -467,8 +467,6 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 ### Tasks
 
-- Google OAuth, phone OTP, MFA (completing FR-1.1, FR-1.3)
-- Google Calendar two-way sync (FR-3.3)
 - Full OWASP Top 10 pass (NFR-2.4) — dedicated security review, not incidental
 - Audit logging for admin actions and sensitive-module access (NFR-2.6)
 - Load testing against NFR-1.3 (10k concurrent WebSocket connections) — do this before launch, not after you find out the hard way
