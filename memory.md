@@ -113,6 +113,9 @@ LifeOS/
 - `/api/v1/focus/sessions` - CRUD focus sessions, pause, resume, complete, abandon, interval-complete.
 - `/api/v1/focus/sessions/active` - Retrieve caller's currently running/paused focus session.
 - `/api/v1/focus/summary` - Aggregated focus time summary, polymorphic `linkedType` breakdown, and sequential trend time-series (FR-7.4, FR-8.3, feeds Phase 9 analytics).
+- `/api/v1/analytics/productivity` - Aggregated productivity metrics (habits completion rate, focus summary, streak consistency, contiguous daily trends) over custom date range (FR-12.1).
+- `/api/v1/analytics/finance` - Aggregated financial breakdown, multi-month/daily spend trend, and budget adherence over custom date range (FR-12.2).
+- `/api/v1/analytics/export` - Synchronous raw CSV and PDF analytics report generation (rate-limited via Redis, raw binary/text attachments) (FR-12.4).
 - `/api/v1/notifications` - Alert feed, push subscriptions (VAPID/Expo push).
 
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
@@ -241,6 +244,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Phase 9 Analytics Aggregation Layer & Export Engine (FR-12.1 – FR-12.4)]: Implemented backend analytics aggregation layer unifying habits scheduled-vs-completed calculations, FocusSession MongoDB aggregation pipelines, finance category breakdowns, spend trends, and budget adherence over bounded date ranges (<=366 days); added synchronous CSV/PDF report generation with RFC 4180 escaping and PDFKit styling returning raw attachments with Content-Disposition headers; added Redis-backed export rate limiting (20 req/hour) and full OpenAPI 3.0.3 specification coverage.
 - [Phase 8 Voice Documentation & Storybook Audit]: Documented client-side voice input layer in Swagger WebSocket protocol specs confirming zero backend API surface and identical WS protocol routing; built VoiceInputBar component and Storybook stories covering all 3 states (Idle, Recording with live waveform, Permission-Denied and Empty-Transcript inline notices) with @storybook/addon-a11y aria-live screen-reader support; verified static Storybook CI build and 107-route OpenAPI schema-completeness check.
 - [Phase 8 Voice Input Affordance (Web & Mobile)]: Implemented 3-state inline voice input (Idle -> Recording -> Idle) directly inside chat input bar across Web and Mobile with zero backend infra — Web Speech API & Web Audio API AnalyserNode on web, on-device SpeechRecognizer adapter with volume metering on mobile, live audio-reactive waveform visualizer (VoiceWaveform), permission denial & empty-speech inline notices, and transparent downstream tool calling & confirmation parity.
 - [Phase 7 Study Planner & Pomodoro Audit Pass]: Completed comprehensive documentation and Storybook audit — enriched Swagger/OpenAPI annotations with AI tool calling (`generate_study_plan` 8am–10pm free-time scanning & graceful fallback), SM-2 mathematical progression, pause/resume elapsed-time semantics, cascade deletion architecture, interval progression worked examples, and error schemas; added `SessionLinkPicker` Storybook stories, extended `NotificationPreferencesPanel` with `focusSessionAlerts` toggle, and enhanced `FocusSummaryChart` with screen-reader accessible data tables.
@@ -255,13 +259,18 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
 - [Focus & Study Planner Aggregation Layer (FR-7.4, FR-8.3)]: Implemented multi-stage MongoDB aggregations for focus summaries, polymorphic entity breakdowns, and sequential time-series trends; enriched topic detail view unifying accumulated focus time, scheduled AI plan events, and SM-2 flashcard deck metrics without redundant counters on Topic models.
 - [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
-- [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
 
 ---
 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Analytics Aggregation, Range Scoping & Export Protocol (FR-12.1 – FR-12.4)**:
+  - Date filtering is unified under `analyticsDateRangeSchema` (`startDate` & `endDate` required, formatted as YYYY-MM-DD or ISO, capped at <= 366 days window to prevent pathological unbounded queries) and parsed into exact UTC day boundaries (`[00:00:00.000, 23:59:59.999]`).
+  - Productivity aggregation (`GET /api/v1/analytics/productivity`) composes Habit frequency check-in math (`daily`, `weekly`, `custom` expected quotas) with the shared `getFocusSummaryData` multi-stage aggregation pipeline, generating contiguous, gap-free daily trends (`focusMinutes`, `completedSessions`, `habitsCompleted`, `habitsExpected`).
+  - Financial analytics (`GET /api/v1/analytics/finance`) reuses Phase 4 MongoDB aggregation pipelines for category breakdowns and multi-period trends, calculating pro-rated actual spend against configured user budgets.
+  - Export generation (`GET /api/v1/analytics/export`) bypasses standard JSON envelopes to synchronously stream formatted RFC 4180 CSV (`text/csv; charset=utf-8`) or PDFKit-rendered binary PDF (`application/pdf`) with `Content-Disposition: attachment; filename="..."`, protected by a dedicated Redis rate limiter (20 requests/hour per user).
 
 - **Voice Input Inline Affordance & STT Routing Protocol (FR-9.1, FR-9.2, FR-9.3)**:
   - Voice recording is entirely contained within the chat input bar across exactly 3 states (Idle -> Recording -> Idle). No separate modals, bottom sheets, or dedicated screens.
