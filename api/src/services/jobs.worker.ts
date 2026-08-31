@@ -191,6 +191,18 @@ async function handleGenerateDailySummary(
   logger.info({ userId, date, jobId: job.id }, "generate_daily_summary completed successfully");
 }
 
+async function handleGeneratePeriodicRecommendations(
+  job: Job<{ userId: string; period: "weekly" | "monthly"; startDate?: string; endDate?: string }>
+): Promise<void> {
+  const { userId, period, startDate, endDate } = job.data;
+  const { generatePeriodicRecommendations } = await import("./ai/recommendationGenerator.js");
+  await generatePeriodicRecommendations(userId, period, startDate, endDate);
+  logger.info(
+    { userId, period, startDate, endDate, jobId: job.id },
+    "generate_periodic_recommendations completed successfully"
+  );
+}
+
 async function handleBudgetRollover(job: Job<{ refDate?: string }>): Promise<void> {
   const { processBudgetRollover } = await import("./budgetService.js");
   const refDate = job.data?.refDate ? new Date(job.data.refDate) : new Date();
@@ -211,6 +223,7 @@ const HANDLERS: Record<string, (job: Job<any>) => Promise<void>> = {
   ai_retry_job: handleAiRetry,
   embedding: processEmbeddingJob,
   generate_daily_summary: handleGenerateDailySummary,
+  generate_periodic_recommendations: handleGeneratePeriodicRecommendations,
   budget_rollover: handleBudgetRollover,
   ocr: async (job: Job<any>) => {
     await handleOcrJobWorker(job.id || job.data?.jobId || "unknown", job.data);

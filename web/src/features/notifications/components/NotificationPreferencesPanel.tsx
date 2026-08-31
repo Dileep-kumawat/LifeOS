@@ -38,6 +38,11 @@ const MODULES = [
     description: "Interval completion and break transition reminders during Pomodoro sessions."
   },
   {
+    key: "periodicRecommendations",
+    title: "AI periodic recommendations",
+    description: "Scheduled weekly and monthly insights and habit/budget recommendations."
+  },
+  {
     key: "system",
     title: "System updates",
     description: "Account and product announcements."

@@ -6,6 +6,9 @@ import { DateRangePicker, computePresetRange, type DateRangeValue } from "./comp
 import { ExportButton } from "./components/ExportButton";
 import { ProductivityAnalyticsSection } from "./components/ProductivityAnalyticsSection";
 import { FinanceAnalyticsSection } from "./components/FinanceAnalyticsSection";
+import { PeriodicRecommendationsCard } from "../ai/components/PeriodicRecommendationsCard";
+import { useLatestRecommendations } from "../ai/hooks/useRecommendations";
+import type { RecommendationPeriod } from "@lifeos/shared";
 
 export function AnalyticsPage() {
   // Shared Date Range State (defaults to 'this_month')
@@ -16,6 +19,17 @@ export function AnalyticsPage() {
 
   // Active Tab View: "productivity" | "finance"
   const [activeTab, setActiveTab] = useState<"productivity" | "finance">("productivity");
+
+  // Periodic Recommendations cadence selection ("weekly" | "monthly")
+  const [recPeriod, setRecPeriod] = useState<RecommendationPeriod>("weekly");
+
+  // Query: Latest Periodic Recommendations
+  const {
+    data: recData,
+    isLoading: isRecLoading,
+    isError: isRecError,
+    refetch: refetchRec
+  } = useLatestRecommendations(recPeriod);
 
   // Query 1: Productivity Analytics
   const {
@@ -46,6 +60,7 @@ export function AnalyticsPage() {
   const handleRefresh = () => {
     refetchProductivity();
     refetchFinance();
+    refetchRec();
   };
 
   const isCurrentTabError = activeTab === "productivity" ? isProductivityError : isFinanceError;
@@ -90,6 +105,17 @@ export function AnalyticsPage() {
 
       {/* 2. Main Content Canvas */}
       <div className="px-4 sm:px-6 lg:px-10 py-6 flex flex-col gap-6 max-w-7xl mx-auto w-full -mt-4 z-20">
+        {/* Periodic AI Recommendations Surface (FR-10.3) */}
+        <PeriodicRecommendationsCard
+          isLoading={isRecLoading}
+          isError={isRecError}
+          onRetry={refetchRec}
+          generated={recData?.generated}
+          period={recPeriod}
+          onPeriodChange={setRecPeriod}
+          recommendation={recData?.recommendation}
+        />
+
         {/* Controls Bar: Domain Switcher + DateRangePicker + ExportButton */}
         <div className="p-4 bg-white border border-[#e6e6e6] rounded-xl shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Domain Tab Switcher */}

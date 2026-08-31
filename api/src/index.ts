@@ -17,6 +17,7 @@ import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { aiChatRouter } from "./routes/aiChat.js";
 import { aiSummaryRouter } from "./routes/aiSummary.js";
+import { aiRecommendationsRouter } from "./routes/aiRecommendations.js";
 import { financeRouter } from "./routes/finance.js";
 import { syncRouter } from "./routes/sync.js";
 import { ocrRouter } from "./routes/ocr.js";
@@ -27,6 +28,7 @@ import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
 import { setupChatSocket } from "./services/ai/chatSocket.js";
 import { dispatchDailySummaries } from "./services/ai/summaryDispatcher.js";
+import { dispatchPeriodicRecommendations } from "./services/ai/recommendationDispatcher.js";
 
 async function main() {
   await connectDb();
@@ -58,6 +60,7 @@ async function main() {
   v1.use(notificationsRouter);
   v1.use(aiChatRouter);
   v1.use(aiSummaryRouter);
+  v1.use(aiRecommendationsRouter);
   v1.use(financeRouter);
   v1.use(syncRouter);
   v1.use(ocrRouter);
@@ -67,14 +70,17 @@ async function main() {
   app.use("/api/v1", v1);
 
   // Start the single background job worker (queued deliveries, later OCR,
-  // embeddings, daily summaries). No-op under tests.
+  // embeddings, daily summaries, periodic recommendations). No-op under tests.
   startJobsWorker();
 
-  // Periodic dispatcher check for daily summaries (every 5 mins)
+  // Periodic dispatcher check for daily summaries and periodic recommendations (every 5 mins)
   setInterval(
     () => {
       dispatchDailySummaries().catch((err) => {
         logger.error({ err }, "Periodic daily summary dispatcher error");
+      });
+      dispatchPeriodicRecommendations().catch((err) => {
+        logger.error({ err }, "Periodic recommendations dispatcher error");
       });
     },
     5 * 60 * 1000

@@ -6,8 +6,8 @@ import { z } from "zod";
  * `budget_alert`) are added by extending this list and registering a handler
  * in the jobs worker; nothing in the queue wrapper or model changes.
  */
-export declare const KNOWN_NOTIFICATION_TYPES: readonly ["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert"];
-export declare const knownNotificationTypeSchema: z.ZodEnum<["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert"]>;
+export declare const KNOWN_NOTIFICATION_TYPES: readonly ["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert", "periodic_recommendation"];
+export declare const knownNotificationTypeSchema: z.ZodEnum<["calendar_reminder", "habit_reminder", "system", "budget_alert", "daily_summary", "focus_session_alert", "periodic_recommendation"]>;
 export type KnownNotificationType = z.infer<typeof knownNotificationTypeSchema>;
 /** Delivery channel for a single Notification document. */
 export declare const notificationChannelSchema: z.ZodEnum<["push", "in_app", "email"]>;
@@ -258,6 +258,16 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     }>>;
+    periodicRecommendations: z.ZodDefault<z.ZodObject<{
+        push: z.ZodDefault<z.ZodBoolean>;
+        inApp: z.ZodDefault<z.ZodBoolean>;
+    }, "strip", z.ZodTypeAny, {
+        push: boolean;
+        inApp: boolean;
+    }, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }>>;
     dailySummary: z.ZodDefault<z.ZodObject<{
         deliveryTime: z.ZodDefault<z.ZodString>;
         channels: z.ZodDefault<z.ZodArray<z.ZodEnum<["push", "in_app", "email"]>, "many">>;
@@ -294,6 +304,10 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         push: boolean;
         inApp: boolean;
     };
+    periodicRecommendations: {
+        push: boolean;
+        inApp: boolean;
+    };
     dailySummary: {
         deliveryTime: string;
         channels: ("email" | "push" | "in_app")[];
@@ -318,6 +332,10 @@ export declare const notificationPreferencesSchema: z.ZodObject<{
         inApp?: boolean | undefined;
     } | undefined;
     focusSessionAlerts?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
+    periodicRecommendations?: {
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;
@@ -381,6 +399,16 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     }>>;
+    periodicRecommendations: z.ZodOptional<z.ZodObject<{
+        push: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+        inApp: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
+    }, "strip", z.ZodTypeAny, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }, {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    }>>;
     dailySummary: z.ZodOptional<z.ZodObject<{
         deliveryTime: z.ZodOptional<z.ZodDefault<z.ZodString>>;
         channels: z.ZodOptional<z.ZodDefault<z.ZodArray<z.ZodEnum<["push", "in_app", "email"]>, "many">>>;
@@ -416,6 +444,10 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;
+    periodicRecommendations?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
     dailySummary?: {
         timezone?: string | undefined;
         deliveryTime?: string | undefined;
@@ -440,6 +472,10 @@ export declare const updateNotificationPreferencesSchema: z.ZodObject<{
         inApp?: boolean | undefined;
     } | undefined;
     focusSessionAlerts?: {
+        push?: boolean | undefined;
+        inApp?: boolean | undefined;
+    } | undefined;
+    periodicRecommendations?: {
         push?: boolean | undefined;
         inApp?: boolean | undefined;
     } | undefined;

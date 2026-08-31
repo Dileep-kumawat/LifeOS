@@ -81,6 +81,10 @@ const userSchema = new Schema(
         type: modulePreferenceSchema,
         default: () => ({ push: true, inApp: true })
       },
+      periodicRecommendations: {
+        type: modulePreferenceSchema,
+        default: () => ({ push: true, inApp: true })
+      },
       dailySummary: {
         type: dailySummaryPreferenceSchema,
         default: () => ({ deliveryTime: "07:00", channels: ["push", "in_app"], timezone: "UTC" })

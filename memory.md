@@ -90,6 +90,7 @@ LifeOS/
   - `Conversation` & `Message`: Chat history with AI assistant.
   - `Embedding`: Vector embeddings for RAG search over user data.
   - `Summary`: Daily/weekly AI-generated life performance summaries.
+  - `Recommendation`: Periodic weekly/monthly AI-generated performance recommendations grounded in productivity & finance metrics (FR-10.3).
   - `Notification` & `PushSubscription`: System alerts & Web Push / Mobile Push endpoints.
 
 ---
@@ -121,6 +122,8 @@ LifeOS/
 - `/api/v1/sync` - Delta sync engine, conflict detection, tombstone tracking.
 - `/api/v1/ai/chat` - AI assistant conversational interface (RAG enabled).
 - `/api/v1/ai/summary` - Automated daily & weekly life performance summaries.
+- `/api/v1/ai/recommendations/latest` - Latest generated periodic recommendation (weekly or monthly cadence) with grounded metrics (FR-10.3).
+- `/api/v1/ai/recommendations/:id` - Historical recommendation lookup by document ID.
 - `/api/v1/ocr/extract` - Shared server-side OCR extraction (Tesseract fallback, BullMQ queue, 10MB limit, rate limited).
 - `/api/v1/ocr/extract/:jobId` - Polling status and result retrieval for async OCR extraction jobs.
 
@@ -242,6 +245,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [Phase 10 Periodic Recommendations (FR-10.3) — Weekly & Monthly Cadences]: Implemented recurring scheduled AI recommendation engine composing Phase 3's `callAI()` with Phase 9's `getProductivityAnalytics` & `getFinanceAnalytics` and Phase 2's `scheduleNotification` notification delivery; added BullMQ recurring dispatcher checking weekly (Sundays at 08:00) and monthly (1st of month at 08:00) user cadences with dedupe keys; created `Recommendation` mongoose model with compound unique indexes; exposed `GET /api/v1/ai/recommendations/latest` and `GET /api/v1/ai/recommendations/:id` with OpenAPI 3.0.3 documentation; built web `PeriodicRecommendationsCard` (with Weekly/Monthly switcher, loading/error/scheduled states, Notion calm palette, and Storybook coverage) and mobile `PeriodicRecommendationsCard`; added `periodicRecommendations` push/in-app notification preference toggles across web and mobile; achieved 100% test coverage with 9 unit/integration tests and monorepo typecheck/build verification.
 - [Phase 9 Analytics Dashboard UI (Web & Mobile)]: Implemented unified Analytics Dashboard UI across Web (React) and Mobile (Expo React Native) — built executive multi-domain dashboard (Productivity vs Finance), shared Recharts (Web) and React Native SVG (Mobile) AnalyticsChart component supporting bar and line variants with accessibility fallback tables and zero-data states, shared DateRangePicker with presets (This Week, This Month, Last 3 Months, Custom bounded <= 366 days), ExportButton (Web) and ExportActionModal (Mobile) with CSV/PDF triggers, native file download and Share sheet integration with rate-limit handling, registered /analytics in web routing & navigation sidebar and mobile FloatingDock / RootNavigator, added Storybook stories, and verified 100% passing tests across web and mobile.
 - [Phase 9 Analytics Aggregation Layer & Export Engine (FR-12.1 – FR-12.4)]: Implemented backend analytics aggregation layer unifying habits scheduled-vs-completed calculations, FocusSession MongoDB aggregation pipelines, finance category breakdowns, spend trends, and budget adherence over bounded date ranges (<=366 days); added synchronous CSV/PDF report generation with RFC 4180 escaping and PDFKit styling returning raw attachments with Content-Disposition headers; added Redis-backed export rate limiting (20 req/hour) and full OpenAPI 3.0.3 specification coverage.
 - [Phase 8 Voice Documentation & Storybook Audit]: Documented client-side voice input layer in Swagger WebSocket protocol specs confirming zero backend API surface and identical WS protocol routing; built VoiceInputBar component and Storybook stories covering all 3 states (Idle, Recording with live waveform, Permission-Denied and Empty-Transcript inline notices) with @storybook/addon-a11y aria-live screen-reader support; verified static Storybook CI build and 107-route OpenAPI schema-completeness check.
@@ -256,14 +260,19 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Metro Bundler / Mobile ML Kit & ImagePicker]: Removed dynamic `await import()` of non-installed `@react-native-ml-kit/text-recognition` in `mobileOcrService.ts` and replaced deprecated `ImagePicker.MediaTypeOptions.Images` with `mediaTypes: ["images"]` in `useOcrCapture.ts` — fixed `Requiring unknown module "undefined"` runtime crash in Metro bundler.
 - [Finance OCR Integration]: Implemented FR-6.2/UC-3 photographed receipt to structured transaction pre-fill — added heuristic receipt parser in @lifeos/shared, Web ReceiptPreviewCard & ReceiptScanModal (with 4 states), Mobile MobileReceiptPreviewCard & ReceiptScanModal, extended TransactionForm/TransactionFormModal with prefill & confidence cues, Storybook stories, and integration test suites.
 - [Metro Bundler / Mobile OCR]: Changed `./apiClient.js` to `./apiClient` in `mobileOcrService.ts` and aligned `expo-image-picker` to `~16.0.6` — resolved Metro bundler module resolution error.
-- [Focus & Study Planner Aggregation Layer (FR-7.4, FR-8.3)]: Implemented multi-stage MongoDB aggregations for focus summaries, polymorphic entity breakdowns, and sequential time-series trends; enriched topic detail view unifying accumulated focus time, scheduled AI plan events, and SM-2 flashcard deck metrics without redundant counters on Topic models.
-- [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
 
 ---
 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Periodic Recommendations Protocol (FR-10.3)**:
+  - Generation occurs strictly on scheduled cadences (weekly on Sundays at 08:00 evaluating the past 7 completed days, monthly on the 1st of the month at 08:00 evaluating the completed calendar month) via BullMQ background jobs with deterministic dedupe keys (`periodic_rec__${userId}__${period}__${startDate}`).
+  - Content generation directly calls `getProductivityAnalytics(userId, start, end)` and `getFinanceAnalytics(userId, start, end)` and feeds aggregated metrics into `callAI()` with provider fallback.
+  - Every recommendation item strictly enforces data grounding: explicit domain (`finance`, `habits`, `productivity`, `overall`), category name, observational message referencing numbers, actionable step, and `metricGrounded` string cue.
+  - Delivery dispatches `periodic_recommendation` notifications via `scheduleNotification` respecting user's `notificationPreferences.periodicRecommendations` (push / in-app toggles).
+  - Background worker errors in `callAI()` are rethrown to trigger BullMQ's exponential retry mechanism instead of saving empty or broken records.
 
 - **Analytics Aggregation, Range Scoping & Export Protocol (FR-12.1 – FR-12.4)**:
   - Date filtering is unified under `analyticsDateRangeSchema` (`startDate` & `endDate` required, formatted as YYYY-MM-DD or ISO, capped at <= 366 days window to prevent pathological unbounded queries) and parsed into exact UTC day boundaries (`[00:00:00.000, 23:59:59.999]`).

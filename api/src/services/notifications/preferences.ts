@@ -11,6 +11,7 @@ export type PreferenceModule =
   | "system"
   | "financeBudgetAlerts"
   | "focusSessionAlerts"
+  | "periodicRecommendations"
   | "dailySummary";
 
 export const NOTIFICATION_PREFERENCE_MODULES: PreferenceModule[] = [
@@ -19,6 +20,7 @@ export const NOTIFICATION_PREFERENCE_MODULES: PreferenceModule[] = [
   "system",
   "financeBudgetAlerts",
   "focusSessionAlerts",
+  "periodicRecommendations",
   "dailySummary"
 ];
 
@@ -29,6 +31,7 @@ export const DEFAULT_PREFERENCES: NotificationPreferences = {
   system: { push: true, inApp: true },
   financeBudgetAlerts: { push: true, inApp: true },
   focusSessionAlerts: { push: true, inApp: true },
+  periodicRecommendations: { push: true, inApp: true },
   dailySummary: { deliveryTime: "07:00", channels: ["push", "in_app"] },
   dndDuringFocus: false
 };
@@ -47,6 +50,8 @@ export function preferenceModuleForType(type: string): PreferenceModule {
       return "financeBudgetAlerts";
     case "focus_session_alert":
       return "focusSessionAlerts";
+    case "periodic_recommendation":
+      return "periodicRecommendations";
     case "daily_summary":
       return "dailySummary";
     default:
@@ -99,6 +104,7 @@ export function applyPreferenceUpdates(
     system: { ...current.system },
     financeBudgetAlerts: { ...current.financeBudgetAlerts },
     focusSessionAlerts: { ...current.focusSessionAlerts },
+    periodicRecommendations: { ...current.periodicRecommendations },
     dailySummary: { ...current.dailySummary },
     dndDuringFocus: updates.dndDuringFocus ?? current.dndDuringFocus ?? false
   };

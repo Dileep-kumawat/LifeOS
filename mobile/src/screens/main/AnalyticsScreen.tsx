@@ -22,7 +22,10 @@ import { DateRangePicker, computeMobilePresetRange, type MobileDateRangeValue } 
 import { ExportActionModal } from "../../components/analytics/ExportActionModal";
 import { ProductivityAnalyticsView } from "../../components/analytics/ProductivityAnalyticsView";
 import { FinanceAnalyticsView } from "../../components/analytics/FinanceAnalyticsView";
+import { PeriodicRecommendationsCard } from "../../components/ai/PeriodicRecommendationsCard";
 import { analyticsApiService } from "../../services/analyticsApiService";
+import { recommendationsApiService } from "../../services/recommendationsApiService";
+import type { RecommendationPeriod } from "@lifeos/shared";
 import { colors, spacing, radius } from "../../theme";
 
 export function AnalyticsScreen() {
@@ -33,6 +36,19 @@ export function AnalyticsScreen() {
   });
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [recPeriod, setRecPeriod] = useState<RecommendationPeriod>("weekly");
+
+  // Query: Periodic AI Recommendations
+  const {
+    data: recData,
+    isLoading: isRecLoading,
+    isError: isRecError,
+    refetch: refetchRec
+  } = useQuery({
+    queryKey: ["mobile-recommendations", recPeriod],
+    queryFn: () => recommendationsApiService.getLatestRecommendations(recPeriod),
+    staleTime: 60 * 1000
+  });
 
   // Query 1: Productivity Analytics
   const {
@@ -62,9 +78,9 @@ export function AnalyticsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetchProductivity(), refetchFinance()]);
+    await Promise.all([refetchProductivity(), refetchFinance(), refetchRec()]);
     setRefreshing(false);
-  }, [refetchProductivity, refetchFinance]);
+  }, [refetchProductivity, refetchFinance, refetchRec]);
 
   const isCurrentError = activeTab === "productivity" ? isProductivityError : isFinanceError;
   const currentError = activeTab === "productivity" ? productivityError : financeError;
@@ -108,6 +124,17 @@ export function AnalyticsScreen() {
           </ThemedText>
         </TouchableOpacity>
       </View>
+
+      {/* Periodic AI Recommendations Surface (FR-10.3) */}
+      <PeriodicRecommendationsCard
+        isLoading={isRecLoading && !refreshing}
+        isError={isRecError}
+        onRetry={refetchRec}
+        generated={recData?.generated}
+        period={recPeriod}
+        onPeriodChange={setRecPeriod}
+        recommendation={recData?.recommendation}
+      />
 
       {/* 2. Date Range Picker */}
       <DateRangePicker value={dateRange} onChange={setDateRange} />

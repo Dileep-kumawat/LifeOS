@@ -13,7 +13,8 @@ export const KNOWN_NOTIFICATION_TYPES = [
   "system",
   "budget_alert",
   "daily_summary",
-  "focus_session_alert"
+  "focus_session_alert",
+  "periodic_recommendation"
 ] as const;
 
 export const knownNotificationTypeSchema = z.enum(KNOWN_NOTIFICATION_TYPES);
@@ -105,6 +106,7 @@ export const notificationPreferencesSchema = z.object({
   system: modulePreferenceSchema.default({ push: true, inApp: true }),
   financeBudgetAlerts: modulePreferenceSchema.default({ push: true, inApp: true }),
   focusSessionAlerts: modulePreferenceSchema.default({ push: true, inApp: true }),
+  periodicRecommendations: modulePreferenceSchema.default({ push: true, inApp: true }),
   dailySummary: dailySummaryPreferenceSchema.default({
     deliveryTime: "07:00",
     channels: ["push", "in_app"]
@@ -121,6 +123,7 @@ export const updateNotificationPreferencesSchema = z.object({
   system: modulePreferenceSchema.partial().optional(),
   financeBudgetAlerts: modulePreferenceSchema.partial().optional(),
   focusSessionAlerts: modulePreferenceSchema.partial().optional(),
+  periodicRecommendations: modulePreferenceSchema.partial().optional(),
   dailySummary: dailySummaryPreferenceSchema.partial().optional(),
   dndDuringFocus: z.boolean().optional()
 });

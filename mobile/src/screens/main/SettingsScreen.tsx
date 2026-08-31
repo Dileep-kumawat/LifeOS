@@ -29,11 +29,13 @@ export function SettingsScreen({ navigation }: any) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
 
-  // Daily Summary & Focus Preferences State
+  // Daily Summary & Periodic Recommendations State
   const [deliveryTime, setDeliveryTime] = useState("07:00");
   const [channelPush, setChannelPush] = useState(true);
   const [channelInApp, setChannelInApp] = useState(true);
   const [channelEmail, setChannelEmail] = useState(false);
+  const [recPush, setRecPush] = useState(true);
+  const [recInApp, setRecInApp] = useState(true);
   const [dndDuringFocus, setDndDuringFocus] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -63,6 +65,10 @@ export function SettingsScreen({ navigation }: any) {
             setChannelInApp(channels.includes("in_app"));
             setChannelEmail(channels.includes("email"));
           }
+          if (preferences?.periodicRecommendations) {
+            setRecPush(preferences.periodicRecommendations.push !== false);
+            setRecInApp(preferences.periodicRecommendations.inApp !== false);
+          }
           if (typeof preferences?.dndDuringFocus === "boolean") {
             setDndDuringFocus(preferences.dndDuringFocus);
           }
@@ -88,6 +94,10 @@ export function SettingsScreen({ navigation }: any) {
           deliveryTime,
           channels,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+        },
+        periodicRecommendations: {
+          push: recPush,
+          inApp: recInApp
         },
         dndDuringFocus
       });
@@ -380,6 +390,50 @@ export function SettingsScreen({ navigation }: any) {
           <Switch
             value={channelEmail}
             onValueChange={setChannelEmail}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        {/* Periodic Recommendations Push Toggle */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              Recommendations Push
+            </ThemedText>
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              Weekly/monthly insights via push
+            </ThemedText>
+          </View>
+          <Switch
+            value={recPush}
+            onValueChange={setRecPush}
+            trackColor={{ false: colors.hairline, true: colors.primary }}
+          />
+        </View>
+
+        {/* Periodic Recommendations In-App Toggle */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleTextContainer}>
+            <ThemedText variant="bodySm" numberOfLines={1} ellipsizeMode="tail">
+              Recommendations In-App
+            </ThemedText>
+            <ThemedText
+              variant="caption"
+              color={colors.inkMuted}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              Weekly/monthly insights in inbox
+            </ThemedText>
+          </View>
+          <Switch
+            value={recInApp}
+            onValueChange={setRecInApp}
             trackColor={{ false: colors.hairline, true: colors.primary }}
           />
         </View>
