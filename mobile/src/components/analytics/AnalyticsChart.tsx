@@ -24,6 +24,7 @@ export interface MobileAnalyticsChartProps {
   emptyTitle?: string;
   emptyMessage?: string;
   isLoading?: boolean;
+  ariaLabel?: string;
 }
 
 export function AnalyticsChart({
@@ -38,7 +39,8 @@ export function AnalyticsChart({
   xAxisFormatter,
   emptyTitle = "Not Enough Data Yet",
   emptyMessage = "No activity logged for this date range.",
-  isLoading = false
+  isLoading = false,
+  ariaLabel
 }: MobileAnalyticsChartProps) {
   if (isLoading) {
     return (
@@ -114,8 +116,13 @@ export function AnalyticsChart({
   const groupWidth = data.length > 0 ? chartWidth / data.length : chartWidth;
   const barSlotWidth = Math.min(24, Math.max(6, (groupWidth * 0.7) / series.length));
 
+  const chartTitle = title || (type === "bar" ? "Activity Bar Chart" : "Trend Line Chart");
+  const accessibleChartLabel =
+    ariaLabel ||
+    `${chartTitle}. Plotted series: ${series.map((s) => s.name).join(", ")}. Data points: ${data.length} periods.`;
+
   return (
-    <Card style={styles.card}>
+    <Card style={styles.card} accessible={true} accessibilityLabel={accessibleChartLabel} accessibilityRole="summary">
       {/* Title & Legend Header */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
@@ -145,7 +152,7 @@ export function AnalyticsChart({
       </View>
 
       {/* SVG Chart Container */}
-      <View style={styles.svgWrapper}>
+      <View style={styles.svgWrapper} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden={true}>
         <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
           {/* Horizontal Gridlines & Y-Axis Labels */}
           {[0, 0.5, 1].map((pct) => {

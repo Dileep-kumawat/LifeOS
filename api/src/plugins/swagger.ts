@@ -93,6 +93,27 @@ Flashcards use the pure deterministic SM-2 algorithm implemented in <code>@lifeo
 
 #### C. Study Planner Cascade Deletion Architecture (FR-7.1)
 Unlike the Notes module where deleting a folder reassigns notes to the root directory (because notes possess standalone semantic value), study topics and flashcards are intrinsically scoped to their syllabus/subject domain. An orphaned topic or flashcard cannot exist without its parent subject context, making complete cascade deletion of all child topics and associated flashcards upon subject deletion the correct domain behavior.
+
+---
+
+### Core Module Architectural Protocols (Phase 9: Analytics & Periodic AI Recommendations)
+
+#### D. Analytics Aggregation & Bounded Date-Range Engine (FR-12.1 – FR-12.3)
+* **Date Boundary & Safety Guard:** Date query parameters (<code>startDate</code> and <code>endDate</code>) enforce strict boundary clamping to whole UTC days (<code>[00:00:00.000, 23:59:59.999]</code>). Date windows are strictly limited to &le; 366 days (1 year) to prevent unbounded memory-intensive DB scans.
+* **Productivity Aggregation Math:** Composes habit check-in logs with frequency calculations (daily, weekly, custom) and MongoDB aggregation pipelines across <code>FocusSession</code> documents to compute expected vs. completed quotas, completion percentages, streak metrics, and polymorphic linkage distributions (<code>topic</code>, <code>goal</code>, <code>task</code>, <code>none</code>).
+* **Contiguous Daily Time Series:** Daily trend datasets are filled sequentially with zero-imputation across the entire bounded date range so client charts receive continuous, gap-free data series without client-side imputation.
+* **Financial Analytics & Budget Adherence:** Aggregates transactions into categorized income/expense totals and multi-month / daily spend trends, calculating pro-rated actual spend against configured user budgets.
+
+#### E. Raw Attachment Export Stream Protocol (FR-12.4)
+* **Raw Attachment vs. JSON Envelope:** Unlike all other API endpoints that return standard JSON envelopes (<code>{ data, ... }</code>), <code>GET /api/v1/analytics/export</code> returns **raw text or binary file streams** (<code>text/csv; charset=utf-8</code> or binary <code>application/pdf</code>) accompanied by an RFC 6266 <code>Content-Disposition: attachment; filename="..."</code> header for direct browser and mobile download processing.
+* **CSV Compliance:** Exported CSV files strictly adhere to RFC 4180 formatting with proper escaping, column headers, and multi-section tables.
+* **PDF Styling:** Exported PDF files are rendered server-side via PDFKit following LifeOS visual design guidelines (calm palette, typography, summary metric cards, and structured tables).
+* **Dedicated Rate Limiting:** Export endpoints are guarded by dedicated Redis sliding-window rate limiters (<strong>20 exports per hour per user</strong>). When exceeded, the endpoint responds with HTTP 429 Too Many Requests, a <code>Retry-After: 3600</code> header, and a standard JSON error body.
+
+#### F. Grounded Periodic AI Recommendations Architecture (FR-10.3)
+* **Cadence & Execution:** Automated background jobs run on deterministic schedules (Weekly on Sundays at 08:00 evaluating the past 7 days; Monthly on the 1st of the month at 08:00 evaluating the completed calendar month) via BullMQ workers with deterministic deduplication keys (<code>periodic_rec__&lt;userId&gt;__&lt;period&gt;__&lt;startDate&gt;</code>).
+* **Data Grounding:** Recommendations directly consume the output of <code>getProductivityAnalytics</code> and <code>getFinanceAnalytics</code>, feeding real numbers, category names, habit streaks, and budget percentages into <code>callAI()</code> to guarantee every recommendation is anchored in empirical user metrics (FR-10.3).
+* **Multi-Channel Dispatch:** Delivery dispatches notifications via Phase 2's notification engine respecting user preference toggles (<code>periodicRecommendations.push</code> and <code>periodicRecommendations.inApp</code>).
 `,
       version: "1.0.0"
     },
