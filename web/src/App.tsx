@@ -22,6 +22,7 @@ import { FinancePage } from "./features/finance/FinancePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { StudyPage } from "./features/study/StudyPage";
 import { FocusPage } from "./features/focus/FocusPage";
+import { AnalyticsPage } from "./features/analytics/AnalyticsPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -114,6 +115,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <FocusPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "analytics",
+        element: (
+          <ProtectedRoute>
+            <AnalyticsPage />
           </ProtectedRoute>
         )
       },

@@ -36,6 +36,7 @@ import {
   Compass,
   GraduationCap,
   Timer,
+  BarChart3,
   Grid,
   LucideIcon
 } from "lucide-react-native";
@@ -69,6 +70,7 @@ function getFallbackIcon(routeName: string): LucideIcon {
   if (name.includes("habit") || name.includes("goal") || name.includes("task") || name.includes("check")) return CheckSquare;
   if (name.includes("note") || name.includes("doc") || name.includes("memo")) return FileText;
   if (name.includes("fin") || name.includes("money") || name.includes("budget") || name.includes("pay")) return DollarSign;
+  if (name.includes("analytic") || name.includes("stat") || name.includes("chart") || name.includes("report")) return BarChart3;
   if (name.includes("study") || name.includes("card") || name.includes("syllabus") || name.includes("learn")) return GraduationCap;
   if (name.includes("focus") || name.includes("pomo") || name.includes("timer") || name.includes("clock")) return Timer;
   if (name.includes("chat") || name.includes("ai") || name.includes("assist") || name.includes("spark")) return Sparkles;

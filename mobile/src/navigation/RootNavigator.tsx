@@ -12,7 +12,8 @@ import {
   Settings,
   Sparkles,
   GraduationCap,
-  Timer
+  Timer,
+  BarChart3
 } from "lucide-react-native";
 
 import { useAuthStore } from "../store/authStore";
@@ -31,6 +32,7 @@ import { NotesScreen } from "../screens/main/NotesScreen";
 import { FinanceScreen } from "../screens/main/FinanceScreen";
 import { StudyScreen } from "../screens/main/StudyScreen";
 import { FocusScreen } from "../screens/main/FocusScreen";
+import { AnalyticsScreen } from "../screens/main/AnalyticsScreen";
 import { ChatScreen } from "../screens/main/ChatScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
 import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScreen";
@@ -141,6 +143,13 @@ function MainTabNavigator() {
           component={FinanceScreen}
           options={{
             tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size || 20} />
+          }}
+        />
+        <Tab.Screen
+          name="Analytics"
+          component={AnalyticsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <BarChart3 color={color} size={size || 20} />
           }}
         />
         <Tab.Screen

@@ -15,7 +15,8 @@ import {
   X,
   LogOut,
   GraduationCap,
-  Timer
+  Timer,
+  BarChart3
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { apiClient } from "../lib/apiClient";
@@ -181,6 +182,10 @@ export function RootLayout() {
                 <Timer className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110" />
                 <span>Focus</span>
               </NavLink>
+              <NavLink to="/analytics" className={getDrawerNavLinkClass}>
+                <BarChart3 className="size-4 shrink-0 text-[#0075de] transition-transform duration-150 group-hover:scale-110" />
+                <span>Analytics</span>
+              </NavLink>
 
               <div className="border-t border-[#c1c6d5]/60 my-2 pt-2">
                 <span className="text-[11px] font-semibold text-[#717784] px-3 uppercase tracking-wider mb-1">
@@ -271,6 +276,10 @@ export function RootLayout() {
           <NavLink to="/focus" className={getNavLinkClass}>
             <Timer className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
             <span>Focus</span>
+          </NavLink>
+          <NavLink to="/analytics" className={getNavLinkClass}>
+            <BarChart3 className="size-5 shrink-0 transition-transform duration-150 group-hover:scale-110" />
+            <span>Analytics</span>
           </NavLink>
         </div>
 
