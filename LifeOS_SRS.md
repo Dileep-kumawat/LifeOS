@@ -137,13 +137,12 @@ Each feature below includes description, priority, and functional requirements (
 
 | ID     | Requirement                                                                                  |
 | ------ | -------------------------------------------------------------------------------------------- |
-| FR-1.1 | System shall allow registration via email/password, Google OAuth, and phone OTP.             |
+| FR-1.1 | System shall allow registration via email/password and Google OAuth.                              |
 | FR-1.2 | System shall issue JWT access tokens (short-lived) and refresh tokens (long-lived, rotated). |
-| FR-1.3 | System shall support multi-factor authentication (optional, TOTP-based).                     |
-| FR-1.4 | System shall support password reset via email link with expiring token.                      |
-| FR-1.5 | System shall allow users to manage active sessions/devices and revoke access remotely.       |
-| FR-1.6 | System shall enforce role-based access control (User, Admin).                                |
-| FR-1.7 | System shall support account deletion with full data purge within 30 days (compliance).      |
+| FR-1.3 | System shall support password reset via email link with expiring token.                      |
+| FR-1.4 | System shall allow users to manage active sessions/devices and revoke access remotely.       |
+| FR-1.5 | System shall enforce role-based access control (User, Admin).                                |
+| FR-1.6 | System shall support account deletion with full data purge within 30 days (compliance).      |
 
 ### 3.2 AI Personal Assistant
 
@@ -169,7 +168,6 @@ Each feature below includes description, priority, and functional requirements (
 | ------ | ---------------------------------------------------------------------------------------------------------- |
 | FR-3.1 | Users shall create, edit, delete, and view events (day/week/month views).                                  |
 | FR-3.2 | System shall support recurring events (daily, weekly, monthly, custom RRULE).                              |
-| FR-3.3 | System shall support two-way sync with Google Calendar (import/export).                                    |
 | FR-3.4 | AI shall suggest optimal time slots for new tasks/events based on existing schedule and stated priorities. |
 | FR-3.5 | System shall send reminders before events (configurable lead time).                                        |
 | FR-3.6 | System shall detect and warn on scheduling conflicts.                                                      |
@@ -318,7 +316,6 @@ Each feature below includes description, priority, and functional requirements (
 | LLM Provider API (e.g., Anthropic Claude API)            | Core AI reasoning, summarization, recommendations |
 | Vector DB (e.g., MongoDB Atlas Vector Search / Pinecone) | Embedding storage for RAG retrieval               |
 | OCR Service (e.g., Google Vision / ML Kit / Tesseract)   | Text extraction from images                       |
-| Google Calendar API                                      | Two-way calendar sync                             |
 | Firebase Cloud Messaging                                 | Android push notifications                        |
 | Web Push API                                             | Browser push notifications                        |
 | Payment Gateway (e.g., Stripe/Razorpay)                  | Subscription billing                              |
@@ -371,7 +368,7 @@ Each feature below includes description, priority, and functional requirements (
 ### 6.1 Core Entities (Simplified)
 
 - **User:** profile, auth credentials, subscription tier, preferences.
-- **Event:** title, start/end, recurrence rule, linked goal/task, source (native/Google sync).
+- **Event:** title, start/end, recurrence rule, linked goal/task, source (native).
 - **Goal:** title, target date, milestones, status, linked habits/tasks.
 - **Habit:** title, frequency, streak data, check-in history.
 - **Note:** title, content (rich text), tags, folder, OCR source flag, version history.

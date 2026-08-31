@@ -98,11 +98,11 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 **Auth (FR-1.x — build now)**
 
-- Email/password registration + login (FR-1.1, partial — defer Google OAuth/OTP)
+- Email/password registration + login (FR-1.1, partial — defer Google OAuth)
 - JWT access token (short-lived) + refresh token (long-lived, rotated on use) via Passport.js (`passport-jwt`) per the SRS's stated auth standardization (FR-1.2)
-- Password reset via expiring email-link token (FR-1.4) — you'll need transactional email (Resend/Postmark) wired in here, earlier than the SRS phase list suggests, since password reset is not really optional
-- Basic RBAC middleware: `User` vs `Admin` role check (FR-1.6)
-- Account deletion endpoint that soft-deletes immediately and hard-purges via a scheduled job at 30 days (FR-1.7) — build the purge job now even though nobody will trigger it yet; it's much easier to build alongside the User model than retrofit
+- Password reset via expiring email-link token (FR-1.3) — you'll need transactional email (Resend/Postmark) wired in here, earlier than the SRS phase list suggests, since password reset is not really optional
+- Basic RBAC middleware: `User` vs `Admin` role check (FR-1.5)
+- Account deletion endpoint that soft-deletes immediately and hard-purges via a scheduled job at 30 days (FR-1.6) — build the purge job now even though nobody will trigger it yet; it's much easier to build alongside the User model than retrofit
 
 **Calendar (FR-3.1, 3.2)**
 
@@ -143,8 +143,7 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 ### Explicitly deferred
 
-- Google OAuth, phone OTP, MFA (Phase 10)
-- Google Calendar sync (Phase 10)
+- Google OAuth (Phase 10)
 - OCR on notes (Phase 6)
 - AI summarization/tagging on notes (Phase 3)
 - Note version history (nice-to-have, fold into Phase 3 or later if time allows)
@@ -467,6 +466,7 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 ### Tasks
 
+- Google OAuth
 - Full OWASP Top 10 pass (NFR-2.4) — dedicated security review, not incidental
 - Audit logging for admin actions and sensitive-module access (NFR-2.6)
 - Load testing against NFR-1.3 (10k concurrent WebSocket connections) — do this before launch, not after you find out the hard way
