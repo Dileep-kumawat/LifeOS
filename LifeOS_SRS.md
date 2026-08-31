@@ -89,10 +89,9 @@ LifeOS is a new, standalone SaaS product built as a multi-client system (Web, An
 7. Pomodoro-based focus timer integrated with tasks/goals
 8. Voice command interface
 9. Daily AI-generated summary and smart recommendations
-10. File storage (documents, images, receipts)
-11. Analytics dashboard (productivity, finance, health)
-12. Push/local notification engine
-13. Offline-first sync on mobile
+10. Analytics dashboard (productivity, finance, health)
+11. Push/local notification engine
+12. Offline-first sync on mobile
 
 ### 2.3 User Classes and Characteristics
 
@@ -258,18 +257,9 @@ Each feature below includes description, priority, and functional requirements (
 | FR-10.3 | System shall generate periodic (weekly/monthly) smart recommendations across productivity, health, and finance.                          |
 | FR-10.4 | Users shall configure the delivery time and channels (push/email) for summaries.                                                         |
 
-### 3.11 File Storage
-
-**Priority:** Medium
-
-| ID      | Requirement                                                                                           |
-| ------- | ----------------------------------------------------------------------------------------------------- |
-| FR-11.1 | Users shall upload files (images, PDFs, documents) attached to notes, finance entries, or standalone. |
-| FR-11.2 | System shall enforce per-tier storage quotas.                                                         |
-| FR-11.3 | System shall generate thumbnails/previews for supported file types.                                   |
-| FR-11.4 | System shall scan uploads for malware before storage.                                                 |
-
 ### 3.12 Analytics Dashboard
+
+*(Section 3.11 "File Storage" and FR-11.x have been removed from scope — this app has no file/attachment functionality. Section and requirement numbering from 3.12/FR-12.x onward is left unchanged rather than renumbered, so existing cross-references elsewhere in this document and in the phase build plans stay valid.)*
 
 **Priority:** Medium
 
@@ -332,7 +322,6 @@ Each feature below includes description, priority, and functional requirements (
 | Firebase Cloud Messaging                                 | Android push notifications                        |
 | Web Push API                                             | Browser push notifications                        |
 | Payment Gateway (e.g., Stripe/Razorpay)                  | Subscription billing                              |
-| Cloud Object Storage (e.g., S3/GCS)                      | File storage                                      |
 | Bank Aggregator (e.g., Plaid/Setu) — v2                  | Auto-import of transactions                       |
 
 ### 4.4 Communication Interfaces
@@ -350,7 +339,7 @@ Each feature below includes description, priority, and functional requirements (
 1. **Client Layer:** React Web (PWA-capable), React Native Android app, future Electron/Tauri desktop.
 2. **API Gateway / Node.js Backend:** REST API + WebSocket gateway; handles auth, business logic, orchestration.
 3. **Data Layer:**
-   - **MongoDB:** Primary document store (users, events, notes, habits, transactions, files metadata).
+   - **MongoDB:** Primary document store (users, events, notes, habits, transactions).
    - **Redis:** Session cache, rate limiting, pub/sub for WebSocket scaling, job queue (e.g., BullMQ) for background tasks (notifications, AI summary generation, OCR processing).
 4. **AI Services Layer:** Dedicated microservice(s) handling:
    - LLM orchestration and prompt/tool-calling management
@@ -358,7 +347,6 @@ Each feature below includes description, priority, and functional requirements (
    - OCR pipeline
    - Scheduled jobs for daily summaries/recommendations
 5. **Notification Service:** Manages push (FCM/Web Push), in-app, and email notifications, decoupled via message queue.
-6. **File Storage Service:** Handles upload, virus scan, thumbnailing, and serving via CDN/object storage.
 
 ### 5.2 Data Flow (Example: AI Assistant Query)
 
@@ -386,8 +374,8 @@ Each feature below includes description, priority, and functional requirements (
 - **Event:** title, start/end, recurrence rule, linked goal/task, source (native/Google sync).
 - **Goal:** title, target date, milestones, status, linked habits/tasks.
 - **Habit:** title, frequency, streak data, check-in history.
-- **Note:** title, content (rich text), tags, folder, attachments, OCR source flag, version history.
-- **Transaction:** amount, category, type (income/expense), date, note, receipt attachment.
+- **Note:** title, content (rich text), tags, folder, OCR source flag, version history.
+- **Transaction:** amount, category, type (income/expense), date, note.
 - **Budget:** category, limit, period, current spend.
 - **StudyPlan:** subject, topics, deadlines, generated schedule, progress.
 - **FocusSession:** start/end, duration, linked task/goal.
@@ -568,8 +556,6 @@ This section maps each architectural component to concrete technology choices, s
 | Primary DB          | MongoDB Atlas                                                                     | Managed, handles flexible document schemas well (notes, chat, varied entities) |
 | Cache/session/queue | Redis (managed, e.g., Upstash/ElastiCache)                                        | Sessions, rate limiting, pub/sub, BullMQ                                       |
 | Vector search (RAG) | MongoDB Atlas Vector Search (keeps one DB) or Pinecone/Qdrant if scale demands it | Start with Atlas Vector Search to avoid a second DB dependency                 |
-| File/object storage | AWS S3 or Cloudflare R2                                                           | R2 avoids egress fees, worth comparing                                         |
-| CDN                 | CloudFront or Cloudflare                                                          | Serving files/thumbnails                                                       |
 
 ### 10.5 AI Services
 

@@ -432,7 +432,7 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 ---
 
-## Phase 9 — Analytics Dashboard + File Storage (2 weeks)
+## Phase 9 — Analytics Dashboard (2 weeks)
 
 **Goal:** Pull together data that already exists from every prior phase — cheap now, would've been premature earlier.
 
@@ -448,21 +448,14 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 - CSV/PDF export (FR-12.4)
 - Periodic (weekly/monthly) smart recommendations — expands Phase 3's daily summary into a broader recurring job (FR-10.3)
 
-**File Storage**
-
-- S3/R2 upload with per-tier quota enforcement (FR-11.1, 11.2)
-- Thumbnail generation for supported types (FR-11.3)
-- Malware scanning before storage — don't skip this, it's a real risk once you accept arbitrary uploads (FR-11.4)
-
 ### Documentation additions
 
-- **Swagger:** `Analytics`, `Files` tags — document export endpoint response types (binary/CSV/PDF) carefully, these don't follow the usual JSON pattern
-- **Storybook:** `AnalyticsChart` variants, `FileUploadDropzone`, `FilePreviewThumbnail`
+- **Swagger:** `Analytics` tag — document export endpoint response types (binary/CSV/PDF) carefully, these don't follow the usual JSON pattern
+- **Storybook:** `AnalyticsChart` variants
 
 ### Exit criteria
 
 - A user can view productivity + finance analytics over a custom date range and export it
-- File upload → thumbnail → malware scan → CDN-served preview works end to end
 
 ---
 
@@ -528,7 +521,7 @@ To keep Swagger and Storybook genuinely useful rather than decorative:
 | 6 — OCR                      | 1–2 wk   | 24 wk      |
 | 7 — Study Planner + Pomodoro | 2–3 wk   | 27 wk      |
 | 8 — Voice                    | 1 wk     | 28 wk      |
-| 9 — Analytics + Files        | 2 wk     | 30 wk      |
+| 9 — Analytics                | 2 wk     | 30 wk      |
 | 10 — Launch Polish           | 2–4 wk   | 34 wk      |
 
 ~7–8 months to a genuinely launch-ready product for a small team. Treat this as a planning input, not a promise — Phase 5 (offline sync) and Phase 3 (AI core) are the two most likely to run over, so if you need to protect a launch date, look there first rather than cutting corners in Phase 10's compliance work.

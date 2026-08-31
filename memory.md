@@ -1,4 +1,4 @@
-# LifeOS System Memory & Architecture Map
+9# LifeOS System Memory & Architecture Map
 
 > **Token-Optimized Project Blueprint for AI Agents**  
 > Maintainer Notice: When completing new features, schemas, or modules, follow the update protocol in [Section 7](#7-memory-maintenance-protocol-for-ai-agents).
