@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useSocketChat } from "./hooks/useSocketChat";
 import { useWebVoiceInput } from "./hooks/useWebVoiceInput";
 import { VoiceWaveform } from "./components/VoiceWaveform";
+import { VoiceInputBar } from "./components/VoiceInputBar";
 import { ConversationHistorySidebar } from "./components/ConversationHistorySidebar";
 import { ChatMessage } from "./components/ChatMessage";
 import { StreamingIndicator } from "./components/StreamingIndicator";
@@ -279,57 +280,17 @@ export const ChatPage: React.FC = () => {
             {/* Bottom Fixed Floating Input Bar (ChatGPT Style) */}
             <div className="p-4 bg-white border-t border-[#f0f0f0] shrink-0">
               <div className="max-w-3xl mx-auto w-full flex flex-col items-center gap-2">
-                <form onSubmit={handleSubmit} className="w-full">
-                  <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#0075de] focus-within:ring-2 focus-within:ring-[#0075de]/15 p-2.5 flex items-center gap-2 transition-all duration-200">
-                    {isRecording ? (
-                      <VoiceWaveform
-                        audioLevels={audioLevels}
-                        onCancel={cancelRecording}
-                        onConfirm={stopRecording}
-                      />
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="p-1.5 text-[#676767] hover:text-[#0d0d0d] hover:bg-[#f4f4f4] active:scale-90 rounded-full transition-all duration-150 cursor-pointer"
-                          title="Add attachment"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-
-                        <input
-                          type="text"
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          placeholder="Message LifeOS AI..."
-                          className="flex-1 text-sm text-[#0d0d0d] bg-transparent outline-none px-2 placeholder-[#8e8e8e]"
-                        />
-
-                        {input.trim().length > 0 ? (
-                          <button
-                            type="submit"
-                            disabled={isStreaming}
-                            className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center hover:bg-[#2f2f2f] hover:scale-105 active:scale-90 disabled:opacity-30 disabled:hover:scale-100 transition-all duration-150 shrink-0 cursor-pointer"
-                            title="Send message"
-                          >
-                            <ArrowUp className="w-4 h-4 stroke-[2.5]" />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={startRecording}
-                            disabled={isStreaming}
-                            className="w-8 h-8 rounded-full bg-[#f4f4f4] text-[#0d0d0d] hover:bg-[#ebebeb] hover:scale-105 active:scale-90 flex items-center justify-center transition-all duration-150 shrink-0 cursor-pointer"
-                            title="Voice input"
-                            aria-label="Voice input"
-                          >
-                            <Mic className="w-4 h-4" />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </form>
+                <VoiceInputBar
+                  input={input}
+                  onInputChange={setInput}
+                  onSubmit={handleSubmit}
+                  isStreaming={isStreaming}
+                  isRecording={isRecording}
+                  audioLevels={audioLevels}
+                  onStartRecording={startRecording}
+                  onStopRecording={stopRecording}
+                  onCancelRecording={cancelRecording}
+                />
 
                 <p className="text-[11px] text-[#8e8e8e] text-center">
                   LifeOS AI can make mistakes. Check important account info.

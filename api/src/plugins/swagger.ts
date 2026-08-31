@@ -60,6 +60,11 @@ LifeOS AI conversational agent binds structured LangChain tools. All write actio
 | <code>create_note</code> | Creates a markdown note with title and tags. | <code>title</code> (string), <code>content</code> (string), <code>tags</code> (string[]) | Proposed to user &rarr; writes to <code>Note</code> collection upon confirmation. |
 | <code>query_spending</code> | Read-only aggregation query over user financial transactions and budgets. | <code>category</code> (optional string), <code>startDate</code> (optional ISO), <code>endDate</code> (optional ISO) | Read-only tool execution — runs directly without requiring user confirmation modal. |
 
+#### 5. Client-Side Voice Input Layer & Protocol Parity (Phase 8 / FR-9.1, FR-9.2, FR-9.3)
+* **Architecture & Zero Backend Surface**: Voice command functionality is implemented strictly as a client-side audio capture and speech-to-text (STT) transcription layer across both Web (Web Speech API + Web Audio API AnalyserNode) and Mobile (on-device native SpeechRecognizer adapter).
+* **Protocol Uniformity**: Voice transcriptions feed directly into the existing <code>send_message</code> upstream event with identical JSON payloads (<code>{ "conversationId"?: "...", "content": "..." }</code>). There are **no separate audio-upload, binary streaming, or STT endpoints** on the backend.
+* **Tool Calling & Safety Parity**: Destructive and write tool actions triggered via voice input (such as scheduling events, creating habits, or generating study plans) route through the identical <code>tool_call_proposed</code> &rarr; <code>confirm_tool_call</code> confirmation modal safety pipeline (FR-2.4) as typed input with full behavioral parity.
+
 ---
 
 ### Core Module Architectural Protocols (Phase 7: Study Planner & Focus)

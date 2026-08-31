@@ -22,6 +22,9 @@ export const VoiceWaveform: React.FC<VoiceWaveformProps> = ({
     >
       {/* Waveform Visualization Area */}
       <div className="flex-1 flex items-center justify-center gap-[3px] sm:gap-1 px-3 h-full overflow-hidden">
+        <span className="sr-only" role="status" aria-live="polite">
+          Recording voice input...
+        </span>
         {audioLevels.map((level, idx) => {
           // Compute dynamic bar height in px (min 4px, max 24px)
           const barHeight = Math.max(4, Math.round(level * 24));

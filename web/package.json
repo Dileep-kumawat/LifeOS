@@ -9,6 +9,7 @@
     "sw:build": "node scripts/build-sw.mjs",
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
+    "test": "vitest run",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

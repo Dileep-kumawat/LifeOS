@@ -12,7 +12,12 @@ export interface VoiceWaveformProps {
 export const VoiceWaveform: React.FC<VoiceWaveformProps> = React.memo(
   ({ audioLevels, onCancel, onConfirm }) => {
     return (
-      <View style={styles.container} accessibilityRole="toolbar" accessibilityLabel="Voice recording controls">
+      <View
+        style={styles.container}
+        accessibilityRole="toolbar"
+        accessibilityLabel="Voice recording in progress"
+        accessibilityLiveRegion="polite"
+      >
         {/* Animated Waveform Bars */}
         <View style={styles.waveformContainer}>
           {audioLevels.map((level, idx) => {
