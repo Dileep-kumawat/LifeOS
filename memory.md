@@ -9,8 +9,8 @@
 
 - **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `packages/shared`).
 - **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/Bull), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, OAuth stub), Swagger (`/api/v1/docs`), Sentry.
-- **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Storybook, Sentry.
-- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), SQLite local storage, EAS Build, Sentry.
+- **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Web Speech API + Web Audio API inline Voice Input (`useWebVoiceInput`, `VoiceWaveform`), Storybook, Sentry.
+- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), On-device Speech Recognizer & inline Voice Input (`useMobileVoiceInput`, `mobileVoiceService`, `VoiceWaveform`), SQLite local storage, EAS Build, Sentry.
 - **Shared Package (`/packages/shared`)**: Shared Zod schemas, TypeScript types, design system tokens, and utility functions.
 - **Infra & DevOps**: Docker Compose (`mongo`, `redis`, `api`), GitHub Actions CI.
 
@@ -233,6 +233,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
   - [ ] Tap message input: keyboard opens, input capsule stays pinned directly above keyboard, and dock fades out completely.
   - [ ] Dismiss keyboard: input returns smoothly to resting position above dock height without layout jump.
   - [ ] Stream AI response: new tokens auto-scroll to bottom, prompt chips disappear, and tool confirmation modal triggers correctly.
+  - [ ] Tap Mic icon in chat input bar: transitions cleanly to live waveform with level-reactive animation, and tapping X discards without sending; tapping checkmark completes transcript and populates input field.
 
 ---
 
@@ -240,6 +241,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 > Short-term memory of intentional changes and bug fixes (newest first, max 15 entries).
 
+- [Phase 8 Voice Input Affordance (Web & Mobile)]: Implemented 3-state inline voice input (Idle -> Recording -> Idle) directly inside chat input bar across Web and Mobile with zero backend infra — Web Speech API & Web Audio API AnalyserNode on web, on-device SpeechRecognizer adapter with volume metering on mobile, live audio-reactive waveform visualizer (VoiceWaveform), permission denial & empty-speech inline notices, and transparent downstream tool calling & confirmation parity.
 - [Phase 7 Study Planner & Pomodoro Audit Pass]: Completed comprehensive documentation and Storybook audit — enriched Swagger/OpenAPI annotations with AI tool calling (`generate_study_plan` 8am–10pm free-time scanning & graceful fallback), SM-2 mathematical progression, pause/resume elapsed-time semantics, cascade deletion architecture, interval progression worked examples, and error schemas; added `SessionLinkPicker` Storybook stories, extended `NotificationPreferencesPanel` with `focusSessionAlerts` toggle, and enhanced `FocusSummaryChart` with screen-reader accessible data tables.
 - [Mobile UI Overflow & Layout Fixes (Study & Focus)]: Removed redundant inner `<ScrollView>` from `StudyScreen` and `FocusScreen` (delegating cleanly to `ScreenContainer scrollable`), eliminating top content clipping; added `flexShrink: 1`, `ellipsizeMode="tail"`, `numberOfLines={1}`, and `minWidth: 0` to long subject badges (`topicSubjectBadge`), status pills, and topic card footers so priority pills (`HIGH`, `MEDIUM`) are no longer pushed off screen; updated `Modal.tsx` header to `alignItems: "flex-start"` with `minWidth: 0` so multi-line titles no longer crowd the close button; improved `PomodoroTimer` link banner and countdown text font scaling; made `TopicDetailModal`, `SessionHistoryList`, and `SessionLinkPicker` badges/titles robust against long text.
 - [Mobile Port: Study Planner & Pomodoro Focus Timer (Phase 7 - Prompt 5)]: Ported Study Planner and Pomodoro Focus to mobile Expo/SQLite client — added local schema models and indexes for `subjects`, `topics`, `flashcards`, and `focus_sessions`; extended sync engine push/pull pipeline with 3-tier conflict resolution (progress-aware review event dedup for flashcards, Last-Write-Wins with notice flag for focus sessions, and cascade deletions for subjects and topics); built mobile `StudyScreen` with Daily Spaced Review Queue modal (`FlashcardReviewCard` with tap-first 0, 2, 4, 5 SM-2 rating mapping), `SubjectModal`, `TopicModal`, `TopicDetailModal`, and `FlashcardFormModal`; built mobile `FocusScreen` with `PomodoroTimer` (idle, working, break, paused states), `SessionLinkPicker` (polymorphic topic/goal link), and `SessionHistoryList` (following Finance transaction list precedent); implemented mobile client-side FR-8.4 Do Not Disturb suppression of non-critical notifications during active focus sessions; integrated `Study` and `Focus` tabs into `RootNavigator` and `FloatingDock`.
@@ -254,13 +256,19 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Notes OCR Integration]: Implemented FR-5.3 photographed text to editable note pre-fill — shared OCR-to-ProseMirror converter, Web & Mobile 4-state scan flow, Storybook stories, and review cards with low-confidence cues.
 - [OCR Extraction Pipeline]: Added shared on-device ML Kit & BullMQ Tesseract OCR pipeline with unified spatial & confidence schemas — unified OCR contract for Notes and Finance.
 - [DashboardScreen]: Added `flexWrap` and `gap` to `DailySummaryCard` badges/items — fixed scheduled item layout overflow on narrow device widths.
-- [FloatingDock]: Maintained dock mounting and transitioned Reanimated opacity on keyboard show/hide — fixed active screen indicator resetting to first icon (Dashboard) after keyboard dismiss.
 
 ---
 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Voice Input Inline Affordance & STT Routing Protocol (FR-9.1, FR-9.2, FR-9.3)**:
+  - Voice recording is entirely contained within the chat input bar across exactly 3 states (Idle -> Recording -> Idle). No separate modals, bottom sheets, or dedicated screens.
+  - Zero backend STT requirement: transcription is processed purely client-side (Web Speech API SpeechRecognition on Web, on-device native SpeechRecognizer adapter on Mobile).
+  - Waveform visualization renders real-time audio levels (Web Audio API AnalyserNode on web, live volume metering on mobile).
+  - Tap-checkmark completes speech recognition and sets the message input state (`setInput(transcript)`), routing through the exact same WebSocket/REST chat send pipeline as typed text.
+  - Destructive & write tool actions triggered via voice follow the exact same `ToolConfirmationModal` confirm-before-write pipeline without deviation; tapping cancel (`X`) discards recording with zero side effects.
 
 - **Focus Time Aggregations & Downstream Analytics Protocol (FR-7.4, FR-8.3)**:
   - Aggregations (`GET /api/v1/focus/summary`) reuse Finance Phase 4 conventions (`range=day|week|month`, `month=YYYY-MM`, `startDate`, `endDate`) and compute server-side MongoDB aggregations across `FocusSession` documents (`$group` on `linkedType`, sum on `$totalFocusMinutes`, count on status).

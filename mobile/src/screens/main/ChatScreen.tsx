@@ -32,6 +32,8 @@ import { ThemedText } from "../../components/ui/ThemedText";
 import { ChatMessage } from "../../components/ai/ChatMessage";
 import { ToolConfirmationModal } from "../../components/ai/ToolConfirmationModal";
 import { ConversationHistoryModal } from "../../components/ai/ConversationHistoryModal";
+import { VoiceWaveform } from "../../components/ai/VoiceWaveform";
+import { useMobileVoiceInput } from "../../hooks/useMobileVoiceInput";
 import { useSocketChat } from "../../services/useSocketChat";
 import { useDockHeight } from "../../navigation/FloatingDock";
 import { colors, radius, spacing, shadows } from "../../theme";
@@ -104,11 +106,29 @@ export function ChatScreen() {
   } = useSocketChat();
 
   const [input, setInput] = useState("");
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const dockHeight = useDockHeight();
+
+  // Mobile Voice Input Hook
+  const {
+    isRecording,
+    audioLevels,
+    startRecording,
+    stopRecording,
+    cancelRecording
+  } = useMobileVoiceInput({
+    onTranscript: (transcript) => {
+      setInput(transcript);
+    },
+    onError: (errMsg) => {
+      setVoiceNotice(errMsg);
+      setTimeout(() => setVoiceNotice(null), 3500);
+    }
+  });
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
@@ -302,52 +322,73 @@ export function ChatScreen() {
             }
           ]}
         >
+          {/* Ephemeral Voice Notice Banner */}
+          {voiceNotice && (
+            <View style={styles.voiceNoticeBanner}>
+              <ThemedText variant="caption" color={colors.inkSecondary} style={{ textAlign: "center", fontSize: 12 }}>
+                {voiceNotice}
+              </ThemedText>
+            </View>
+          )}
+
           <View style={styles.inputCapsule}>
-            {/* Plus / Quick Actions Button */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setShowQuickPrompts(!showQuickPrompts)}
-              style={styles.plusActionButton}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Plus size={18} color={showQuickPrompts ? colors.primary : colors.inkSecondary} />
-            </TouchableOpacity>
-
-            {/* Dynamic Multiline Text Input */}
-            <TextInput
-              value={input}
-              onChangeText={setInput}
-              placeholder={!isOnline ? "Connect to internet to chat..." : "Message LifeOS AI..."}
-              placeholderTextColor={colors.inkMuted}
-              editable={isOnline && !isStreaming}
-              style={styles.capsuleInput}
-              multiline
-              maxLength={2000}
-            />
-
-            {/* Right Action: Send Button (ArrowUp) / Stop Button / Mic Icon */}
-            {isStreaming ? (
-              <View style={[styles.capsuleActionBtn, styles.stopBtn]}>
-                <Square size={12} color="#FFFFFF" fill="#FFFFFF" />
-              </View>
-            ) : input.trim().length > 0 ? (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => handleSend()}
-                disabled={!isOnline}
-                style={[styles.capsuleActionBtn, styles.sendActiveBtn]}
-              >
-                <ArrowUp size={18} color="#FFFFFF" strokeWidth={2.6} />
-              </TouchableOpacity>
+            {isRecording ? (
+              <VoiceWaveform
+                audioLevels={audioLevels}
+                onCancel={cancelRecording}
+                onConfirm={stopRecording}
+              />
             ) : (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setShowQuickPrompts(!showQuickPrompts)}
-                style={styles.capsuleActionBtn}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Mic size={19} color={colors.inkMuted} />
-              </TouchableOpacity>
+              <>
+                {/* Plus / Quick Actions Button */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowQuickPrompts(!showQuickPrompts)}
+                  style={styles.plusActionButton}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Plus size={18} color={showQuickPrompts ? colors.primary : colors.inkSecondary} />
+                </TouchableOpacity>
+
+                {/* Dynamic Multiline Text Input */}
+                <TextInput
+                  value={input}
+                  onChangeText={setInput}
+                  placeholder={!isOnline ? "Connect to internet to chat..." : "Message LifeOS AI..."}
+                  placeholderTextColor={colors.inkMuted}
+                  editable={isOnline && !isStreaming}
+                  style={styles.capsuleInput}
+                  multiline
+                  maxLength={2000}
+                />
+
+                {/* Right Action: Send Button (ArrowUp) / Stop Button / Mic Icon */}
+                {isStreaming ? (
+                  <View style={[styles.capsuleActionBtn, styles.stopBtn]}>
+                    <Square size={12} color="#FFFFFF" fill="#FFFFFF" />
+                  </View>
+                ) : input.trim().length > 0 ? (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => handleSend()}
+                    disabled={!isOnline}
+                    style={[styles.capsuleActionBtn, styles.sendActiveBtn]}
+                  >
+                    <ArrowUp size={18} color="#FFFFFF" strokeWidth={2.6} />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={startRecording}
+                    disabled={!isOnline}
+                    style={styles.capsuleActionBtn}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    accessibilityLabel="Start voice recording"
+                  >
+                    <Mic size={19} color={colors.inkMuted} />
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -586,5 +627,16 @@ const styles = StyleSheet.create({
   },
   stopBtn: {
     backgroundColor: "#0F172A"
+  },
+  voiceNoticeBanner: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    alignSelf: "center",
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    ...shadows.card
   }
 });
