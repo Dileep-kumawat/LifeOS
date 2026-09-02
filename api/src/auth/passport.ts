@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as JwtStrategy, ExtractJwt, type StrategyOptions } from "passport-jwt";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { env } from "../config/env.js";
 import { logger } from "../logger.js";
 import { User } from "../models/User.js";
@@ -30,6 +31,23 @@ passport.use(
   })
 );
 
-logger.info("Passport initialized (JWT strategy active)");
+if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        callbackURL: env.GOOGLE_CALLBACK_URL,
+        scope: ["profile", "email"]
+      },
+      (_accessToken, _refreshToken, profile, done) => {
+        return done(null, profile as any);
+      }
+    )
+  );
+  logger.info("Passport initialized (JWT and Google OAuth strategies active)");
+} else {
+  logger.info("Passport initialized (JWT strategy active)");
+}
 
 export { passport };

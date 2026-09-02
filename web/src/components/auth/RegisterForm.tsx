@@ -7,14 +7,21 @@ import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
 import { Alert, AlertDescription } from "../ui/Alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/Card";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 interface RegisterFormProps {
   onSubmit?: (data: RegisterInput) => Promise<void>;
+  onGoogleSignIn?: () => void;
   onNavigateLogin?: () => void;
   externalError?: string | null;
 }
 
-export function RegisterForm({ onSubmit, onNavigateLogin, externalError }: RegisterFormProps) {
+export function RegisterForm({
+  onSubmit,
+  onGoogleSignIn,
+  onNavigateLogin,
+  externalError
+}: RegisterFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(externalError || null);
 
@@ -99,8 +106,17 @@ export function RegisterForm({ onSubmit, onNavigateLogin, externalError }: Regis
             Create Account
           </Button>
 
+          <div className="relative my-1 w-full flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#e3e2e0]" />
+            </div>
+            <div className="relative bg-white px-2 text-xs text-[#918f8b]">or</div>
+          </div>
+
+          <GoogleSignInButton onClick={onGoogleSignIn} text="Sign up with Google" />
+
           {onNavigateLogin && (
-            <p className="text-xs text-center text-[#615d59]">
+            <p className="text-xs text-center text-[#615d59] mt-1">
               Already have an account?{" "}
               <button
                 type="button"

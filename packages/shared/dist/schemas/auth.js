@@ -24,6 +24,12 @@ export const resetPasswordSchema = z.object({
     token: z.string().min(1, "Reset token is required"),
     password: passwordSchema
 });
+export const googleAuthSchema = z.object({
+    idToken: z.string().min(1, "Google ID token is required")
+});
+export const googleLinkSchema = z.object({
+    idToken: z.string().min(1, "Google ID token is required")
+});
 export const userProfileSchema = z.object({
     id: z.string(),
     email: z.string().email(),
@@ -31,7 +37,9 @@ export const userProfileSchema = z.object({
     role: z.enum(["user", "admin"]),
     emailVerified: z.boolean(),
     status: z.enum(["active", "soft_deleted"]),
-    createdAt: z.string()
+    createdAt: z.string(),
+    googleId: z.string().nullable().optional(),
+    hasPassword: z.boolean().optional()
 });
 export const sessionSchema = z.object({
     id: z.string(),

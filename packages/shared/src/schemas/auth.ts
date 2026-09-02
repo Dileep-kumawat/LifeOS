@@ -38,6 +38,18 @@ export const resetPasswordSchema = z.object({
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(1, "Google ID token is required")
+});
+
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+
+export const googleLinkSchema = z.object({
+  idToken: z.string().min(1, "Google ID token is required")
+});
+
+export type GoogleLinkInput = z.infer<typeof googleLinkSchema>;
+
 export const userProfileSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -45,7 +57,9 @@ export const userProfileSchema = z.object({
   role: z.enum(["user", "admin"]),
   emailVerified: z.boolean(),
   status: z.enum(["active", "soft_deleted"]),
-  createdAt: z.string()
+  createdAt: z.string(),
+  googleId: z.string().nullable().optional(),
+  hasPassword: z.boolean().optional()
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;

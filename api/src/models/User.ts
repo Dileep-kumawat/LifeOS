@@ -27,7 +27,7 @@ const userSchema = new Schema(
       trim: true,
       index: true
     },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false, default: null },
     name: { type: String, required: true, trim: true },
     role: {
       type: String,
@@ -55,8 +55,8 @@ const userSchema = new Schema(
     passwordResetTokenHash: { type: String, default: null },
     passwordResetExpiresAt: { type: Date, default: null },
 
-    // Phase 10 stubs to avoid future migrations
-    googleId: { type: String, default: null, sparse: true },
+    // Phase 10 OAuth & identity fields
+    googleId: { type: String, default: null, sparse: true, index: true },
     phoneNumber: { type: String, default: null },
     mfaEnabled: { type: Boolean, default: false },
 

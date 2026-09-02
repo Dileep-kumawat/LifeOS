@@ -39,6 +39,15 @@ vi.mock("expo-secure-store", () => {
   };
 });
 
+vi.mock("expo-web-browser", () => ({
+  maybeCompleteAuthSession: vi.fn(),
+  openAuthSessionAsync: vi.fn()
+}));
+
+vi.mock("expo-linking", () => ({
+  createURL: vi.fn(() => "exp://127.0.0.1:8081/--/oauth")
+}));
+
 vi.mock("axios", () => {
   return {
     default: {
@@ -159,6 +168,98 @@ describe("Mobile Auth Flow & Token Storage", () => {
 
       const savedRefreshToken = await tokenStorage.getRefreshToken();
       expect(savedRefreshToken).toBe("new-refresh-token");
+    });
+
+    it("should store refresh token securely and update Zustand on loginWithGoogle", async () => {
+      const mockGoogleUser = {
+        id: "usr-google-1",
+        email: "googleuser@example.com",
+        name: "Google User",
+        role: "user" as const,
+        emailVerified: true,
+        status: "active" as const,
+        googleId: "google-sub-xyz",
+        createdAt: new Date().toISOString()
+      };
+      const mockResponse = {
+        data: {
+          user: mockGoogleUser,
+          accessToken: "google-access-token",
+          refreshToken: "google-refresh-token"
+        }
+      };
+
+      mockAxiosInstance.post.mockResolvedValue(mockResponse as any);
+
+      const result = await authApi.loginWithGoogle({
+        idToken: "mock-google-id-token"
+      });
+
+      expect(result.user).toEqual(mockGoogleUser);
+      expect(result.accessToken).toBe("google-access-token");
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+      expect(useAuthStore.getState().user).toEqual(mockGoogleUser);
+
+      const savedRefreshToken = await tokenStorage.getRefreshToken();
+      expect(savedRefreshToken).toBe("google-refresh-token");
+    });
+
+    it("should handle startGoogleOAuth and ingest direct tokens and user profile", async () => {
+      const WebBrowser = await import("expo-web-browser");
+      const mockOAuthUser = {
+        id: "usr-oauth-mobile",
+        email: "mobile@example.com",
+        name: "Mobile User",
+        role: "user" as const,
+        emailVerified: true,
+        status: "active" as const,
+        googleId: "google-mobile-sub",
+        createdAt: new Date().toISOString()
+      };
+
+      vi.mocked(WebBrowser.openAuthSessionAsync).mockResolvedValue({
+        type: "success",
+        url: `exp://127.0.0.1:8081/--/oauth?oauth_success=true&accessToken=mobile-jwt-access&refreshToken=mobile-jwt-refresh&user=${encodeURIComponent(
+          JSON.stringify(mockOAuthUser)
+        )}`
+      } as any);
+
+      const result = await authApi.startGoogleOAuth();
+
+      expect(result).not.toBeNull();
+      expect(result?.user).toEqual(mockOAuthUser);
+      expect(result?.accessToken).toBe("mobile-jwt-access");
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+      expect(await tokenStorage.getRefreshToken()).toBe("mobile-jwt-refresh");
+    });
+
+    it("should update user in Zustand on linkGoogle and unlinkGoogle", async () => {
+      const initialUser = {
+        id: "usr-link-1",
+        email: "user@example.com",
+        name: "User",
+        role: "user" as const,
+        emailVerified: true,
+        status: "active" as const,
+        googleId: null,
+        createdAt: new Date().toISOString()
+      };
+      useAuthStore.getState().setAuth(initialUser, "acc-token");
+
+      const linkedUser = { ...initialUser, googleId: "google-sub-999" };
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { message: "Google account linked successfully", user: linkedUser }
+      } as any);
+
+      await authApi.linkGoogle({ idToken: "link-token" });
+      expect(useAuthStore.getState().user?.googleId).toBe("google-sub-999");
+
+      mockAxiosInstance.delete.mockResolvedValue({
+        data: { message: "Google account unlinked successfully", user: initialUser }
+      } as any);
+
+      await authApi.unlinkGoogle();
+      expect(useAuthStore.getState().user?.googleId).toBeNull();
     });
 
     it("should clear both SecureStore and in-memory Zustand state on logout", async () => {

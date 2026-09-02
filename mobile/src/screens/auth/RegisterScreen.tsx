@@ -7,6 +7,7 @@ import { ThemedText } from "../../components/ui/ThemedText";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { GoogleSignInButton } from "../../components/ui/GoogleSignInButton";
 import { colors, spacing } from "../../theme";
 
 export function RegisterScreen({ navigation }: { navigation: any }) {
@@ -20,6 +21,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
     general?: string;
   }>({});
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleRegister = async () => {
     setErrors({});
@@ -43,6 +45,22 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
       setErrors({ general: message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    setErrors({});
+    setGoogleLoading(true);
+    try {
+      await authApi.startGoogleOAuth();
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Google registration failed. Please try again.";
+      setErrors({ general: message });
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -105,6 +123,20 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
           onPress={handleRegister}
           style={styles.registerButton}
         />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <ThemedText variant="caption" color={colors.inkFaint} style={styles.dividerText}>
+            or
+          </ThemedText>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <GoogleSignInButton
+          title="Sign up with Google"
+          loading={googleLoading}
+          onPress={handleGoogleRegister}
+        />
       </Card>
 
       <View style={styles.footer}>
@@ -154,6 +186,19 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     marginTop: spacing.sm
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: spacing.md
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.hairline
+  },
+  dividerText: {
+    marginHorizontal: spacing.sm
   },
   footer: {
     flexDirection: "row",

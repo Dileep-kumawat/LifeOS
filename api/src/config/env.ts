@@ -29,9 +29,12 @@ const envSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().min(1, "VAPID_PRIVATE_KEY is required for the notification engine"),
   VAPID_SUBJECT: z.string().min(1, "VAPID_SUBJECT is required for the notification engine"),
 
-  // Optional — unused until the Google OAuth strategy is enabled in Phase 10.
+  // Phase 10 Google OAuth configuration
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().default("http://localhost:4000/api/v1/auth/google/callback"),
+  GOOGLE_MOBILE_CLIENT_ID: z.string().optional(),
+  GOOGLE_ANDROID_CLIENT_ID: z.string().optional(),
 
   // Comma-separated IP allowlist that can view /api/v1/docs. In non-local
   // environments (test/production) Swagger is gated behind this list; when

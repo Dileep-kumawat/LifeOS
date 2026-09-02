@@ -43,6 +43,22 @@ export declare const resetPasswordSchema: z.ZodObject<{
     token: string;
 }>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export declare const googleAuthSchema: z.ZodObject<{
+    idToken: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    idToken: string;
+}, {
+    idToken: string;
+}>;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+export declare const googleLinkSchema: z.ZodObject<{
+    idToken: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    idToken: string;
+}, {
+    idToken: string;
+}>;
+export type GoogleLinkInput = z.infer<typeof googleLinkSchema>;
 export declare const userProfileSchema: z.ZodObject<{
     id: z.ZodString;
     email: z.ZodString;
@@ -51,6 +67,8 @@ export declare const userProfileSchema: z.ZodObject<{
     emailVerified: z.ZodBoolean;
     status: z.ZodEnum<["active", "soft_deleted"]>;
     createdAt: z.ZodString;
+    googleId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    hasPassword: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     email: string;
     name: string;
@@ -59,6 +77,8 @@ export declare const userProfileSchema: z.ZodObject<{
     role: "user" | "admin";
     emailVerified: boolean;
     createdAt: string;
+    googleId?: string | null | undefined;
+    hasPassword?: boolean | undefined;
 }, {
     email: string;
     name: string;
@@ -67,6 +87,8 @@ export declare const userProfileSchema: z.ZodObject<{
     role: "user" | "admin";
     emailVerified: boolean;
     createdAt: string;
+    googleId?: string | null | undefined;
+    hasPassword?: boolean | undefined;
 }>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export declare const sessionSchema: z.ZodObject<{
@@ -98,6 +120,8 @@ export declare const authResponseSchema: z.ZodObject<{
         emailVerified: z.ZodBoolean;
         status: z.ZodEnum<["active", "soft_deleted"]>;
         createdAt: z.ZodString;
+        googleId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        hasPassword: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         email: string;
         name: string;
@@ -106,6 +130,8 @@ export declare const authResponseSchema: z.ZodObject<{
         role: "user" | "admin";
         emailVerified: boolean;
         createdAt: string;
+        googleId?: string | null | undefined;
+        hasPassword?: boolean | undefined;
     }, {
         email: string;
         name: string;
@@ -114,6 +140,8 @@ export declare const authResponseSchema: z.ZodObject<{
         role: "user" | "admin";
         emailVerified: boolean;
         createdAt: string;
+        googleId?: string | null | undefined;
+        hasPassword?: boolean | undefined;
     }>;
     accessToken: z.ZodString;
 }, "strip", z.ZodTypeAny, {
@@ -125,6 +153,8 @@ export declare const authResponseSchema: z.ZodObject<{
         role: "user" | "admin";
         emailVerified: boolean;
         createdAt: string;
+        googleId?: string | null | undefined;
+        hasPassword?: boolean | undefined;
     };
     accessToken: string;
 }, {
@@ -136,6 +166,8 @@ export declare const authResponseSchema: z.ZodObject<{
         role: "user" | "admin";
         emailVerified: boolean;
         createdAt: string;
+        googleId?: string | null | undefined;
+        hasPassword?: boolean | undefined;
     };
     accessToken: string;
 }>;

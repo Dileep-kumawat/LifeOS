@@ -8,9 +8,9 @@
 ## 1. High-Level Architecture & Tech Stack
 
 - **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `packages/shared`).
-- **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/Bull), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, OAuth stub), Swagger (`/api/v1/docs`), Sentry.
-- **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Web Speech API + Web Audio API inline Voice Input (`useWebVoiceInput`, `VoiceWaveform`), Storybook, Sentry.
-- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), On-device Speech Recognizer & inline Voice Input (`useMobileVoiceInput`, `mobileVoiceService`, `VoiceWaveform`), SQLite local storage, EAS Build, Sentry.
+- **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/Bull), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, Google OAuth 2.0 & ID Token verification), Swagger (`/api/v1/docs`), Sentry.
+- **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6, Google Sign-In button (`GoogleSignInButton`), Connected Accounts management in Settings, Web Speech API + Web Audio API inline Voice Input (`useWebVoiceInput`, `VoiceWaveform`), Storybook, Sentry.
+- **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), Google Sign-In button (`GoogleSignInButton`), On-device Speech Recognizer & inline Voice Input (`useMobileVoiceInput`, `mobileVoiceService`, `VoiceWaveform`), SQLite local storage, EAS Build, Sentry.
 - **Shared Package (`/packages/shared`)**: Shared Zod schemas, TypeScript types, design system tokens, and utility functions.
 - **Infra & DevOps**: Docker Compose (`mongo`, `redis`, `api`), GitHub Actions CI.
 
@@ -60,7 +60,7 @@ LifeOS/
 ## 3. Data Models & Database Schemas (`/api/src/models`)
 
 - **Auth & User**:
-  - `User`: Core profile, password hash, OAuth IDs, preferences, tier settings.
+  - `User`: Core profile, optional `passwordHash` (null for OAuth-only users), `googleId` (sparse indexed), email, name, role, emailVerified, preferences, tier settings.
   - `RefreshToken`: Active refresh tokens, device info, expiration.
 - **Calendar & Time**:
   - `Event`: Calendar events, start/end timestamps, recurrence rules, Google Sync IDs, `linkedTopicId` (reverse-link to syllabus topics).
@@ -98,7 +98,10 @@ LifeOS/
 ## 4. API Endpoints Overview (`/api/src/routes`)
 
 - `/api/v1/health` - Health check & system status.
-- `/api/v1/auth` - User registration, login, token refresh, logout, `/me`.
+- `/api/v1/auth` - User registration, login, token refresh, logout, `/me`, password reset, account deletion.
+- `/api/v1/auth/google` - Google OAuth ID token verification (POST) & browser authorization initiation (GET).
+- `/api/v1/auth/google/callback` - Browser OAuth callback handler redirecting with session tokens.
+- `/api/v1/auth/google/link` - Explicit authenticated Google account linking (POST) & unlinking (DELETE).
 - `/api/v1/calendar` - CRUD events, recurring expansion, Google Calendar sync.
 - `/api/v1/finance` - CRUD transactions, budget tracking, category analytics.
 - `/api/v1/habits` - CRUD habits, daily check-in toggle, streak computation.
@@ -245,6 +248,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [Phase 10 Google OAuth Authentication (FR-1.1)]: Implemented Google OAuth 2.0 and ID token verification as a first-class authentication method while preserving existing JWT short-lived access token + rotating refresh token session architecture; added `googleAuthService` validating cryptographic signatures, issuer, audience, and email verification against configured client IDs with swappable mock verifier adapter; added sparse indexing on `User.googleId` and made `passwordHash` optional (`null` for OAuth-only users); added explicit account linking (`POST /api/v1/auth/google/link`), unlinking with account lockout guard (`DELETE /api/v1/auth/google/link`), and unauthenticated email collision rejection (`409 Conflict - AccountLinkingRequired`); added complete OpenAPI 3.0.3 documentation (117 routes covered); implemented Web `GoogleSignInButton`, Storybook stories, OAuth query param handlers in `LoginPage`/`RegisterPage`, and "Connected Accounts" card in `SettingsPage`; implemented Mobile `GoogleSignInButton`, `authApi` methods, and login/register integration; updated structured logging with redaction for ID tokens, passwords, refresh tokens, and cookies; achieved 100% test pass rate (20 backend unit/integration tests, 8 mobile tests, 361 monorepo tests).
 - [Phase 9 Analytics & Periodic Recommendations Audit Pass]: Completed comprehensive Swagger, OpenAPI, and Storybook audit pass — tagged all routes under `Analytics` and `AI` with explicit cross-references; thoroughly documented raw binary PDF (`application/pdf`) and CSV (`text/csv; charset=utf-8`) export streams with RFC 6266 `Content-Disposition` attachments, Redis rate limiting (20 req/hr), and full component schemas for Productivity, Finance, and Recommendations; verified `AnalyticsChart` (bar/line/empty/loading), `DateRangePicker`, `ExportButton`, and `PeriodicRecommendationsCard` Storybook stories with `@storybook/addon-a11y` and semantic data tables / mobile accessibility roles; confirmed `periodicRecommendations` preference toggles on web and mobile; verified 100% passing tests (342 tests across 47 suites), static Storybook build, and 112-route OpenAPI schema check.
 - [Phase 10 Periodic Recommendations (FR-10.3) — Weekly & Monthly Cadences]: Implemented recurring scheduled AI recommendation engine composing Phase 3's `callAI()` with Phase 9's `getProductivityAnalytics` & `getFinanceAnalytics` and Phase 2's `scheduleNotification` notification delivery; added BullMQ recurring dispatcher checking weekly (Sundays at 08:00) and monthly (1st of month at 08:00) user cadences with dedupe keys; created `Recommendation` mongoose model with compound unique indexes; exposed `GET /api/v1/ai/recommendations/latest` and `GET /api/v1/ai/recommendations/:id` with OpenAPI 3.0.3 documentation; built web `PeriodicRecommendationsCard` (with Weekly/Monthly switcher, loading/error/scheduled states, Notion calm palette, and Storybook coverage) and mobile `PeriodicRecommendationsCard`; added `periodicRecommendations` push/in-app notification preference toggles across web and mobile; achieved 100% test coverage with 9 unit/integration tests and monorepo typecheck/build verification.
 - [Phase 9 Analytics Dashboard UI (Web & Mobile)]: Implemented unified Analytics Dashboard UI across Web (React) and Mobile (Expo React Native) — built executive multi-domain dashboard (Productivity vs Finance), shared Recharts (Web) and React Native SVG (Mobile) AnalyticsChart component supporting bar and line variants with accessibility fallback tables and zero-data states, shared DateRangePicker with presets (This Week, This Month, Last 3 Months, Custom bounded <= 366 days), ExportButton (Web) and ExportActionModal (Mobile) with CSV/PDF triggers, native file download and Share sheet integration with rate-limit handling, registered /analytics in web routing & navigation sidebar and mobile FloatingDock / RootNavigator, added Storybook stories, and verified 100% passing tests across web and mobile.
@@ -266,6 +270,13 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Google OAuth Authentication & Account Linking Protocol (FR-1.1)**:
+  - Google ID tokens are verified server-side with strict cryptographic validation of issuer (`https://accounts.google.com` or `accounts.google.com`), audience (matching configured client IDs), expiration timestamp, and `email_verified: true`.
+  - Account Creation / Login: New Google users are registered with `googleId: sub`, `passwordHash: null`, `emailVerified: true`, and seeded with default categories. Existing Google users authenticate via `googleId` and receive standard LifeOS session tokens (short-lived access token + rotating refresh token).
+  - Unauthenticated Collision Prevention: If a registration attempt or OAuth callback matches an existing user email that has no linked `googleId`, the server returns `409 Conflict` (`AccountLinkingRequired`) rather than silently merging identities.
+  - Explicit Linking & Unlinking: Authenticated users link Google via `POST /api/v1/auth/google/link` (guarded against identity theft/reassignment) and unlink via `DELETE /api/v1/auth/google/link` (rejecting if `!user.passwordHash` to prevent account lockout).
+  - Secret & Token Redaction: ID tokens, OAuth codes, client secrets, passwords, cookies, and authorization headers are strictly redacted from structured Pino log output.
 
 - **Periodic Recommendations Protocol (FR-10.3)**:
   - Generation occurs strictly on scheduled cadences (weekly on Sundays at 08:00 evaluating the past 7 completed days, monthly on the 1st of the month at 08:00 evaluating the completed calendar month) via BullMQ background jobs with deterministic dedupe keys (`periodic_rec__${userId}__${period}__${startDate}`).
@@ -331,6 +342,10 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
 - **Error Handling & Logging Conventions**:
   - **Backend (`/api/src/services`)**: Use structured Pino logger (`import { logger } from "../logger.js"`). Pass contextual objects (`logger.error({ err, userId, category }, "message")`), throw domain errors caught by central `errorHandler.ts`. See [budgetService.ts](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/api/src/services/budgetService.ts).
   - **Mobile (`/mobile/src/services`)**: Intercept 401s for silent JWT refresh in `apiClient.ts` with single-flight mutex (`refreshPromise`). In background workers (`syncEngine.ts`), catch and handle async exceptions (`.catch(() => {})`) to avoid crashing the JS runtime, and record errors in Zustand stores. See [apiClient.ts](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile/src/services/apiClient.ts).
+- **Google OAuth Cross-Platform & Mobile Deep Linking Pattern (FR-1.1)**:
+  - Web OAuth uses standard redirect flows with refresh token cookies and URL query fallbacks (`/login?oauth_success=true&accessToken=...&refreshToken=...`).
+  - Mobile OAuth uses `expo-web-browser` and `expo-linking` (`WebBrowser.openAuthSessionAsync(authUrl, redirectUrl)`). The client passes `return_url=lifeos://oauth` (or `exp://...`), which the backend encodes into the base64url `state` payload.
+  - Upon callback, `authRouter.get("/auth/google/callback")` decodes `returnUrl` from the `state` parameter and serves an HTML bridge redirect with embedded JS (`window.location.replace`) to ensure Android Chrome Custom Tabs reliably fire the deep link intent to the app. The redirect URL includes the verified `user` profile, `accessToken`, and `refreshToken`, allowing mobile to authenticate immediately in `useAuthStore` and `tokenStorage` with zero extra round-trips.
 - **Component Memoization & Performance**:
   - Wrap pure subcomponents and animated children in `React.memo()`.
   - Wrap callbacks passed to child/animated elements in `useCallback()`.
@@ -343,7 +358,7 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
 Standing environment variables (names only) and system ports across workspaces.
 
 - **Required Environment Variables**:
-  - **Backend (`/api`)**: `NODE_ENV`, `PORT` (default 4000), `MONGO_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `AI_PROVIDER_ORDER`. Optional: `MISTRAL_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_VISION_API_KEY`, `SENTRY_DSN`, `RESEND_API_KEY`, `POSTMARK_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SWAGGER_ALLOWED_IPS`.
+  - **Backend (`/api`)**: `NODE_ENV`, `PORT` (default 4000), `MONGO_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `AI_PROVIDER_ORDER`. Optional: `MISTRAL_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_VISION_API_KEY`, `SENTRY_DSN`, `RESEND_API_KEY`, `POSTMARK_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `GOOGLE_MOBILE_CLIENT_ID`, `GOOGLE_ANDROID_CLIENT_ID`, `SWAGGER_ALLOWED_IPS`.
   - **Frontend Web (`/web`)**: `VITE_VAPID_PUBLIC_KEY`. Optional: `VITE_SENTRY_DSN`.
   - **Mobile (`/mobile`)**: `EXPO_PUBLIC_API_URL` (optional override; defaults to auto-detecting host machine IP over Wi-Fi or `http://localhost:4000/api/v1` via USB `adb reverse`).
 - **System Ports Overview**:

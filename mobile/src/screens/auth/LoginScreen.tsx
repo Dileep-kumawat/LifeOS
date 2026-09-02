@@ -7,6 +7,7 @@ import { ThemedText } from "../../components/ui/ThemedText";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { GoogleSignInButton } from "../../components/ui/GoogleSignInButton";
 import { colors, spacing } from "../../theme";
 
 export function LoginScreen({ navigation }: { navigation: any }) {
@@ -14,6 +15,7 @@ export function LoginScreen({ navigation }: { navigation: any }) {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleLogin = async () => {
     setErrors({});
@@ -40,6 +42,22 @@ export function LoginScreen({ navigation }: { navigation: any }) {
       setErrors({ general: message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrors({});
+    setGoogleLoading(true);
+    try {
+      await authApi.startGoogleOAuth();
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Google sign-in failed. Please try again.";
+      setErrors({ general: message });
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -102,6 +120,20 @@ export function LoginScreen({ navigation }: { navigation: any }) {
           onPress={handleLogin}
           style={styles.signInButton}
         />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <ThemedText variant="caption" color={colors.inkFaint} style={styles.dividerText}>
+            or
+          </ThemedText>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <GoogleSignInButton
+          title="Continue with Google"
+          loading={googleLoading}
+          onPress={handleGoogleLogin}
+        />
       </Card>
 
       <View style={styles.footer}>
@@ -155,6 +187,19 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: spacing.xs
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: spacing.md
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.hairline
+  },
+  dividerText: {
+    marginHorizontal: spacing.sm
   },
   footer: {
     flexDirection: "row",

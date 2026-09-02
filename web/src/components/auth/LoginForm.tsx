@@ -7,9 +7,11 @@ import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
 import { Alert, AlertDescription } from "../ui/Alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/Card";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 interface LoginFormProps {
   onSubmit?: (data: LoginInput) => Promise<void>;
+  onGoogleSignIn?: () => void;
   onNavigateRegister?: () => void;
   onNavigateForgotPassword?: () => void;
   externalError?: string | null;
@@ -17,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({
   onSubmit,
+  onGoogleSignIn,
   onNavigateRegister,
   onNavigateForgotPassword,
   externalError
@@ -104,8 +107,17 @@ export function LoginForm({
             Sign In
           </Button>
 
+          <div className="relative my-1 w-full flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#e3e2e0]" />
+            </div>
+            <div className="relative bg-white px-2 text-xs text-[#918f8b]">or</div>
+          </div>
+
+          <GoogleSignInButton onClick={onGoogleSignIn} text="Continue with Google" />
+
           {onNavigateRegister && (
-            <p className="text-xs text-center text-[#615d59]">
+            <p className="text-xs text-center text-[#615d59] mt-1">
               Don&apos;t have an account?{" "}
               <button
                 type="button"
