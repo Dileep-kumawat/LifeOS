@@ -2,12 +2,14 @@ import http from "http";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { Server } from "socket.io";
 
 import { env } from "./config/env.js";
 import { logger, httpLogger } from "./logger.js";
 import { connectDb } from "./db/mongoose.js";
 import { registerSwagger } from "./plugins/swagger.js";
+import { generalApiRateLimiter } from "./middleware/rateLimiter.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./routes/auth.js";
 import { calendarRouter } from "./routes/calendar.js";
@@ -42,6 +44,23 @@ async function main() {
 
   setupChatSocket(io);
 
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", "ws:", "wss:", "https:"]
+        }
+      },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      frameguard: { action: "deny" }
+    })
+  );
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
@@ -51,6 +70,7 @@ async function main() {
   registerSwagger(app);
 
   const v1 = express.Router();
+  v1.use(generalApiRateLimiter);
   v1.use(healthRouter);
   v1.use(authRouter);
   v1.use(calendarRouter);

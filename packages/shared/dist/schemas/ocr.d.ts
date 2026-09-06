@@ -332,6 +332,7 @@ export declare const ocrExtractionResultSchema: z.ZodObject<{
 export type OcrExtractionResult = z.infer<typeof ocrExtractionResultSchema>;
 export declare const ocrJobStatusSchema: z.ZodObject<{
     jobId: z.ZodString;
+    userId: z.ZodOptional<z.ZodString>;
     status: z.ZodEnum<["pending", "processing", "completed", "failed"]>;
     error: z.ZodOptional<z.ZodString>;
     result: z.ZodOptional<z.ZodObject<{
@@ -517,6 +518,7 @@ export declare const ocrJobStatusSchema: z.ZodObject<{
     status: "pending" | "failed" | "processing" | "completed";
     jobId: string;
     createdAt?: string | undefined;
+    userId?: string | undefined;
     completedAt?: string | undefined;
     error?: string | undefined;
     result?: {
@@ -554,6 +556,7 @@ export declare const ocrJobStatusSchema: z.ZodObject<{
     status: "pending" | "failed" | "processing" | "completed";
     jobId: string;
     createdAt?: string | undefined;
+    userId?: string | undefined;
     completedAt?: string | undefined;
     error?: string | undefined;
     result?: {

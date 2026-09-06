@@ -432,6 +432,7 @@ ocrRouter.post("/ocr/extract", uploadMiddleware, async (req: Request, res: Respo
   if (!existingStatus) {
     await setOcrJobStatus(jobId, {
       jobId,
+      userId,
       status: "pending",
       createdAt: new Date().toISOString()
     });
@@ -540,9 +541,10 @@ ocrRouter.post("/ocr/extract", uploadMiddleware, async (req: Request, res: Respo
  */
 ocrRouter.get("/ocr/extract/:jobId", async (req: Request, res: Response) => {
   const { jobId } = req.params;
+  const userId = req.user!._id.toString();
   const statusData = await getOcrJobStatus(jobId);
 
-  if (!statusData) {
+  if (!statusData || (statusData.userId && statusData.userId !== userId)) {
     return res.status(404).json({
       error: "JobNotFound",
       message: "OCR extraction job not found or expired"

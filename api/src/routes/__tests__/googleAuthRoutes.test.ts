@@ -10,9 +10,14 @@ import { RefreshToken } from "../../models/RefreshToken.js";
 
 const testUserId = new Types.ObjectId("662c9f1e9f0b2a001c3d4e0a");
 
-// Mock rate limiter to pass through
+// Mock rate limiters to pass through
 vi.mock("../../middleware/rateLimiter.js", () => ({
-  loginRateLimiter: (_req: any, _res: any, next: any) => next()
+  loginRateLimiter: (_req: any, _res: any, next: any) => next(),
+  registerRateLimiter: (_req: any, _res: any, next: any) => next(),
+  forgotPasswordRateLimiter: (_req: any, _res: any, next: any) => next(),
+  resetPasswordRateLimiter: (_req: any, _res: any, next: any) => next(),
+  refreshRateLimiter: (_req: any, _res: any, next: any) => next(),
+  generalApiRateLimiter: (_req: any, _res: any, next: any) => next()
 }));
 
 // Mock auth middleware for protected endpoints

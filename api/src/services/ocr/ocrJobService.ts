@@ -50,10 +50,11 @@ export async function getOcrJobStatus(jobId: string): Promise<OcrJobStatus | nul
  * Worker handler for processing an OCR job.
  */
 export async function handleOcrJobWorker(jobId: string, data: OcrJobData): Promise<OcrExtractionResult> {
-  const { imageBase64, mimeType, options, createdAt } = data;
+  const { userId, imageBase64, mimeType, options, createdAt } = data;
 
   await setOcrJobStatus(jobId, {
     jobId,
+    userId,
     status: "processing",
     createdAt: createdAt || new Date().toISOString()
   });
@@ -64,20 +65,22 @@ export async function handleOcrJobWorker(jobId: string, data: OcrJobData): Promi
 
     await setOcrJobStatus(jobId, {
       jobId,
+      userId,
       status: "completed",
       result,
       createdAt: createdAt || new Date().toISOString(),
       completedAt: new Date().toISOString()
     });
 
-    logger.info({ jobId, textLength: result.extractedText.length }, "OCR job worker completed successfully");
+    logger.info({ jobId, userId, textLength: result.extractedText.length }, "OCR job worker completed successfully");
     return result;
   } catch (err: any) {
     const errorMsg = err?.message || "OCR extraction failed";
-    logger.error({ err, jobId }, "OCR job worker failed");
+    logger.error({ err, jobId, userId }, "OCR job worker failed");
 
     await setOcrJobStatus(jobId, {
       jobId,
+      userId,
       status: "failed",
       error: errorMsg,
       createdAt: createdAt || new Date().toISOString(),

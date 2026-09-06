@@ -11,6 +11,7 @@ import { createProviderModel } from "./providers.js";
 import { getProviderOrder, callAI } from "./callAI.js";
 import { ALL_AI_TOOLS, executeToolCall } from "./tools.js";
 import { generateStudyPlanAllocation } from "../study/studyPlanService.js";
+import { checkAiRateLimit } from "./rateLimiter.js";
 
 interface AuthenticatedSocket extends Socket {
   user?: UserDoc;
@@ -60,6 +61,22 @@ export function setupChatSocket(io: Server) {
         const content = payload?.content?.trim();
         if (!content) {
           socket.emit("error", { message: "Message content cannot be empty." });
+          return;
+        }
+
+        // Rate Limit Check for WebSocket AI invocation (NFR-2.3, NFR-2.4)
+        const userTier = socket.user?.subscriptionTier || "free";
+        const rateLimit = await checkAiRateLimit(userId, userTier);
+        if (!rateLimit.allowed) {
+          socket.emit("chat_error", {
+            conversationId: payload?.conversationId,
+            error: "RateLimitExceeded",
+            message: `AI rate limit exceeded for your subscription tier (${userTier}). Quota resets at ${rateLimit.resetAt.toISOString()}.`,
+            isRateLimited: true,
+            resetAt: rateLimit.resetAt,
+            limit: rateLimit.limit,
+            remaining: 0
+          });
           return;
         }
 

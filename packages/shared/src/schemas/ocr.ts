@@ -51,6 +51,7 @@ export type OcrExtractionResult = z.infer<typeof ocrExtractionResultSchema>;
 // ─── Server Job Polling & Status Schemas ─────────────────────────────────────
 export const ocrJobStatusSchema = z.object({
   jobId: z.string(),
+  userId: z.string().optional(),
   status: z.enum(["pending", "processing", "completed", "failed"]),
   error: z.string().optional(),
   result: ocrExtractionResultSchema.optional(),

@@ -12,7 +12,13 @@ import {
 import { User } from "../models/User.js";
 import { RefreshToken } from "../models/RefreshToken.js";
 import { validate } from "../middleware/validate.js";
-import { loginRateLimiter } from "../middleware/rateLimiter.js";
+import {
+  forgotPasswordRateLimiter,
+  loginRateLimiter,
+  refreshRateLimiter,
+  registerRateLimiter,
+  resetPasswordRateLimiter
+} from "../middleware/rateLimiter.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {
   clearRefreshCookie,
@@ -198,7 +204,11 @@ export async function unlinkGoogleAccountFromUser(userId: string): Promise<any> 
  *       409:
  *         description: Email already registered
  */
-authRouter.post("/auth/register", validate(registerSchema), async (req: Request, res: Response) => {
+authRouter.post(
+  "/auth/register",
+  registerRateLimiter,
+  validate(registerSchema),
+  async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
 
@@ -792,7 +802,7 @@ authRouter.delete("/auth/google/link", requireAuth, async (req: Request, res: Re
  *       401:
  *         description: Invalid, missing, or revoked refresh token (or user account inactive)
  */
-authRouter.post("/auth/refresh", async (req: Request, res: Response) => {
+authRouter.post("/auth/refresh", refreshRateLimiter, async (req: Request, res: Response) => {
   try {
     const rawToken =
       req.body?.refreshToken ||
@@ -896,6 +906,7 @@ authRouter.post("/auth/logout", async (req: Request, res: Response) => {
  */
 authRouter.post(
   "/auth/forgot-password",
+  forgotPasswordRateLimiter,
   validate(forgotPasswordSchema),
   async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -953,6 +964,7 @@ authRouter.post(
  */
 authRouter.post(
   "/auth/reset-password",
+  resetPasswordRateLimiter,
   validate(resetPasswordSchema),
   async (req: Request, res: Response) => {
     const { token, password } = req.body;
