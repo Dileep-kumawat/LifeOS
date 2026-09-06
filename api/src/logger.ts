@@ -29,6 +29,7 @@ export const logger = pino({
 const pinoHttp = (pinoHttpModule as any).default || pinoHttpModule;
 export const httpLogger = pinoHttp({
   logger,
+  genReqId: (req: any) => (req as any).id || (req.headers && req.headers["x-request-id"]) || "req-unknown",
   autoLogging: {
     ignore: (req: any) => req.url === "/api/v1/health"
   }

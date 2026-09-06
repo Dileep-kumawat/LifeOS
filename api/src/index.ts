@@ -26,6 +26,8 @@ import { ocrRouter } from "./routes/ocr.js";
 import { studyRouter } from "./routes/study.js";
 import { focusRouter } from "./routes/focus.js";
 import { analyticsRouter } from "./routes/analytics.js";
+import { adminRouter } from "./routes/admin.js";
+import { correlationMiddleware } from "./middleware/correlationMiddleware.js";
 import { passport } from "./auth/passport.js";
 import { startJobsWorker } from "./services/jobs.worker.js";
 import { setupChatSocket } from "./services/ai/chatSocket.js";
@@ -64,6 +66,7 @@ async function main() {
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
+  app.use(correlationMiddleware);
   app.use(httpLogger);
   app.use(passport.initialize());
 
@@ -73,6 +76,7 @@ async function main() {
   v1.use(generalApiRateLimiter);
   v1.use(healthRouter);
   v1.use(authRouter);
+  v1.use(adminRouter);
   v1.use(calendarRouter);
   v1.use(goalsRouter);
   v1.use(habitsRouter);

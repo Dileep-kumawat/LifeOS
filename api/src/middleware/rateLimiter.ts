@@ -121,3 +121,33 @@ export const generalApiRateLimiter = createRedisRateLimiter({
     return userId ? `user:${userId}` : `ip:${ip}`;
   }
 });
+
+/**
+ * Admin portal rate limiter: 60 requests per minute per admin user.
+ */
+export const adminRateLimiter = createRedisRateLimiter({
+  keyPrefix: "admin_portal",
+  windowSeconds: 60,
+  maxAttempts: 60,
+  message: "Admin API rate limit exceeded. Please slow down administrative requests.",
+  keyGenerator: (req) => {
+    const userId = (req as any).user?._id?.toString();
+    const ip = req.ip || req.socket.remoteAddress || "unknown_ip";
+    return userId ? `admin:${userId}` : `ip:${ip}`;
+  }
+});
+
+/**
+ * Admin audit log viewer rate limiter: 30 requests per minute per admin user.
+ */
+export const adminAuditRateLimiter = createRedisRateLimiter({
+  keyPrefix: "admin_audit",
+  windowSeconds: 60,
+  maxAttempts: 30,
+  message: "Audit log rate limit exceeded. Maximum 30 queries per minute.",
+  keyGenerator: (req) => {
+    const userId = (req as any).user?._id?.toString();
+    const ip = req.ip || req.socket.remoteAddress || "unknown_ip";
+    return userId ? `admin_audit:${userId}` : `ip:${ip}`;
+  }
+});

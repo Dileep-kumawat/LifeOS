@@ -1,4 +1,4 @@
-9# LifeOS System Memory & Architecture Map
+# LifeOS System Memory & Architecture Map
 
 > **Token-Optimized Project Blueprint for AI Agents**  
 > Maintainer Notice: When completing new features, schemas, or modules, follow the update protocol in [Section 7](#7-memory-maintenance-protocol-for-ai-agents).
@@ -26,9 +26,9 @@ LifeOS/
 │   │   ├── config/        # Environment vars, database & Redis connection setup
 │   │   ├── db/            # Mongoose connections, indexes
 │   │   ├── middleware/    # Auth, error handler, rate limiters, Zod validation
-│   │   ├── models/        # Mongoose schemas (User, Event, Habit, Note, Finance, AI, Sync, etc.)
-│   │   ├── routes/        # API v1 routes (auth, calendar, finance, goals, habits, notes, sync, etc.)
-│   │   └── services/      # AI (RAG, embeddings), Sync engine, Google Calendar integration
+│   │   ├── models/        # Mongoose schemas (User, Event, Habit, Note, Finance, AI, Sync, AuditLog, etc.)
+│   │   ├── routes/        # API v1 routes (auth, calendar, finance, goals, habits, notes, sync, admin, etc.)
+│   │   └── services/      # AI (RAG, embeddings), Sync engine, Google Calendar, auditService
 ├── web/                   # Vite + React Web Application
 │   ├── src/
 │   │   ├── components/    # Reusable UI components & Storybook stories
@@ -47,7 +47,7 @@ LifeOS/
 ├── packages/
 │   └── shared/            # Monorepo shared package
 │       ├── src/
-│       │   ├── schemas/   # Zod validation schemas (auth, calendar, finance, habits, notes, sync)
+│       │   ├── schemas/   # Zod validation schemas (auth, calendar, finance, habits, notes, sync, audit)
 │       │   └── tokens/    # Design system tokens & color definitions
 ├── scripts/               # OpenAPI & build validation scripts
 ├── docker-compose.yml     # Local orchestration (MongoDB + Redis + API)
@@ -59,8 +59,10 @@ LifeOS/
 
 ## 3. Data Models & Database Schemas (`/api/src/models`)
 
+- **Security & Audit**:
+  - `AuditLog`: Immutable, tamper-resistant security audit trail (`timestamp`, `actorId`, `actorRole`, `actorEmail`, `action`, `resourceType`, `resourceId`, `targetUserId`, `outcome`, `reason`, `ipAddress` [anonymized], `userAgent`, `requestId`, `metadata` [redacted], `expiresAt` with MongoDB TTL index).
 - **Auth & User**:
-  - `User`: Core profile, optional `passwordHash` (null for OAuth-only users), `googleId` (sparse indexed), email, name, role, emailVerified, preferences, tier settings.
+  - `User`: Core profile, optional `passwordHash` (null for OAuth-only users), `googleId` (sparse indexed), email, name, role (`user`/`admin`), status (`active`/`suspended`/`pending_deletion`), emailVerified, preferences, tier settings.
   - `RefreshToken`: Active refresh tokens, device info, expiration.
 - **Calendar & Time**:
   - `Event`: Calendar events, start/end timestamps, recurrence rules, Google Sync IDs, `linkedTopicId` (reverse-link to syllabus topics).
@@ -129,6 +131,14 @@ LifeOS/
 - `/api/v1/ai/recommendations/:id` - Historical recommendation lookup by document ID.
 - `/api/v1/ocr/extract` - Shared server-side OCR extraction (Tesseract fallback, BullMQ queue, 10MB limit, rate limited).
 - `/api/v1/ocr/extract/:jobId` - Polling status and result retrieval for async OCR extraction jobs.
+- `/api/v1/admin/users` - Admin user directory search and paginated listing with role, status, and subscription tier filters (NFR-2.6).
+- `/api/v1/admin/users/:id` - Admin user profile retrieval with sensitive field inspection.
+- `/api/v1/admin/users/:id/status` - Admin user account suspension and reactivation.
+- `/api/v1/admin/users/:id/role` - Admin role elevation or demotion.
+- `/api/v1/admin/users/:id/subscription` - Admin subscription tier assignment.
+- `/api/v1/admin/users/:id/purge` - Admin permanent user account purge and cascade deletion.
+- `/api/v1/admin/users/:id/finance` - Admin inspection of user financial records (audited access).
+- `/api/v1/admin/audit-logs` - Admin security audit log query with actor, target, date, outcome, and action filtering (30 req/min).
 
 ---
 
@@ -248,6 +258,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [Phase 10 Production Audit Logging System (NFR-2.6)]: Implemented dedicated, tamper-resistant security audit logging architecture distinct from operational logging and error monitoring; created `AuditLog` Mongoose model with Mongoose pre-hook immutability guards (blocking updates, deletes, replacements) and MongoDB TTL index (90-day retention); created `auditService` with deterministic IP anonymization (`anonymizeIp`), recursive secret/PII redaction (`sanitizeAuditMetadata`), and correlation tracking; instrumented admin surface (`/api/v1/admin/users*`, `/api/v1/admin/audit-logs`) with Redis-backed rate limiters (60/min and 30/min) and 100% OpenAPI 3.0.3 documentation; instrumented sensitive operations (`ADMIN_LOGIN`, `ACCOUNT_DELETION_SCHEDULED`, `SENSITIVE_DATA_EXPORT`, `ADMIN_ACCESS_DENIED`, and IDOR cross-user access attempts with `OWNERSHIP_MISMATCH` returning 404); achieved 100% test pass rate across 55 test files (404 passing tests, 0 failures), 0 TypeScript errors, 0 lint errors, and 125 documented routes.
 - [Mobile Auth UI Cleanup]: Removed Continue with Google and Sign up with Google buttons and dividers from mobile LoginScreen and RegisterScreen UI while keeping the underlying OAuth client services, API routes, and token storage logic intact; verified 0 TypeScript errors and 100% mobile test pass rate (91 tests).
 - [Phase 10 OWASP Top 10 Full Security Audit & Remediation (NFR-2.4)]: Performed comprehensive codebase security audit and code/test remediations across all 10 OWASP categories; fixed BOLA/IDOR vulnerability in `GET /api/v1/ocr/extract/:jobId` by storing and strictly matching `userId` on async OCR job records; eliminated WebSocket AI rate-limit bypass by enforcing `checkAiRateLimit` and subscription tier daily ceilings directly on `send_message` in `chatSocket.ts`; installed `helmet` and mounted comprehensive HTTP security headers (HSTS, Frameguard `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, CSP compatible with Swagger UI); implemented Redis-backed rate limiters for `registerRateLimiter` (5/15m), `forgotPasswordRateLimiter` (3/15m), `resetPasswordRateLimiter` (5/15m), `refreshRateLimiter` (60/15m), and baseline `generalApiRateLimiter` (120/min); verified zero SSRF attack surface across outbound providers; confirmed Mongo operator injection rejection across Zod schemas; created dedicated `securityAudit.test.ts` (17 tests covering IDOR, BOLA, injection, rate limiting, and security headers); achieved 100% test pass rate across 52 test files (379 passing tests), 0 type errors, 0 lint errors, and 117-route OpenAPI coverage.
 - [Phase 10 Google OAuth Authentication (FR-1.1)]: Implemented Google OAuth 2.0 and ID token verification as a first-class authentication method while preserving existing JWT short-lived access token + rotating refresh token session architecture; added `googleAuthService` validating cryptographic signatures, issuer, audience, and email verification against configured client IDs with swappable mock verifier adapter; added sparse indexing on `User.googleId` and made `passwordHash` optional (`null` for OAuth-only users); added explicit account linking (`POST /api/v1/auth/google/link`), unlinking with account lockout guard (`DELETE /api/v1/auth/google/link`), and unauthenticated email collision rejection (`409 Conflict - AccountLinkingRequired`); added complete OpenAPI 3.0.3 documentation (117 routes covered); implemented Web `GoogleSignInButton`, Storybook stories, OAuth query param handlers in `LoginPage`/`RegisterPage`, and "Connected Accounts" card in `SettingsPage`; implemented Mobile `GoogleSignInButton`, `authApi` methods, and login/register integration; updated structured logging with redaction for ID tokens, passwords, refresh tokens, and cookies; achieved 100% test pass rate (20 backend unit/integration tests, 8 mobile tests, 361 monorepo tests).
@@ -262,13 +273,21 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Mobile Port: Study Planner & Pomodoro Focus Timer (Phase 7 - Prompt 5)]: Ported Study Planner and Pomodoro Focus to mobile Expo/SQLite client — added local schema models and indexes for `subjects`, `topics`, `flashcards`, and `focus_sessions`; extended sync engine push/pull pipeline with 3-tier conflict resolution (progress-aware review event dedup for flashcards, Last-Write-Wins with notice flag for focus sessions, and cascade deletions for subjects and topics); built mobile `StudyScreen` with Daily Spaced Review Queue modal (`FlashcardReviewCard` with tap-first 0, 2, 4, 5 SM-2 rating mapping), `SubjectModal`, `TopicModal`, `TopicDetailModal`, and `FlashcardFormModal`; built mobile `FocusScreen` with `PomodoroTimer` (idle, working, break, paused states), `SessionLinkPicker` (polymorphic topic/goal link), and `SessionHistoryList` (following Finance transaction list precedent); implemented mobile client-side FR-8.4 Do Not Disturb suppression of non-critical notifications during active focus sessions; integrated `Study` and `Focus` tabs into `RootNavigator` and `FloatingDock`.
 - [Pomodoro Focus Timer & Notification Integration (Phase 7 - Prompt 3)]: Implemented FR-8.1, FR-8.2, FR-8.4 Pomodoro focus session engine with accurate time accumulation math (excluding paused durations and preserving partial focus time on abandon), 4th cycle 15-min long break progression, client-triggered interval-completion notifications via Phase 2 notification engine, opt-in Do Not Disturb during active sessions, full Web FocusPage & PomodoroTimer (supporting idle, working, break, paused states), Storybook stories, and Mobile settings DND toggle.
 - [AI Study Plan Generation & Tool Calling (Phase 7 - Prompt 2)]: Implemented FR-7.2/UC-2 AI study planner composing Phase 3's tool-calling pipeline with Calendar free-time detection (8am–10pm window) and prioritized topics; added generate_study_plan tool, confirm-before-write Calendar event generation with linkedTopicId, Web StudyPlanCard, Storybook stories, and end-to-end test suites.
-- [Study Planner & SM-2 Spaced Repetition (Phase 7 - Prompt 1)]: Implemented core Subject/Topic/Flashcard data models, pure SuperMemo SM-2 spaced repetition scheduler in @lifeos/shared, cascade-deletion behavior on subjects, RESTful CRUD endpoints under /study, daily review queue, Web UI components, and Storybook stories.
 
 ---
 
 ## 10. Coding Conventions & Patterns
 
 Standing codebase conventions to preserve consistency across web, mobile, and backend.
+
+- **Production Security Audit Logging Protocol (NFR-2.6)**:
+  - **Audit vs. Operational Logging Separation**: Audit logs (`AuditLog` model via `auditService`) are strictly reserved for security and compliance events (admin mutations, admin reads of sensitive data, authentication lifecycle, sensitive exports, and access control denials). Routine application operations, high-frequency CRUD, and errors route exclusively through Pino (`logger`) and Sentry.
+  - **Immutability & Tamper Resistance**: The `AuditLog` collection enforces append-only semantics via Mongoose pre-hooks that reject `updateOne`, `updateMany`, `findOneAndUpdate`, `replaceOne`, `deleteOne`, `deleteMany`, and `findOneAndDelete`. No REST endpoints allow mutation or deletion of audit records.
+  - **Retention Policy**: Audit entries maintain a strict default retention period (90 days, configurable via `AUDIT_LOG_RETENTION_DAYS`) powered by a MongoDB TTL index on `expiresAt` (`expireAfterSeconds: 0`).
+  - **IP Anonymization & Privacy (GDPR/HIPAA Compliance)**: Client IP addresses are anonymized before persistence using `anonymizeIp()` — IPv4 addresses have their last octet zeroed (`192.168.1.0`), and IPv6 addresses retain only their first 3 segments (`2001:db8:85a3::`).
+  - **Sanitization & Redaction Policy**: `sanitizeAuditMetadata()` recursively scrubs sensitive keys (`password`, `token`, `secret`, `authorization`, `cookie`, `creditCard`, `cvv`, etc.), replaces full markdown contents/payloads with length/summary counters, and limits string fields to 256 characters.
+  - **Security Denial & Anomaly Auditing**: Unauthorized admin attempts record `ADMIN_ACCESS_DENIED` with `reason: "INSUFFICIENT_PERMISSIONS"`. IDOR/BOLA cross-user access attempts on finance and notes record `CROSS_USER_ACCESS_ATTEMPT` with `outcome: "DENIED"` and `reason: "OWNERSHIP_MISMATCH"` while responding to callers with generic 404s to avoid ID oracle leakage.
+  - **Admin Surface Protection**: All `/api/v1/admin/*` routes require active `admin` role, are rate-limited via `adminRateLimiter` (60 req/min) and `adminAuditRateLimiter` (30 req/min), and emit synchronous audit records for all admin actions.
 
 - **OWASP Top 10 Security & Rate-Limiting Policy (NFR-2.4, NFR-2.1–2.6)**:
   - **Access Control (A01)**: All resource mutations and queries (notes, habits, goals, events, finance, study, focus, analytics, async jobs) MUST strictly enforce user ownership matching (`{ userId: req.user._id }`).

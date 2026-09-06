@@ -38,7 +38,7 @@ const userSchema = new Schema(
     emailVerified: { type: Boolean, default: false },
     status: {
       type: String,
-      enum: ["active", "soft_deleted"],
+      enum: ["active", "suspended", "soft_deleted"],
       default: "active",
       required: true,
       index: true

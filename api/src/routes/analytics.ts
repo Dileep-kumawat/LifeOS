@@ -9,6 +9,7 @@ import { getProductivityAnalytics } from "../services/analytics/productivityAnal
 import { getFinanceAnalytics } from "../services/analytics/financeAnalyticsService.js";
 import { generateAnalyticsExport } from "../services/analytics/exportService.js";
 import { exportRateLimiter } from "../services/analytics/rateLimiter.js";
+import { auditService } from "../services/auditService.js";
 
 export const analyticsRouter = Router();
 
@@ -502,6 +503,16 @@ analyticsRouter.get(
         startDate,
         endDate
       );
+
+      auditService
+        .log({
+          req,
+          action: "SENSITIVE_DATA_EXPORT",
+          resourceType: "analytics",
+          outcome: "SUCCESS",
+          metadata: { type, format, startDate, endDate }
+        })
+        .catch(() => {});
 
       res.setHeader("Content-Type", contentType);
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

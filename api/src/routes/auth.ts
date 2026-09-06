@@ -36,6 +36,7 @@ import { logger } from "../logger.js";
 import { sendPasswordResetEmail } from "../services/emailService.js";
 import { scheduleAccountPurge } from "../services/accountPurgeQueue.js";
 import { seedDefaultCategories } from "../services/financeCategory.js";
+import { auditService } from "../services/auditService.js";
 
 export const authRouter = Router();
 
@@ -302,10 +303,27 @@ authRouter.post(
       const { email, password } = req.body;
 
       const user = await User.findOne({ email });
-      if (!user || user.status === "soft_deleted" || !user.passwordHash) {
+      if (!user || user.status !== "active" || !user.passwordHash) {
+        if (user && user.status === "suspended") {
+          auditService
+            .log({
+              req,
+              actorUserId: user._id.toString(),
+              actorRole: user.role,
+              action: "LOGIN_DENIED",
+              resourceType: "user",
+              resourceId: user._id.toString(),
+              outcome: "DENIED",
+              reason: "ACCOUNT_SUSPENDED"
+            })
+            .catch(() => {});
+        }
         return res.status(401).json({
           error: "Unauthorized",
-          message: "Invalid email or password."
+          message:
+            user?.status === "suspended"
+              ? "Account is suspended. Please contact support."
+              : "Invalid email or password."
         });
       }
 
@@ -315,6 +333,21 @@ authRouter.post(
           error: "Unauthorized",
           message: "Invalid email or password."
         });
+      }
+
+      if (user.role === "admin") {
+        await auditService.log(
+          {
+            req,
+            actorUserId: user._id.toString(),
+            actorRole: "admin",
+            action: "ADMIN_LOGIN",
+            resourceType: "user",
+            resourceId: user._id.toString(),
+            outcome: "SUCCESS"
+          },
+          { critical: true }
+        );
       }
 
       const accessToken = generateAccessToken(user);
@@ -1068,6 +1101,18 @@ authRouter.delete("/auth/account", requireAuth, async (req: Request, res: Respon
   await scheduleAccountPurge(userId);
   clearRefreshCookie(res);
 
+  await auditService.log(
+    {
+      req,
+      action: "ACCOUNT_DELETION_SCHEDULED",
+      resourceType: "user",
+      resourceId: userId,
+      targetUserId: userId,
+      outcome: "SUCCESS"
+    },
+    { critical: true }
+  );
+
   return res.json({
     message: "Account scheduled for deletion. Your account will be permanently purged in 30 days."
   });
@@ -1181,6 +1226,16 @@ authRouter.delete("/auth/sessions/:id", requireAuth, async (req: Request, res: R
 
   session.revokedAt = new Date();
   await session.save();
+
+  auditService
+    .log({
+      req,
+      action: "SESSION_REVOKED",
+      resourceType: "session",
+      resourceId: id,
+      outcome: "SUCCESS"
+    })
+    .catch(() => {});
 
   return res.json({ message: "Session revoked successfully." });
 });

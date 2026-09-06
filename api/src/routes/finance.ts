@@ -30,6 +30,7 @@ import {
 import { getMonthBounds, recalculateBudgetSpend } from "../services/budgetService.js";
 import { callAI } from "../services/ai/callAI.js";
 import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
+import { auditService } from "../services/auditService.js";
 
 export const financeRouter = Router();
 
@@ -356,6 +357,28 @@ financeRouter.get(
  *                 error: { type: string, example: "NotFound" }
  *                 message: { type: string, example: "Transaction not found" }
  */
+async function checkAndAuditCrossUserFinanceAccess(req: Request, resourceId: string, callerUserId: string) {
+  try {
+    const foreign = await Transaction.findById(resourceId).select("userId");
+    if (foreign && foreign.userId.toString() !== callerUserId.toString()) {
+      await auditService.log(
+        {
+          req,
+          action: "CROSS_USER_ACCESS_ATTEMPT",
+          resourceType: "finance",
+          resourceId,
+          targetUserId: foreign.userId.toString(),
+          outcome: "DENIED",
+          reason: "OWNERSHIP_MISMATCH"
+        },
+        { critical: true }
+      );
+    }
+  } catch (_err) {
+    // Ignore error during IDOR detection check
+  }
+}
+
 financeRouter.get(
   "/finance/transactions/:id",
   validate(transactionParamsSchema, "params"),
@@ -366,6 +389,7 @@ financeRouter.get(
 
       const transaction = await Transaction.findOne({ _id: id, userId });
       if (!transaction) {
+        await checkAndAuditCrossUserFinanceAccess(req, id, userId);
         return res.status(404).json({ error: "NotFound", message: "Transaction not found" });
       }
 
@@ -436,6 +460,7 @@ financeRouter.patch(
 
       const transaction = await Transaction.findOne({ _id: id, userId });
       if (!transaction) {
+        await checkAndAuditCrossUserFinanceAccess(req, id, userId);
         return res.status(404).json({ error: "NotFound", message: "Transaction not found" });
       }
 
@@ -509,6 +534,7 @@ financeRouter.delete(
 
       const transaction = await Transaction.findOneAndDelete({ _id: id, userId });
       if (!transaction) {
+        await checkAndAuditCrossUserFinanceAccess(req, id, userId);
         return res.status(404).json({ error: "NotFound", message: "Transaction not found" });
       }
 

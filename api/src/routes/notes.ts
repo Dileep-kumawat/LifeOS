@@ -23,6 +23,7 @@ import {
   type FolderLike
 } from "../services/noteFolders.js";
 import { enqueueEmbeddingJob, deleteEmbedding } from "../services/ai/embeddingJob.js";
+import { auditService } from "../services/auditService.js";
 
 export const notesRouter = Router();
 
@@ -546,6 +547,27 @@ notesRouter.get(
     try {
       const doc = await Note.findOne({ _id: req.params.id, userId: req.user!._id });
       if (!doc) {
+        try {
+          if (typeof (Note as any).findById === "function") {
+            const foreignNote = await (Note as any).findById(req.params.id)?.select?.("userId");
+            if (foreignNote && foreignNote.userId && foreignNote.userId.toString() !== req.user!._id.toString()) {
+              await auditService.log(
+                {
+                  req,
+                  action: "CROSS_USER_ACCESS_ATTEMPT",
+                  resourceType: "note",
+                  resourceId: req.params.id,
+                  targetUserId: foreignNote.userId.toString(),
+                  outcome: "DENIED",
+                  reason: "OWNERSHIP_MISMATCH"
+                },
+                { critical: true }
+              );
+            }
+          }
+        } catch (_err) {
+          // Ignore error during IDOR detection check
+        }
         return res.status(404).json({ error: "Not Found", message: "Note not found." });
       }
       return res.json({ note: formatNote(doc, true) });
