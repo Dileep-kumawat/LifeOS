@@ -1,159 +1,131 @@
-# LifeOS
+# LifeOS — AI Personal Operating System
 
-Monorepo for LifeOS — AI Personal Operating System. This is the **Phase 0** scaffold: a boring, working skeleton per the build plan. No feature code yet.
+> **Monorepo Architecture**: Node.js 22 LTS + Express + TypeScript, React 18 + Vite (Web), Expo SDK 52 (React Native Mobile), MongoDB + Redis, Socket.IO, BullMQ, and LangChain.
 
-## Stack (Phase 0)
+LifeOS is an intelligent personal management platform unifying calendar scheduling, task & goal tracking, habit formation, Markdown/ProseMirror knowledge management, personal finance with receipt OCR, study planning with SuperMemo SM-2 spaced repetition, Pomodoro focus timers, client-side voice input, and an AI assistant grounded in user metrics.
 
-- **Monorepo:** npm workspaces — `/api`, `/web`, `/packages/shared`
-- **Backend:** Express + TypeScript, Mongoose, Zod validation, pino logging, Swagger via `swagger-jsdoc`/`swagger-ui-express`, Passport.js (JWT strategy active, Google OAuth stubbed for Phase 10)
-- **Frontend:** Vite + React + TypeScript, Tailwind, Zustand, TanStack Query, React Router, Storybook
-- **Infra:** Docker Compose (MongoDB + Redis + API), GitHub Actions CI
+---
 
-## Prerequisites
+## 1. Monorepo Workspaces
 
-- Node.js 22 LTS
-- Docker + Docker Compose
-- npm 10+
+The repository is structured as an `npm` workspaces monorepo:
 
-## First-time setup
-
-```bash
-git clone <your-repo-url> lifeos
-cd lifeos
-npm install                     # installs all workspaces
-cp api/.env.example api/.env    # adjust secrets as needed
+```
+LifeOS/
+├── api/                   # Express REST API v1 & Socket.IO real-time server (Port 4000)
+├── web/                   # React 18 + Vite + Tailwind CSS Web Application (Port 5173)
+├── mobile/                # Expo React Native App with dynamic Floating Sliding Dock
+├── packages/
+│   └── shared/            # Shared TypeScript types, Zod schemas, and design tokens
+├── scripts/
+│   ├── backup/            # Automated database snapshot and encryption scripts
+│   ├── restore/           # PITR forensic restore & application compatibility verifier
+│   └── load-test/         # Socket.IO 10k WebSocket load testing & concurrency benchmark
+├── docs/                  # Launch readiness reports and release checklists
+├── DISASTER_RECOVERY.md   # Production MongoDB disaster recovery & PITR runbook
+├── PRIVACY_POLICY.md      # GDPR & India DPDP compliance & third-party AI disclosures
+└── docker-compose.yml     # Local orchestration for MongoDB, Redis, and API
 ```
 
-## Running locally
+---
 
-**Option A — everything in Docker (API + Mongo + Redis):**
+## 2. Prerequisites & Environment Setup
 
+- **Node.js**: 22 LTS
+- **Package Manager**: npm 10+
+- **Database & Cache**: Docker & Docker Compose (or local MongoDB 7+ and Redis 6+)
+- **Mobile Tooling**: Expo CLI (`npx expo`), Android Studio / Xcode / Expo Go app
+
+### First-Time Setup
+
+```bash
+# 1. Clone repository
+git clone <repo-url> lifeos
+cd lifeos
+
+# 2. Install all workspace dependencies
+npm install
+
+# 3. Configure environment variables
+cp .env.example .env
+cp api/.env.example api/.env
+```
+
+> [!NOTE]
+> Review `.env.example` for required production variables (JWT secrets, VAPID push notification keys, MongoDB Atlas connection strings, and optional Google OAuth / AI provider keys).
+
+---
+
+## 3. Running Locally
+
+### Option A: Hybrid Dev (Recommended)
+Run databases in Docker and frontends/backends on host for instant HMR and debugging:
+
+```bash
+# 1. Start MongoDB and Redis in background
+docker compose up -d mongo redis
+
+# 2. Start services in separate terminals
+npm run dev:api       # Express API in watch mode (http://localhost:4000)
+npm run dev:web       # Vite Web App (http://localhost:5173)
+npm run dev:mobile    # Expo Metro bundler (http://localhost:8081)
+```
+
+### Option B: Full Docker Compose
 ```bash
 docker compose up --build
 ```
 
-Then in a second terminal, run the web app on the host (faster HMR than dockerizing it):
-
+### Mobile Physical Device Debugging (Android via USB)
 ```bash
-npm run dev:web
+# Enable USB Debugging on Android, connect USB cable, then forward ports:
+adb reverse tcp:8081 tcp:8081    # Metro bundler
+adb reverse tcp:4000 tcp:4000    # LifeOS API backend
+
+cd mobile && npx expo start --localhost
+# Press 'a' in terminal to launch on connected Android device
 ```
-
-- API: http://localhost:4000/api/v1/health
-- Swagger UI: http://localhost:4000/api/v1/docs
-- Web: http://localhost:5173
-
-**Option B — everything on the host (no Docker for app code, just DB/cache):**
-
-```bash
-docker compose up mongo redis
-npm run dev:api     # separate terminal
-npm run dev:web     # separate terminal
-```
-
-If running the API on the host instead of in Docker, edit `api/.env` and point `MONGO_URI`/`REDIS_URL` at `localhost` instead of the Docker service names (see comments in `api/.env.example`).
-
-## Running the Mobile App (Expo)
-
-### Running on Physical Device via USB Cable
-
-#### 📱 Android (via USB Debugging)
-
-1. **Enable USB Debugging on your phone:**
-   - Go to **Settings** → **About Phone** → tap **Build Number** 7 times until Developer Mode is unlocked.
-   - Go to **Settings** → **System** / **Developer Options** → enable **USB Debugging**.
-
-2. **Connect Phone to PC:**
-   - Connect your phone using a USB cable.
-   - Set USB connection mode to **File Transfer / MTP**.
-   - Accept the prompt on your phone: _"Allow USB debugging from this computer"_.
-
-3. **Verify Device Connection:**
-
-   ```bash
-   adb devices
-   ```
-
-   _(Your device should show with status `device`)_.
-
-4. **Port Forwarding (Essential for Bundler & Local API access):**
-
-   ```bash
-   # Forward Metro bundler port
-   adb reverse tcp:8081 tcp:8081
-
-   # Forward LifeOS API backend port (allows mobile app to reach http://localhost:4000)
-   adb reverse tcp:4000 tcp:4000
-   ```
-
-5. **Start Expo & Run on Android:**
-   - Install **Expo Go** from Google Play Store on your phone.
-   - Start the mobile app:
-     ```bash
-     cd mobile
-     npx expo start --localhost
-     ```
-     _(or from workspace root: `npm run dev:mobile`)_
-   - Press **`a`** in your terminal to launch and bundle the app directly onto your phone.
 
 ---
 
-#### 🍎 iOS (iPhone via USB)
+## 4. Key Scripts Reference
 
-1. **Install Expo Go** from the Apple App Store.
-2. **Connect iPhone via Cable** and tap **"Trust This Computer"** when prompted.
-3. **Start Expo:**
-   ```bash
-   cd mobile
-   npx expo start --localhost
-   ```
-4. Open the **Camera app** on your iPhone and scan the QR code displayed in the terminal to open in Expo Go.
+| Command | Action | Scope |
+| :--- | :--- | :--- |
+| `npm run build` | Compile monorepo (`shared` → `api` → `web`) | Monorepo root |
+| `npm run typecheck` | Run TypeScript type checks across all workspaces | All workspaces |
+| `npm run lint` | Run ESLint across all workspaces | All workspaces |
+| `npm run test` | Run automated test suites (over 400 tests) | `api`, `web`, `mobile` |
+| `npm run check:openapi` | Verify 100% Swagger/OpenAPI documentation coverage | `api` routes |
+| `npm run storybook --workspace=web` | Start Storybook dev server (Port 6006) | `web` |
+| `npm run build-storybook --workspace=web` | Build static Storybook documentation | `web` |
 
 ---
 
-## Storybook
+## 5. Architecture & Security Highlights
 
-```bash
-npm run storybook --workspace=web
-```
+### Authentication & Authorization (FR-1.1, NFR-2.2, NFR-2.3)
+- **Dual Auth**: Email & password authentication (bcrypt cost factor 12) + Google OAuth 2.0 with cryptographic server-side ID token verification.
+- **Session Tokens**: Short-lived (15 min) JWT access tokens + rotating single-use refresh tokens stored as salted hashes in MongoDB.
+- **Rate Limiting**: Granular Redis-backed rate limiters on login (5/15m), register (5/15m), password reset (3/15m), and token refresh (60/15m).
+- **Hardened HTTP**: Express mounts `helmet` with HSTS, CSP, Frameguard (`DENY`), and cross-origin isolation.
 
-Runs at http://localhost:6006. The `Button` component's stories are the first example — every new shared component in `web/src/components` should get a `.stories.tsx` alongside it.
+### Real-Time & Concurrency (NFR-1.3)
+- **Socket.IO Clustering**: Backed by `@socket.io/redis-adapter` for horizontal multi-instance pub/sub and fan-out.
+- **AI Streaming**: Real-time token streaming with subscription tier rate-limit enforcement (`checkAiRateLimit`).
+- **Load Testing**: Automated benchmark suite in `scripts/load-test/` (`ws-load-test.ts`, `horizontal-scale-test.ts`).
 
-## Scripts (root)
+### Privacy & Compliance (NFR-6.1, NFR-6.2, FR-1.6)
+- **Data Portability**: `GET /api/v1/auth/export` generates structured JSON export across all 25 user collections (rate limited to 5 req/hr).
+- **Cascade Deletion**: 30-day grace period with cascade hard-purge of user data across 25 collections and BullMQ background jobs.
+- **AI Transparency**: Detailed in [PRIVACY_POLICY.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOs/PRIVACY_POLICY.md) documenting provider fallback order (**Mistral AI → Groq → Google Gemini**), zero-data-retention standards, and user opt-out toggles.
 
-| Command             | What it does                           |
-| ------------------- | -------------------------------------- |
-| `npm run dev:api`   | Start the API in watch mode            |
-| `npm run dev:web`   | Start the Vite dev server              |
-| `npm run lint`      | ESLint across the monorepo             |
-| `npm run typecheck` | TypeScript project-wide check          |
-| `npm run test`      | Run tests in api + web                 |
-| `npm run build`     | Production build of shared → api → web |
+---
 
-## Exit criteria for Phase 0 (from the build plan)
+## 6. Disaster Recovery & Documentation Links
 
-- [x] `docker compose up` boots API + DB + Redis
-- [x] `npm run dev:web` boots the web app
-- [x] Empty `/health` route documented and visible in Swagger UI
-- [x] `Button` component has a working Storybook story
-- [ ] CI passes on a trivial PR — verify once this is pushed to GitHub and Actions runs
-
-## Auth scaffold
-
-Passport.js is wired per the SRS's auth standardization (`api/src/auth/passport.ts`):
-
-- **JWT strategy** — active now. Verifies Bearer tokens signed with `JWT_ACCESS_SECRET`.
-- **`requireAuth` middleware** (`api/src/auth/requireAuth.ts`) — drop it on any route that needs a logged-in user: `v1.get("/me", requireAuth, handler)`. There's nothing to protect yet since no routes exist beyond `/health`.
-- **Google OAuth strategy** — present but commented out; deferred to Phase 10 per the build plan. Uncomment once `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set.
-
-What's _not_ here yet, because it's Phase 1 work: register/login endpoints, password hashing, refresh-token rotation, RBAC middleware, password reset flow. The strategy above just means Phase 1 only has to add those routes, not set up Passport from scratch.
-
-## What's deliberately not here yet
-
-Per the build plan, Phase 0 explicitly defers:
-
-- Mobile scaffold (Phase 5)
-- Any real feature code — auth, calendar, goals, habits, notes all start in Phase 1
-
-## Next step
-
-Phase 1 — Auth + Core CRUD. See `LifeOS_Build_Plan.md`.
+- **Disaster Recovery Runbook**: [DISASTER_RECOVERY.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOs/DISASTER_RECOVERY.md) — Step-by-step procedures for MongoDB Atlas continuous PITR, isolated recovery, and application compatibility verification.
+- **Launch Readiness Report**: [docs/PHASE10_LAUNCH_READINESS.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOs/docs/PHASE10_LAUNCH_READINESS.md) — Comprehensive 13-section audit, requirement traceability table, and launch recommendation.
+- **Launch Checklist**: [docs/LAUNCH_CHECKLIST.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOs/docs/LAUNCH_CHECKLIST.md) — Operational sign-off checklist across Auth, Security, Performance, Privacy, and Reliability.
+- **Privacy Policy**: [PRIVACY_POLICY.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOs/PRIVACY_POLICY.md) — Data inventory, lawful processing bases, and AI provider disclosures.
+- **API Documentation**: Interactive Swagger UI at `http://localhost:4000/api/v1/docs` (127 documented routes).
