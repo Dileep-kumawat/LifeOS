@@ -8,7 +8,11 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:ws-smoke": "tsx ../scripts/load-test/ci-smoke-test.ts",
+    "test:ws-load": "tsx ../scripts/load-test/run-staged-tests.ts",
+    "test:ws-horizontal": "tsx ../scripts/load-test/horizontal-scale-test.ts",
+    "test:ws-failure": "tsx ../scripts/load-test/failure-recovery-test.ts"
   },
   "dependencies": {
     "@langchain/core": "*",
@@ -16,6 +20,7 @@
     "@langchain/groq": "*",
     "@langchain/mistralai": "*",
     "@lifeos/shared": "file:../packages/shared",
+    "@socket.io/redis-adapter": "^8.3.0",
     "@types/web-push": "^3.6.4",
     "bcryptjs": "^3.0.3",
     "bullmq": "^6.0.6",
@@ -55,6 +60,7 @@
     "@types/supertest": "^7.2.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.6",
+    "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",

@@ -13,8 +13,26 @@ import { ALL_AI_TOOLS, executeToolCall } from "./tools.js";
 import { generateStudyPlanAllocation } from "../study/studyPlanService.js";
 import { checkAiRateLimit } from "./rateLimiter.js";
 
+interface AuthUserPayload {
+  _id: any;
+  email?: string;
+  role?: string;
+  status?: string;
+  subscriptionTier?: string;
+}
+
 interface AuthenticatedSocket extends Socket {
-  user?: UserDoc;
+  user?: AuthUserPayload;
+}
+
+const userAuthCache = new Map<string, { user: AuthUserPayload; cachedAt: number }>();
+const CACHE_TTL_MS = 60000; // 60s TTL for auth handshake cache
+
+/**
+ * Emits an event to a user across all cluster instances via Redis pub/sub adapter.
+ */
+export function emitToUser(io: Server, userId: string, event: string, payload: any) {
+  io.to(`user_${userId}`).emit(event, payload);
 }
 
 export function setupChatSocket(io: Server) {
@@ -35,7 +53,29 @@ export function setupChatSocket(io: Server) {
       }
 
       const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as { userId: string };
-      const user = await User.findById(decoded.userId);
+
+      // Check cache first to avoid slamming MongoDB during connection storms
+      const cached = userAuthCache.get(decoded.userId);
+      let user: AuthUserPayload | null = null;
+      if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+        user = cached.user;
+      } else {
+        const dbUser = await User.findById(decoded.userId)
+          .select("_id email role status subscriptionTier")
+          .lean();
+
+        if (dbUser) {
+          user = {
+            _id: dbUser._id,
+            email: dbUser.email,
+            role: dbUser.role,
+            status: dbUser.status,
+            subscriptionTier: dbUser.subscriptionTier
+          };
+          userAuthCache.set(decoded.userId, { user, cachedAt: Date.now() });
+        }
+      }
+
       if (!user || user.status === "soft_deleted") {
         return next(new Error("Unauthorized user"));
       }
@@ -51,7 +91,7 @@ export function setupChatSocket(io: Server) {
   // 2. Connection Listener
   io.on("connection", (socket: AuthenticatedSocket) => {
     const userId = socket.user!._id.toString();
-    logger.info({ userId, socketId: socket.id }, "Client connected to AI Chat WebSocket");
+    logger.debug({ userId, socketId: socket.id }, "Client connected to AI Chat WebSocket");
 
     socket.join(`user_${userId}`);
 
@@ -428,7 +468,7 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
     );
 
     socket.on("disconnect", () => {
-      logger.info({ userId, socketId: socket.id }, "Client disconnected from AI Chat WebSocket");
+      logger.debug({ userId, socketId: socket.id }, "Client disconnected from AI Chat WebSocket");
     });
   });
 }

@@ -4,13 +4,15 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createRedisClient } from "./db/redis.js";
 
 import { env } from "./config/env.js";
 import { logger, httpLogger } from "./logger.js";
 import { connectDb } from "./db/mongoose.js";
 import { registerSwagger } from "./plugins/swagger.js";
 import { generalApiRateLimiter } from "./middleware/rateLimiter.js";
-import { healthRouter } from "./routes/health.js";
+import { healthRouter, setActiveIo } from "./routes/health.js";
 import { authRouter } from "./routes/auth.js";
 import { calendarRouter } from "./routes/calendar.js";
 import { goalsRouter } from "./routes/goals.js";
@@ -41,10 +43,25 @@ async function main() {
   const server = http.createServer(app);
 
   const io = new Server(server, {
-    cors: { origin: env.CORS_ORIGIN, credentials: true }
+    cors: { origin: env.CORS_ORIGIN, credentials: true },
+    pingInterval: 30000,
+    pingTimeout: 25000,
+    maxHttpBufferSize: 1e6,
+    transports: ["websocket", "polling"]
   });
 
+  try {
+    const pubClient = createRedisClient();
+    const subClient = createRedisClient();
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info("Socket.IO Redis adapter initialized successfully");
+  } catch (err) {
+    logger.warn({ err }, "Redis adapter initialization failed, using in-memory adapter fallback");
+  }
+
   setupChatSocket(io);
+  setActiveIo(io);
 
   app.use(
     helmet({
