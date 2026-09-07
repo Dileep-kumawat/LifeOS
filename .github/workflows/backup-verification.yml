@@ -1,0 +1,45 @@
+name: Scheduled Backup Verification
+
+on:
+  schedule:
+    # Run every Sunday at 03:00 UTC
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  verify-backup-and-recovery:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Install Database Tools (mongodump & mongorestore)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mongodb-database-tools
+
+      - name: Run Backup & Recovery Unit Tests
+        run: npm run test --workspace=api -- backupRecovery.test.ts
+
+      - name: Execute Controlled PITR Test & Live Restoration Verification
+        env:
+          MONGO_URI: mongodb://localhost:27017/lifeos_test
+        run: |
+          npx tsx scripts/restore/pitr-recovery.ts
+          npx tsx scripts/restore/verify-recovery.ts --db=lifeos_pitr_recovery

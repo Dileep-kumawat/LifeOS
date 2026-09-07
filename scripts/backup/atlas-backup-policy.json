@@ -1,0 +1,54 @@
+{
+  "clusterName": "lifeos-production",
+  "provider": "AWS",
+  "region": "us-east-1",
+  "cloudBackup": {
+    "enabled": true,
+    "pointInTimeRecovery": {
+      "enabled": true,
+      "pitrWindowDays": 7,
+      "resolution": "1_minute"
+    },
+    "encryptionAtRest": {
+      "enabled": true,
+      "provider": "AWS_KMS",
+      "keyIdentifier": "arn:aws:kms:us-east-1:123456789012:key/lifeos-mongodb-atlas-backup-key"
+    },
+    "snapshotSchedules": [
+      {
+        "type": "hourly",
+        "frequencyHours": 6,
+        "retentionDays": 2
+      },
+      {
+        "type": "daily",
+        "frequencyHours": 24,
+        "retentionDays": 35,
+        "snapshotTimeUTC": "02:00"
+      },
+      {
+        "type": "weekly",
+        "frequencyDays": 7,
+        "retentionWeeks": 4,
+        "dayOfWeek": "SUNDAY"
+      },
+      {
+        "type": "monthly",
+        "frequencyDays": 30,
+        "retentionMonths": 12
+      }
+    ],
+    "monitoringAndAlerts": {
+      "alertOnSnapshotFailure": true,
+      "alertOnPitrLagMinutes": 15,
+      "notificationChannels": [
+        "pagerduty:service_lifeos_database_critical",
+        "slack:#alerts-db-backup"
+      ]
+    },
+    "restorePermissions": {
+      "leastPrivilegeRole": "Project Backup Admin",
+      "productionOverwriteRequiresDualAuthorization": true
+    }
+  }
+}
