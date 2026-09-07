@@ -304,6 +304,18 @@ export const authApi = {
     return response.data;
   },
 
+  async exportData(): Promise<any> {
+    const response = await apiClient.get("/auth/export");
+    return response.data;
+  },
+
+  async deleteAccount(): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>("/auth/account");
+    await tokenStorage.clearRefreshToken();
+    useAuthStore.getState().clearAuth();
+    return response.data;
+  },
+
   async restoreSession(): Promise<boolean> {
     try {
       useAuthStore.getState().setIsInitializing(true);

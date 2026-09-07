@@ -2,7 +2,7 @@ import { Queue, Worker, type Job } from "bullmq";
 import { redis } from "../db/redis.js";
 import { logger } from "../logger.js";
 import { User } from "../models/User.js";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { purgeUserData } from "./accountPurgeService.js";
 
 export const ACCOUNT_PURGE_QUEUE_NAME = "account-purge";
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -44,11 +44,7 @@ export const accountPurgeWorker = new Worker<AccountPurgeJobPayload>(
       return;
     }
 
-    // Cascade delete associated documents (RefreshToken, and stub for Calendar/Goal/Habit/Note)
-    await RefreshToken.deleteMany({ userId });
-    await User.findByIdAndDelete(userId);
-
-    logger.info({ userId }, "User account and all associated tokens hard deleted successfully");
+    await purgeUserData(userId);
   },
   { connection: redis, autorun: process.env.NODE_ENV !== "test" }
 );

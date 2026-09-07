@@ -17,7 +17,8 @@ import {
   loginRateLimiter,
   refreshRateLimiter,
   registerRateLimiter,
-  resetPasswordRateLimiter
+  resetPasswordRateLimiter,
+  userDataExportRateLimiter
 } from "../middleware/rateLimiter.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {
@@ -37,6 +38,7 @@ import { sendPasswordResetEmail } from "../services/emailService.js";
 import { scheduleAccountPurge } from "../services/accountPurgeQueue.js";
 import { seedDefaultCategories } from "../services/financeCategory.js";
 import { auditService } from "../services/auditService.js";
+import { generateUserDataExport } from "../services/userDataExportService.js";
 
 export const authRouter = Router();
 
@@ -1067,6 +1069,76 @@ authRouter.get("/auth/me", requireAuth, (req: Request, res: Response) => {
     user: formatUserProfile(user)
   });
 });
+
+/**
+ * @openapi
+ * /auth/export:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Export complete user data (GDPR / India DPDP)
+ *     description: Generates and downloads a complete, structured JSON export of all personal data across all LifeOS modules (profile, calendar, goals, habits, notes, finances, study, focus, AI interactions, notifications, sync). Rate-limited to 5 requests per hour. Strictly excludes authentication secrets (password hashes, refresh token secrets, OAuth credentials). Audited as SENSITIVE_DATA_EXPORT.
+ *     responses:
+ *       200:
+ *         description: Complete JSON data export attachment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 metadata: { type: object }
+ *                 profile: { type: object }
+ *                 sessions: { type: array }
+ *                 calendar: { type: array }
+ *                 goals: { type: array }
+ *                 habits: { type: object }
+ *                 notes: { type: object }
+ *                 finance: { type: object }
+ *                 studyPlanner: { type: object }
+ *                 focusSessions: { type: array }
+ *                 aiAssistant: { type: object }
+ *                 notifications: { type: object }
+ *                 syncTombstones: { type: array }
+ *       401:
+ *         description: Authentication required
+ *       429:
+ *         description: Rate limit exceeded (more than 5 exports per hour)
+ */
+authRouter.get(
+  "/auth/export",
+  requireAuth,
+  userDataExportRateLimiter,
+  async (req: Request, res: Response) => {
+    const user = req.user!;
+    const userId = user._id.toString();
+
+    const exportData = await generateUserDataExport(userId);
+    if (!exportData) {
+      return res.status(404).json({ error: "NotFound", message: "User not found" });
+    }
+
+    await auditService.log(
+      {
+        req,
+        action: "SENSITIVE_DATA_EXPORT",
+        resourceType: "user",
+        resourceId: userId,
+        targetUserId: userId,
+        outcome: "SUCCESS",
+        metadata: {
+          exportType: "complete_account_data",
+          standard: "GDPR_Art_20_DPDP_Sec_11"
+        }
+      },
+      { critical: true }
+    );
+
+    const filename = `lifeos-user-data-export-${userId}-${Date.now()}.json`;
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+    return res.status(200).send(JSON.stringify(exportData, null, 2));
+  }
+);
 
 /**
  * @openapi

@@ -151,3 +151,18 @@ export const adminAuditRateLimiter = createRedisRateLimiter({
     return userId ? `admin_audit:${userId}` : `ip:${ip}`;
   }
 });
+
+/**
+ * User data portability export rate limiter: 5 requests per hour per user.
+ */
+export const userDataExportRateLimiter = createRedisRateLimiter({
+  keyPrefix: "user_export",
+  windowSeconds: 60 * 60,
+  maxAttempts: 5,
+  message: "Data export rate limit exceeded. Maximum 5 complete exports per hour.",
+  keyGenerator: (req) => {
+    const userId = (req as any).user?._id?.toString();
+    const ip = req.ip || req.socket.remoteAddress || "unknown_ip";
+    return userId ? `export:${userId}` : `ip:${ip}`;
+  }
+});

@@ -6,12 +6,15 @@ import { apiClient } from "../lib/apiClient";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { DeleteAccountDialog } from "../components/auth/DeleteAccountDialog";
+import { PrivacyPolicyModal } from "../components/privacy/PrivacyPolicyModal";
 import { NotificationPreferencesPanel } from "../features/notifications";
 
 export function SettingsPage() {
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -19,6 +22,34 @@ export function SettingsPage() {
     } finally {
       clearAuth();
       navigate("/login");
+    }
+  };
+
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      const response = await apiClient.get("/auth/export", { responseType: "blob" });
+      const blob = new Blob([response.data], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `lifeos-data-export-${(user as any)?._id || (user as any)?.id || "user"}-${Date.now()}.json`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Account data export downloaded successfully.");
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        toast.error("Export rate limit reached. Maximum 5 exports per hour.");
+      } else {
+        toast.error("Failed to generate data export. Please try again later.");
+      }
+    } finally {
+      setExportingData(false);
     }
   };
 
@@ -159,6 +190,57 @@ export function SettingsPage() {
           <NotificationPreferencesPanel />
         </div>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Privacy & Data Protection</CardTitle>
+            <CardDescription>
+              Manage your personal data, portability rights, and AI disclosures (GDPR / India DPDP)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[#e3e2e0] bg-white">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-[#000000]">
+                  Data Portability (GDPR Art. 20)
+                </span>
+                <span className="text-xs text-[#615d59]">
+                  Download a complete JSON export of all your notes, calendar events, habits,
+                  finances, and study plans.
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportData}
+                isLoading={exportingData}
+                className="text-xs sm:w-auto"
+              >
+                Export My Data
+              </Button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[#e3e2e0] bg-white">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-[#000000]">
+                  Privacy Policy & AI Disclosure
+                </span>
+                <span className="text-xs text-[#615d59]">
+                  Review data retention schedules, third-party LLM providers (Mistral/Groq/Gemini),
+                  and DPDP rights.
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrivacyModalOpen(true)}
+                className="text-xs sm:w-auto"
+              >
+                View Policy
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-red-200 bg-red-50/20">
           <CardHeader>
             <CardTitle className="text-red-600">Danger Zone</CardTitle>
@@ -186,6 +268,11 @@ export function SettingsPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirmDelete={handleDeleteAccount}
+      />
+
+      <PrivacyPolicyModal
+        open={privacyModalOpen}
+        onOpenChange={setPrivacyModalOpen}
       />
     </div>
   );

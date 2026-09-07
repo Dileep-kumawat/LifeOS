@@ -2,8 +2,11 @@ import { AiRequestLog } from "../../models/AiRequestLog.js";
 import { Message } from "../../models/Message.js";
 import { logger } from "../../logger.js";
 
-/** Default raw content retention window in days (90 days per FR-2.7 / NFR-6.2) */
-export const RAW_CONTENT_RETENTION_DAYS = 90;
+/** Raw content retention window in days (configurable via AI_LOG_RETENTION_DAYS, default 90 days) */
+export const RAW_CONTENT_RETENTION_DAYS = parseInt(
+  process.env.AI_LOG_RETENTION_DAYS || "90",
+  10
+);
 
 /**
  * Anonymizes/truncates raw AI chat content and request logs older than `retentionDays`.

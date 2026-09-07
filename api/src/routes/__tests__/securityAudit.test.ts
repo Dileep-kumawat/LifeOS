@@ -98,7 +98,8 @@ vi.mock("../../middleware/rateLimiter.js", async (importOriginal) => {
         });
       }
       next();
-    })
+    }),
+    userDataExportRateLimiter: vi.fn((_req, _res, next) => next())
   };
 });
 

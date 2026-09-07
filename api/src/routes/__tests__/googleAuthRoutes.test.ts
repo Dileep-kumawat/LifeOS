@@ -17,7 +17,8 @@ vi.mock("../../middleware/rateLimiter.js", () => ({
   forgotPasswordRateLimiter: (_req: any, _res: any, next: any) => next(),
   resetPasswordRateLimiter: (_req: any, _res: any, next: any) => next(),
   refreshRateLimiter: (_req: any, _res: any, next: any) => next(),
-  generalApiRateLimiter: (_req: any, _res: any, next: any) => next()
+  generalApiRateLimiter: (_req: any, _res: any, next: any) => next(),
+  userDataExportRateLimiter: (_req: any, _res: any, next: any) => next()
 }));
 
 // Mock auth middleware for protected endpoints

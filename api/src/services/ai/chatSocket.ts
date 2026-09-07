@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { SystemMessage, HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { env } from "../../config/env.js";
 import { logger } from "../../logger.js";
-import { User, type UserDoc } from "../../models/User.js";
+import { User } from "../../models/User.js";
 import { Conversation } from "../../models/Conversation.js";
 import { Message } from "../../models/Message.js";
 import { retrieveContext } from "./retriever.js";

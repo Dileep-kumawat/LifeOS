@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, TextInput, Switch } from "react-native";
-import { RefreshCw, LogOut, Sparkles, Check, Bell } from "lucide-react-native";
+import { RefreshCw, LogOut, Sparkles, Check, Bell, Shield, Download, Trash2 } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { authApi } from "../../services/apiClient";
@@ -144,6 +144,63 @@ export function SettingsScreen({ navigation }: any) {
     if (navigation?.navigate) {
       navigation.navigate(screenName, params);
     }
+  };
+
+  const [exportingData, setExportingData] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      const data = await authApi.exportData();
+      Alert.alert(
+        "Data Export Ready",
+        `Successfully generated portable JSON archive (${data?.metadata?.dataPortabilityStandard || "GDPR Art. 20 / DPDP"}). Included: calendar, goals, habits, notes, finances, study, focus, and notifications.`
+      );
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        Alert.alert("Rate Limit Exceeded", "Maximum 5 data exports per hour.");
+      } else {
+        Alert.alert("Export Failed", err.message || "Failed to generate data export.");
+      }
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleShowPrivacyPolicy = () => {
+    Alert.alert(
+      "Privacy Policy & AI Disclosure",
+      "LifeOS complies with GDPR and India DPDP 2023.\n\nAI Providers & Fallback: Mistral AI → Groq → Google Gemini.\n\nNotice: Free-tier AI keys may permit provider data retention/training under their terms. Commercial enterprise keys with Zero Data Retention (ZDR) should be configured for production.\n\n30-Day Purge: Accounts requested for deletion enter a soft-deleted grace period, followed by complete cascade purge after 30 days."
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? It will be placed into a 30-day deletion-pending state, revoking all sessions. After 30 days, all your data will be permanently and irreversibly purged.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingAccount(true);
+            try {
+              await authApi.deleteAccount();
+              Alert.alert(
+                "Account Scheduled for Deletion",
+                "Your account is scheduled for deletion and will be permanently purged in 30 days."
+              );
+            } catch (err: any) {
+              Alert.alert("Error", err.message || "Failed to schedule account deletion.");
+            } finally {
+              setDeletingAccount(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -521,6 +578,66 @@ export function SettingsScreen({ navigation }: any) {
             {user?.role?.toUpperCase() || "USER"}
           </ThemedText>
         </View>
+      </Card>
+
+      {/* Privacy & Data Protection Card */}
+      <Card style={styles.card}>
+        <View style={styles.cardHeader}>
+          <ThemedText variant="title" style={styles.sectionTitle}>
+            Privacy & Data Rights
+          </ThemedText>
+        </View>
+        <ThemedText variant="caption" color={colors.inkMuted} style={{ marginBottom: spacing.sm }}>
+          GDPR Article 20 & India DPDP 2023 data portability and AI disclosures.
+        </ThemedText>
+        <View style={{ gap: spacing.xs }}>
+          <Button
+            title="Export Account Data"
+            variant="outline"
+            size="sm"
+            fullWidth
+            loading={exportingData}
+            onPress={handleExportData}
+            icon={<Download size={14} color={colors.ink} />}
+          />
+          <Button
+            title="View Privacy Policy & AI Disclosure"
+            variant="outline"
+            size="sm"
+            fullWidth
+            onPress={handleShowPrivacyPolicy}
+            icon={<Shield size={14} color={colors.ink} />}
+          />
+        </View>
+      </Card>
+
+      {/* Danger Zone Card */}
+      <Card
+        style={[
+          styles.card,
+          {
+            borderColor: "rgba(234, 67, 53, 0.25)",
+            backgroundColor: "rgba(234, 67, 53, 0.04)"
+          }
+        ]}
+      >
+        <View style={styles.cardHeader}>
+          <ThemedText variant="title" style={[styles.sectionTitle, { color: colors.error }]}>
+            Danger Zone
+          </ThemedText>
+        </View>
+        <ThemedText variant="caption" color={colors.inkMuted} style={{ marginBottom: spacing.sm }}>
+          Soft-delete account with 30-day permanent purge delay across all modules.
+        </ThemedText>
+        <Button
+          title="Delete Account"
+          variant="danger"
+          size="sm"
+          fullWidth
+          loading={deletingAccount}
+          onPress={handleDeleteAccount}
+          icon={<Trash2 size={14} color="#ffffff" />}
+        />
       </Card>
 
       <Button
