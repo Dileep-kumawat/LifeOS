@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   LayoutDashboard,
   Calendar,
@@ -42,10 +41,11 @@ import { ConflictNoticeBanner } from "../components/ui/ConflictNoticeBanner";
 import { syncEngine } from "../services/syncEngine";
 import { notificationService } from "../services/notificationService";
 import { FloatingDock } from "./FloatingDock";
+import { createActivityTabNavigator } from "./ActivityPager";
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab = createActivityTabNavigator();
 
 function AuthNavigator() {
   return (

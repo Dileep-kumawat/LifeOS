@@ -19,6 +19,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedScrollHandler,
+  useAnimatedReaction,
+  useAnimatedRef,
+  scrollTo,
   interpolate,
   Extrapolation,
   withTiming,
@@ -48,7 +51,7 @@ const AnimatedView = Animated.View as React.ComponentType<any>;
 export const DOCK_HEIGHT = 64;
 export const DOCK_VERTICAL_OFFSET = 6;
 export const DOCK_CLEARANCE = 16;
-const ITEM_WIDTH = 54;
+export const ITEM_WIDTH = 54;
 const INDICATOR_SIZE = 50;
 const FADE_WIDTH = 48;
 
@@ -221,14 +224,21 @@ const DockItem = React.memo(function DockItem({
   );
 });
 
+export interface FloatingDockProps extends BottomTabBarProps {
+  sharedScrollX?: Animated.SharedValue<number>;
+  isContentSwiping?: Animated.SharedValue<boolean>;
+}
+
 export function FloatingDock({
   state,
   descriptors,
-  navigation
-}: BottomTabBarProps) {
+  navigation,
+  sharedScrollX,
+  isContentSwiping
+}: FloatingDockProps) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const scrollViewRef = useRef<any>(null);
+  const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
   const lastSettledIndexRef = useRef<number>(state.index);
   const isProgrammaticScrollRef = useRef<boolean>(false);
   const programmaticScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -258,8 +268,19 @@ export function FloatingDock({
   );
   const sidePadding = Math.max(0, (dockWidth - ITEM_WIDTH) / 2);
 
-  // Reanimated scroll tracking initialized to current active index
-  const scrollX = useSharedValue(state.index * ITEM_WIDTH);
+  // Reanimated scroll tracking: consume shared scroll value if provided, or fallback to internal
+  const internalScrollX = useSharedValue(state.index * ITEM_WIDTH);
+  const scrollX = sharedScrollX ?? internalScrollX;
+
+  // Real-time synchronization: when content is swiped, drive the dock's ScrollView on the UI thread
+  useAnimatedReaction(
+    () => scrollX.value,
+    (currentScrollX) => {
+      if (isContentSwiping?.value) {
+        scrollTo(scrollViewRef, currentScrollX, 0, false);
+      }
+    }
+  );
 
   // Reanimated opacity for the transient active title pill label
   const labelOpacity = useSharedValue(1);
@@ -305,12 +326,14 @@ export function FloatingDock({
     lastSettledIndexRef.current = state.index;
     setProgrammaticScroll(true);
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        x: state.index * ITEM_WIDTH,
-        animated: true
-      });
+      if (typeof (scrollViewRef.current as any).scrollTo === "function") {
+        (scrollViewRef.current as any).scrollTo({
+          x: state.index * ITEM_WIDTH,
+          animated: true
+        });
+      }
     }
-  }, [state.index, setProgrammaticScroll]);
+  }, [state.index, setProgrammaticScroll, scrollViewRef]);
 
   // Auto-fade the active screen title pill after hold duration on index change
   useEffect(() => {
@@ -341,6 +364,8 @@ export function FloatingDock({
   // Scroll handler for real-time item scale and proximity interpolation
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
+      // Ignore scroll echo when content is driving the gesture
+      if (isContentSwiping?.value) return;
       scrollX.value = event.contentOffset.x;
     }
   });
@@ -423,10 +448,12 @@ export function FloatingDock({
       lastSettledIndexRef.current = index;
 
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({
-          x: index * ITEM_WIDTH,
-          animated: true
-        });
+        if (typeof (scrollViewRef.current as any).scrollTo === "function") {
+          (scrollViewRef.current as any).scrollTo({
+            x: index * ITEM_WIDTH,
+            animated: true
+          });
+        }
       }
 
       if (index !== state.index) {
