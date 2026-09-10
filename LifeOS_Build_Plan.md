@@ -486,6 +486,67 @@ A standing rule across every phase from Phase 1 onward: **no endpoint ships with
 
 ---
 
+## Phase 11 — Performance & Tech Debt Hardening (2–3 weeks)
+
+**Goal:** All 10 phases are built and shipped — this phase pays down the perf and coverage debt that accrues naturally across a fast phased build, before it compounds under real user load.
+
+**Depends on:** everything above (Phases 0–10)
+
+### Tasks
+
+**Database & backend performance**
+
+- Index audit: enumerate every Mongoose model's indexes against actual query patterns in routes/services (analytics date-range aggregations, userId-scoped CRUD across all modules); add missing compound indexes via an idempotent migration script under `/scripts/db/`
+- Enable Mongo profiler at a 100ms threshold in staging for a day; fix the worst offenders surfaced
+- N+1 / sequential-await audit across aggregation-heavy paths (`userDataExportService`, dashboard aggregation, RAG context assembly) — confirm genuine parallelism, not just the appearance of it
+- Redis read-through caching for analytics (`/analytics/productivity`, `/analytics/finance`), `/focus/summary`, and habit streak reads — 5-minute TTL, graceful fallback to direct query on Redis failure, reuse the existing Redis connection rather than opening a new one
+- Re-run the Phase 10 WebSocket load test against the 10k concurrent NFR target now that AI streaming, notifications, and sync events are all live simultaneously — do this after the caching change above, since it shifts the load shape
+
+**Frontend & mobile performance**
+
+- Web bundle analysis (rollup-plugin-visualizer or equivalent); route-split the Notes editor (TipTap/ProseMirror), Analytics dashboard (charting), and OCR/receipt scan flow behind `React.lazy` if not already
+- TanStack Query cache tuning: deliberate `staleTime`/`gcTime` per query type rather than defaults everywhere
+- Mobile: profile `FloatingDock`/`ActivityPager` with Reanimated's perf monitor for actual frame drops, not just memoization review
+- Offline sync engine investigation: document the current delta/conflict-resolution algorithm, check whether `SyncTombstone` records are pruned after multi-device convergence (propose a cleanup job if not, reusing Phase 2's `enqueueJob`), and flag full-table-diff vs. delta-only conflict resolution as a scaling risk if found
+
+**Code quality & tech debt**
+
+- Grep for dead code and stale feature flags left over from each phase's "explicitly deferred" list once those features later shipped
+- Verify `packages/shared` schemas are actually imported by `api`/`web`/`mobile` rather than duplicated — type drift here is the most common source of prod-only bugs in this stack
+- Audit later-phase services (Study Planner, Focus, Analytics) against the error-handling convention established in Phase 1 (structured Pino + domain errors → central handler) for drift under time pressure
+
+**Testing**
+
+- Unit tests for business logic previously covered only by exit-criteria spot checks: SM-2 spaced repetition edge cases (easeFactor floor, quality-0 reset), Pomodoro `accumulatedWorkSeconds` across pause/resume/abandon, habit streak calculation (daily/weekly/custom/missed day), budget pro-ration and category normalization
+- Security regression tests: IDOR/BOLA cross-user access returns generic 404 (not 403) across every resource route, with a corresponding `CROSS_USER_ACCESS_ATTEMPT` audit log entry; refresh token rotation under concurrent requests; account deletion + 30-day purge job with injectable time boundary; rate-limiter boundary tests per documented limits
+- Integration tests on aggregation endpoints: analytics date-range UTC boundary edges and the 366-day cap, gap-fill/contiguous trend generation against sparse data, OCR confidence-threshold routing end-to-end, AI provider fallback chain (Mistral → Groq → Gemini) under simulated failures
+- E2E tests on confirm-before-write flows: chat tool-call → confirmation modal → DB write (and cancel → zero side effects), voice input asserted to route through the identical pipeline as typed chat, offline sync conflict resolution round-trip on mobile
+- Wire a coverage gate into CI (a modest floor, e.g. 60% on `/api/src/services`) alongside the existing lint/typecheck/test gate, so this doesn't silently erode again post-launch
+
+### Documentation additions
+
+- **Swagger:** no new routes expected; if the caching layer changes any response headers (e.g. cache status) document it
+- **Storybook:** no new components expected unless lazy-loading introduces new loading/skeleton states — add stories for those if so
+- New docs: `PERF_INDEX_AUDIT.md`, `BUNDLE_REPORT.md`, `SYNC_ENGINE_NOTES.md`, `LOAD_TEST_RESULTS_<date>.md`
+
+### Exit criteria
+
+- Index audit complete and missing indexes applied; slow-query log shows no unindexed collection scans on the audited endpoints
+- Analytics/streak/focus-summary reads served from cache within TTL, verified with hit/miss logging
+- WebSocket load test re-passes at 10k concurrent connections under realistic mixed traffic (chat + notifications + sync)
+- Web initial bundle size measurably reduced; lazy-loaded routes render correctly
+- Sync engine algorithm documented; tombstone pruning gap either closed or explicitly tracked as a follow-up
+- All four testing tiers (unit, security, integration, E2E) have coverage for the areas listed above; CI coverage gate is active
+- No regressions: full existing test suite and Phase 10 launch-readiness checklist still pass
+
+### Explicitly deferred
+
+- Implementing the tombstone-pruning job itself (Phase 11 documents and proposes it; building it is a fast follow if the investigation confirms it's needed)
+- Any fix surfaced by the IDOR/BOLA tests beyond documentation — a real ownership-check gap found here should be triaged and patched immediately as a hotfix, not folded into this phase's timeline
+- Further AI cost optimization (prompt caching, model routing by task complexity) — natural next phase if Phase 11's perf work isn't enough on its own
+
+---
+
 ## Recurring documentation discipline (applies from Phase 1 onward)
 
 To keep Swagger and Storybook genuinely useful rather than decorative:
@@ -521,5 +582,6 @@ To keep Swagger and Storybook genuinely useful rather than decorative:
 | 8 — Voice                    | 1 wk     | 28 wk      |
 | 9 — Analytics                | 2 wk     | 30 wk      |
 | 10 — Launch Polish           | 2–4 wk   | 34 wk      |
+| 11 — Perf & Tech Debt Hardening | 2–3 wk | 37 wk    |
 
-~7–8 months to a genuinely launch-ready product for a small team. Treat this as a planning input, not a promise — Phase 5 (offline sync) and Phase 3 (AI core) are the two most likely to run over, so if you need to protect a launch date, look there first rather than cutting corners in Phase 10's compliance work.
+~8–9 months to a genuinely launch-ready, hardened product for a small team. Treat this as a planning input, not a promise — Phase 5 (offline sync) and Phase 3 (AI core) are the two most likely to run over, so if you need to protect a launch date, look there first rather than cutting corners in Phase 10's compliance work. Phase 11 is post-launch hardening, not a launch blocker — it can run in parallel with early production traffic if needed, though the WebSocket load re-test and security regression tests are worth prioritizing before scaling marketing/user acquisition.
