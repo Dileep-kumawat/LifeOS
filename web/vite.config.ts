@@ -1,8 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+import { visualizer } from "rollup-plugin-visualizer";
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    visualizer({
+      filename: "stats.html",
+      gzipSize: true,
+      brotliSize: true,
+      open: false,
+      emitFile: true
+    }) as any,
+    visualizer({
+      filename: "stats.json",
+      template: "raw-data",
+      emitFile: true
+    }) as any
+  ],
   server: {
     port: 5173,
     proxy: {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -9,21 +9,53 @@ import { LoginPage } from "./routes/LoginPage";
 import { RegisterPage } from "./routes/RegisterPage";
 import { ForgotPasswordPage } from "./routes/ForgotPasswordPage";
 import { ResetPasswordPage } from "./routes/ResetPasswordPage";
-import { SettingsPage } from "./routes/SettingsPage";
-import { CalendarPage } from "./features/calendar/CalendarPage";
-import { GoalListPage } from "./features/goals/GoalListPage";
-import { GoalDetailPage } from "./features/goals/GoalDetailPage";
-import { HabitListPage } from "./features/habits/HabitListPage";
-import { HabitDetailPage } from "./features/habits/HabitDetailPage";
-import { NotesListPage } from "./features/notes/NotesListPage";
-import { NoteDetailPage } from "./features/notes/NoteDetailPage";
-import { ChatPage } from "./features/ai/ChatPage";
-import { FinancePage } from "./features/finance/FinancePage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
-import { StudyPage } from "./features/study/StudyPage";
-import { FocusPage } from "./features/focus/FocusPage";
-import { AnalyticsPage } from "./features/analytics/AnalyticsPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RouteLoadingFallback } from "./components/ui/RouteLoadingFallback";
+
+// Route-split lazy-loaded features
+const NoteDetailPage = lazy(() =>
+  import("./features/notes/NoteDetailPage").then((m) => ({ default: m.NoteDetailPage }))
+);
+const NotesListPage = lazy(() =>
+  import("./features/notes/NotesListPage").then((m) => ({ default: m.NotesListPage }))
+);
+const AnalyticsPage = lazy(() =>
+  import("./features/analytics/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage }))
+);
+const ReceiptScanPage = lazy(() =>
+  import("./features/finance/ReceiptScanPage").then((m) => ({ default: m.ReceiptScanPage }))
+);
+const FinancePage = lazy(() =>
+  import("./features/finance/FinancePage").then((m) => ({ default: m.FinancePage }))
+);
+const CalendarPage = lazy(() =>
+  import("./features/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage }))
+);
+const GoalListPage = lazy(() =>
+  import("./features/goals/GoalListPage").then((m) => ({ default: m.GoalListPage }))
+);
+const GoalDetailPage = lazy(() =>
+  import("./features/goals/GoalDetailPage").then((m) => ({ default: m.GoalDetailPage }))
+);
+const HabitListPage = lazy(() =>
+  import("./features/habits/HabitListPage").then((m) => ({ default: m.HabitListPage }))
+);
+const HabitDetailPage = lazy(() =>
+  import("./features/habits/HabitDetailPage").then((m) => ({ default: m.HabitDetailPage }))
+);
+const StudyPage = lazy(() =>
+  import("./features/study/StudyPage").then((m) => ({ default: m.StudyPage }))
+);
+const FocusPage = lazy(() =>
+  import("./features/focus/FocusPage").then((m) => ({ default: m.FocusPage }))
+);
+const ChatPage = lazy(() =>
+  import("./features/ai/ChatPage").then((m) => ({ default: m.ChatPage }))
+);
+const SettingsPage = lazy(() =>
+  import("./routes/SettingsPage").then((m) => ({ default: m.SettingsPage }))
+);
 
 const router = createBrowserRouter([
   {
@@ -42,7 +74,19 @@ const router = createBrowserRouter([
         path: "finance",
         element: (
           <ProtectedRoute>
-            <FinancePage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <FinancePage />
+            </Suspense>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "finance/scan",
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<RouteLoadingFallback variant="scan" />}>
+              <ReceiptScanPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -50,7 +94,9 @@ const router = createBrowserRouter([
         path: "calendar",
         element: (
           <ProtectedRoute>
-            <CalendarPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <CalendarPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -58,7 +104,9 @@ const router = createBrowserRouter([
         path: "goals",
         element: (
           <ProtectedRoute>
-            <GoalListPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <GoalListPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -66,7 +114,9 @@ const router = createBrowserRouter([
         path: "goals/:id",
         element: (
           <ProtectedRoute>
-            <GoalDetailPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <GoalDetailPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -74,7 +124,9 @@ const router = createBrowserRouter([
         path: "habits",
         element: (
           <ProtectedRoute>
-            <HabitListPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <HabitListPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -82,7 +134,9 @@ const router = createBrowserRouter([
         path: "habits/:id",
         element: (
           <ProtectedRoute>
-            <HabitDetailPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <HabitDetailPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -90,7 +144,9 @@ const router = createBrowserRouter([
         path: "notes",
         element: (
           <ProtectedRoute>
-            <NotesListPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <NotesListPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -98,7 +154,9 @@ const router = createBrowserRouter([
         path: "notes/:id",
         element: (
           <ProtectedRoute>
-            <NoteDetailPage />
+            <Suspense fallback={<RouteLoadingFallback variant="editor" />}>
+              <NoteDetailPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -106,7 +164,9 @@ const router = createBrowserRouter([
         path: "study",
         element: (
           <ProtectedRoute>
-            <StudyPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <StudyPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -114,7 +174,9 @@ const router = createBrowserRouter([
         path: "focus",
         element: (
           <ProtectedRoute>
-            <FocusPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <FocusPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -122,7 +184,9 @@ const router = createBrowserRouter([
         path: "analytics",
         element: (
           <ProtectedRoute>
-            <AnalyticsPage />
+            <Suspense fallback={<RouteLoadingFallback variant="analytics" />}>
+              <AnalyticsPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -130,7 +194,9 @@ const router = createBrowserRouter([
         path: "chat",
         element: (
           <ProtectedRoute>
-            <ChatPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <ChatPage />
+            </Suspense>
           </ProtectedRoute>
         )
       },
@@ -138,7 +204,9 @@ const router = createBrowserRouter([
         path: "settings",
         element: (
           <ProtectedRoute>
-            <SettingsPage />
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <SettingsPage />
+            </Suspense>
           </ProtectedRoute>
         )
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Tag, PieChart, Wallet, Camera } from "lucide-react";
@@ -15,8 +15,12 @@ import { BudgetDetailDialog } from "./components/BudgetDetailDialog";
 import { CategoryBreakdownChart } from "./components/CategoryBreakdownChart";
 import { TrendLineChart } from "./components/TrendLineChart";
 import { InsightsCard } from "./components/InsightsCard";
-import { ReceiptScanModal } from "./components/ReceiptScanModal";
 import { Button } from "../../components/Button";
+import { RouteLoadingFallback } from "../../components/ui/RouteLoadingFallback";
+
+const ReceiptScanModal = lazy(() =>
+  import("./components/ReceiptScanModal").then((m) => ({ default: m.ReceiptScanModal }))
+);
 
 export function FinancePage() {
   const queryClient = useQueryClient();
@@ -428,17 +432,21 @@ export function FinancePage() {
         onDelete={handleDeleteBudget}
       />
 
-      {/* Receipt Scan Modal */}
-      <ReceiptScanModal
-        open={isReceiptScanOpen}
-        onClose={() => setIsReceiptScanOpen(false)}
-        categories={categories}
-        onConfirmTransaction={handleSaveTransaction}
-        onOpenBlankForm={() => {
-          setEditingTransaction(null);
-          setIsTransactionFormOpen(true);
-        }}
-      />
+      {/* Receipt Scan Modal (Lazy loaded with Suspense) */}
+      {isReceiptScanOpen && (
+        <Suspense fallback={<RouteLoadingFallback variant="scan" />}>
+          <ReceiptScanModal
+            open={isReceiptScanOpen}
+            onClose={() => setIsReceiptScanOpen(false)}
+            categories={categories}
+            onConfirmTransaction={handleSaveTransaction}
+            onOpenBlankForm={() => {
+              setEditingTransaction(null);
+              setIsTransactionFormOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Transaction Form Modal */}
       <TransactionForm

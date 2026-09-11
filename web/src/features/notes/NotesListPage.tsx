@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { FilePlus, FolderPlus, Search, X, StickyNote, Camera } from "lucide-react";
@@ -7,11 +7,15 @@ import { notesApi } from "./api";
 import { NoteCard } from "./NoteCard";
 import { FolderTree } from "./FolderTree";
 import { FolderManager } from "./FolderManager";
-import { NotesScanModal } from "./NotesScanModal";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/Button";
+import { RouteLoadingFallback } from "../../components/ui/RouteLoadingFallback";
 import { cn } from "../../lib/utils";
 import type { NoteSummary, NoteFolder } from "./types";
+
+const NotesScanModal = lazy(() =>
+  import("./NotesScanModal").then((m) => ({ default: m.NotesScanModal }))
+);
 
 export function NotesListPage() {
   const navigate = useNavigate();
@@ -362,15 +366,19 @@ export function NotesListPage() {
         isSubmitting={false}
       />
 
-      <NotesScanModal
-        open={isScanModalOpen}
-        onClose={() => setIsScanModalOpen(false)}
-        folders={folders}
-        allTags={allTags}
-        initialFolderId={selectedFolder}
-        onSaveNote={handleSaveScannedNote}
-        onOpenBlankNote={handleCreateNote}
-      />
+      {isScanModalOpen && (
+        <Suspense fallback={<RouteLoadingFallback variant="scan" />}>
+          <NotesScanModal
+            open={isScanModalOpen}
+            onClose={() => setIsScanModalOpen(false)}
+            folders={folders}
+            allTags={allTags}
+            initialFolderId={selectedFolder}
+            onSaveNote={handleSaveScannedNote}
+            onOpenBlankNote={handleCreateNote}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
