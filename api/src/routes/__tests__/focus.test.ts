@@ -17,6 +17,26 @@ vi.mock("../../middleware/authMiddleware.js", () => ({
   }
 }));
 
+// Redis rate limit & read-through cache mock storage
+const redisStore = new Map<string, any>();
+
+vi.mock("../../db/redis.js", () => ({
+  redis: {
+    get: vi.fn().mockImplementation(async (key: string) => redisStore.get(key) ?? null),
+    set: vi.fn().mockImplementation(async (key: string, val: string, _ex?: string, _ttl?: number) => {
+      redisStore.set(key, val);
+      return "OK";
+    }),
+    incr: vi.fn().mockImplementation(async (key: string) => {
+      const val = (Number(redisStore.get(key)) || 0) + 1;
+      redisStore.set(key, val);
+      return val;
+    }),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(3600)
+  }
+}));
+
 // Mock focus notifications
 vi.mock("../../services/focus/focusService.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../services/focus/focusService.js")>();
@@ -232,6 +252,9 @@ vi.mock("../../models/User.js", () => ({
 
 import { focusRouter } from "../focus.js";
 import { sendFocusIntervalNotification } from "../../services/focus/focusService.js";
+import { redis } from "../../db/redis.js";
+import { FocusSession } from "../../models/FocusSession.js";
+import { resetCacheMetrics } from "../../services/cache/readThroughCache.js";
 
 const app = express();
 app.use(express.json());
@@ -240,6 +263,8 @@ app.use(focusRouter);
 describe("Focus Timer API (/api/v1/focus)", () => {
   beforeEach(() => {
     sessionsStore = [];
+    redisStore.clear();
+    resetCacheMetrics();
     vi.clearAllMocks();
   });
 
@@ -761,6 +786,63 @@ describe("Focus Timer API (/api/v1/focus)", () => {
       expect(res.status).toBe(200);
       expect(res.body.totalFocusMinutes).toBe(25);
       expect(res.body.totalSessionsCount).toBe(1);
+    });
+
+    it("caches focus summary on first call and serves from cache without FocusSession.aggregate on second call", async () => {
+      const targetDate = new Date("2026-08-15T10:00:00.000Z");
+      sessionsStore.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        workMinutes: 25,
+        breakMinutes: 5,
+        longBreakMinutes: 15,
+        longBreakInterval: 4,
+        currentCycle: 1,
+        currentPhase: "work",
+        linkedType: "topic",
+        linkedId: "topic-101",
+        status: "completed",
+        startedAt: targetDate,
+        completedAt: targetDate,
+        pausedAt: null,
+        lastResumedAt: null,
+        accumulatedWorkSeconds: 1500,
+        totalFocusMinutes: 25,
+        createdAt: targetDate,
+        updatedAt: targetDate,
+        save: async function () { return this; }
+      });
+
+      const url = "/focus/summary?startDate=2026-08-10T00:00:00.000Z&endDate=2026-08-20T23:59:59.999Z";
+
+      // Call 1: Misses cache, populates Redis
+      const res1 = await request(app).get(url).expect(200);
+      expect(res1.body.totalFocusMinutes).toBe(25);
+
+      const expectedKey = `cache:focus:summary:${testUserId}:2026-08-10T00:00:00.000Z:2026-08-20T23:59:59.999Z`;
+      expect(redis.set).toHaveBeenCalledWith(
+        expectedKey,
+        expect.any(String),
+        "EX",
+        300
+      );
+
+      // Call 2: Clears spy, second call served from cache without Mongo aggregate
+      vi.mocked(FocusSession.aggregate).mockClear();
+
+      const res2 = await request(app).get(url).expect(200);
+      expect(res2.body).toEqual(res1.body);
+      expect(FocusSession.aggregate).not.toHaveBeenCalled();
+    });
+
+    it("falls back to direct MongoDB aggregation gracefully when Redis read fails on focus summary", async () => {
+      vi.mocked(redis.get).mockRejectedValueOnce(new Error("Redis connection dropped"));
+
+      const url = "/focus/summary?startDate=2026-08-10T00:00:00.000Z&endDate=2026-08-20T23:59:59.999Z";
+      const res = await request(app).get(url).expect(200);
+
+      expect(res.body.totalFocusMinutes).toBeDefined();
+      expect(FocusSession.aggregate).toHaveBeenCalled();
     });
   });
 });

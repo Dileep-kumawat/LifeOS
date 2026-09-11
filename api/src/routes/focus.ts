@@ -18,6 +18,7 @@ import {
   sendFocusIntervalNotification
 } from "../services/focus/focusService.js";
 import { getFocusSummaryData } from "../services/focus/focusAggregation.js";
+import { getOrSetCache, CACHE_TTL_SECONDS } from "../services/cache/readThroughCache.js";
 
 export const focusRouter = Router();
 
@@ -180,24 +181,31 @@ focusRouter.get(
         startBound = new Date(Date.UTC(past7.getUTCFullYear(), past7.getUTCMonth(), past7.getUTCDate(), 0, 0, 0, 0));
       }
 
-      const data = await getFocusSummaryData(userId, startBound, endBound);
+      const startDateKey = startDate || startBound.toISOString();
+      const endDateKey = endDate || endBound.toISOString();
+      const cacheKey = `cache:focus:summary:${userId.toString()}:${startDateKey}:${endDateKey}`;
 
-      return res.status(200).json({
-        period: {
-          range: effectiveRange,
-          startDate: startBound.toISOString(),
-          endDate: endBound.toISOString(),
-          label: periodLabel
-        },
-        totalFocusMinutes: data.totalFocusMinutes,
-        totalSessionsCount: data.totalSessionsCount,
-        completedSessionsCount: data.completedSessionsCount,
-        abandonedSessionsCount: data.abandonedSessionsCount,
-        activeSessionsCount: data.activeSessionsCount,
-        averageSessionMinutes: data.averageSessionMinutes,
-        linkedTypeBreakdown: data.linkedTypeBreakdown,
-        trend: data.trend
+      const summary = await getOrSetCache(cacheKey, CACHE_TTL_SECONDS, async () => {
+        const data = await getFocusSummaryData(userId, startBound, endBound);
+        return {
+          period: {
+            range: effectiveRange,
+            startDate: startBound.toISOString(),
+            endDate: endBound.toISOString(),
+            label: periodLabel
+          },
+          totalFocusMinutes: data.totalFocusMinutes,
+          totalSessionsCount: data.totalSessionsCount,
+          completedSessionsCount: data.completedSessionsCount,
+          abandonedSessionsCount: data.abandonedSessionsCount,
+          activeSessionsCount: data.activeSessionsCount,
+          averageSessionMinutes: data.averageSessionMinutes,
+          linkedTypeBreakdown: data.linkedTypeBreakdown,
+          trend: data.trend
+        };
       });
+
+      return res.status(200).json(summary);
     } catch (err: any) {
       return res.status(500).json({
         error: "InternalServerError",

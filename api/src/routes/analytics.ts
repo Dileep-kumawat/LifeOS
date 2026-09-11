@@ -10,6 +10,7 @@ import { getFinanceAnalytics } from "../services/analytics/financeAnalyticsServi
 import { generateAnalyticsExport } from "../services/analytics/exportService.js";
 import { exportRateLimiter } from "../services/analytics/rateLimiter.js";
 import { auditService } from "../services/auditService.js";
+import { getOrSetCache, CACHE_TTL_SECONDS } from "../services/cache/readThroughCache.js";
 
 export const analyticsRouter = Router();
 
@@ -156,10 +157,13 @@ analyticsRouter.get(
   validate(analyticsDateRangeSchema, "query"),
   async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id || req.user!._id;
+      const userId = (req.user!.id || req.user!._id).toString();
       const { startDate, endDate } = req.query as { startDate: string; endDate: string };
+      const cacheKey = `cache:analytics:productivity:${userId}:${startDate}:${endDate}`;
 
-      const analytics = await getProductivityAnalytics(userId, startDate, endDate);
+      const analytics = await getOrSetCache(cacheKey, CACHE_TTL_SECONDS, () =>
+        getProductivityAnalytics(userId, startDate, endDate)
+      );
       return res.status(200).json(analytics);
     } catch (err: any) {
       return res.status(500).json({
@@ -329,10 +333,13 @@ analyticsRouter.get(
   validate(analyticsDateRangeSchema, "query"),
   async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id || req.user!._id;
+      const userId = (req.user!.id || req.user!._id).toString();
       const { startDate, endDate } = req.query as { startDate: string; endDate: string };
+      const cacheKey = `cache:analytics:finance:${userId}:${startDate}:${endDate}`;
 
-      const analytics = await getFinanceAnalytics(userId, startDate, endDate);
+      const analytics = await getOrSetCache(cacheKey, CACHE_TTL_SECONDS, () =>
+        getFinanceAnalytics(userId, startDate, endDate)
+      );
       return res.status(200).json(analytics);
     } catch (err: any) {
       return res.status(500).json({

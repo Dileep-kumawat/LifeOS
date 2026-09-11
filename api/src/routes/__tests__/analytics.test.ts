@@ -25,13 +25,18 @@ let mockTransactions: any[] = [];
 let mockBudgets: any[] = [];
 let mockFocusSessions: any[] = [];
 
-// Redis rate limit mock storage
-const redisStore = new Map<string, number>();
+// Redis rate limit & read-through cache mock storage
+const redisStore = new Map<string, any>();
 
 vi.mock("../../db/redis.js", () => ({
   redis: {
+    get: vi.fn().mockImplementation(async (key: string) => redisStore.get(key) ?? null),
+    set: vi.fn().mockImplementation(async (key: string, val: string, _ex?: string, _ttl?: number) => {
+      redisStore.set(key, val);
+      return "OK";
+    }),
     incr: vi.fn().mockImplementation(async (key: string) => {
-      const val = (redisStore.get(key) || 0) + 1;
+      const val = (Number(redisStore.get(key)) || 0) + 1;
       redisStore.set(key, val);
       return val;
     }),
@@ -214,6 +219,10 @@ vi.mock("../../models/FocusSession.js", () => ({
 }));
 
 import { analyticsRouter } from "../analytics.js";
+import { redis } from "../../db/redis.js";
+import { Habit } from "../../models/Habit.js";
+import { Transaction } from "../../models/Transaction.js";
+import { resetCacheMetrics } from "../../services/cache/readThroughCache.js";
 
 const app = express();
 app.use(express.json());
@@ -222,6 +231,8 @@ app.use("/api/v1", analyticsRouter);
 describe("Analytics Module (FR-12.1 – FR-12.4)", () => {
   beforeEach(() => {
     redisStore.clear();
+    resetCacheMetrics();
+    vi.clearAllMocks();
     mockHabits = [];
     mockHabitCheckIns = [];
     mockTransactions = [];
@@ -367,6 +378,61 @@ describe("Analytics Module (FR-12.1 – FR-12.4)", () => {
         .expect(400);
       expect(res2.body.error).toBe("ValidationError");
     });
+
+    it("caches aggregation on first call and serves from cache on second call within TTL without Mongo query", async () => {
+      mockHabits.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        title: "Daily Reading",
+        frequency: { type: "daily" },
+        currentStreak: 4,
+        longestStreak: 10,
+        createdAt: new Date("2026-01-01")
+      });
+
+      const url = "/api/v1/analytics/productivity?startDate=2026-08-01&endDate=2026-08-07";
+
+      // 1. First call: cache miss, queries Mongo models
+      const res1 = await request(app).get(url).expect(200);
+      expect(res1.body.habits.totalExpected).toBe(7);
+
+      const expectedKey = `cache:analytics:productivity:${testUserId}:2026-08-01:2026-08-07`;
+      expect(redis.set).toHaveBeenCalledWith(
+        expectedKey,
+        expect.any(String),
+        "EX",
+        300
+      );
+
+      // 2. Clear spy calls to prove second call does NOT query Mongo
+      vi.mocked(Habit.find).mockClear();
+
+      // Second call: cache hit, served from Redis
+      const res2 = await request(app).get(url).expect(200);
+      expect(res2.body).toEqual(res1.body);
+      expect(Habit.find).not.toHaveBeenCalled();
+    });
+
+    it("falls back to direct MongoDB aggregation gracefully when Redis read fails", async () => {
+      mockHabits.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        title: "Daily Meditation",
+        frequency: { type: "daily" },
+        currentStreak: 2,
+        longestStreak: 5,
+        createdAt: new Date("2026-01-01")
+      });
+
+      vi.mocked(redis.get).mockRejectedValueOnce(new Error("Redis connection dropped"));
+
+      const res = await request(app)
+        .get("/api/v1/analytics/productivity?startDate=2026-08-01&endDate=2026-08-07")
+        .expect(200);
+
+      expect(res.body.habits.totalExpected).toBe(7);
+      expect(Habit.find).toHaveBeenCalled();
+    });
   });
 
   describe("2. Finance Analytics Endpoint (FR-12.2, FR-12.3)", () => {
@@ -455,6 +521,59 @@ describe("Analytics Module (FR-12.1 – FR-12.4)", () => {
       expect(diningBudget.status).toBe("exceeded");
       expect(diningBudget.isOverBudget).toBe(true);
       expect(diningBudget.percentUsed).toBe(150);
+    });
+
+    it("caches finance aggregation on first call and serves from cache without Mongo aggregation on second call", async () => {
+      mockTransactions.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        type: "income",
+        category: "Freelance",
+        amount: 1000,
+        date: new Date("2026-08-02T10:00:00.000Z")
+      });
+
+      const url = "/api/v1/analytics/finance?startDate=2026-08-01&endDate=2026-08-07";
+
+      // 1. First call: cache miss, executes Mongo aggregation
+      const res1 = await request(app).get(url).expect(200);
+      expect(res1.body.summary.totalIncome).toBe(1000);
+
+      const expectedKey = `cache:analytics:finance:${testUserId}:2026-08-01:2026-08-07`;
+      expect(redis.set).toHaveBeenCalledWith(
+        expectedKey,
+        expect.any(String),
+        "EX",
+        300
+      );
+
+      // 2. Clear spy calls to prove second call does NOT query Mongo
+      vi.mocked(Transaction.aggregate).mockClear();
+
+      // Second call: cache hit, served from Redis
+      const res2 = await request(app).get(url).expect(200);
+      expect(res2.body).toEqual(res1.body);
+      expect(Transaction.aggregate).not.toHaveBeenCalled();
+    });
+
+    it("falls back to direct MongoDB aggregation gracefully when Redis read fails on finance read", async () => {
+      mockTransactions.push({
+        _id: new Types.ObjectId(),
+        userId: testUserId,
+        type: "income",
+        category: "Salary",
+        amount: 2500,
+        date: new Date("2026-08-03T10:00:00.000Z")
+      });
+
+      vi.mocked(redis.get).mockRejectedValueOnce(new Error("Redis read failure"));
+
+      const res = await request(app)
+        .get("/api/v1/analytics/finance?startDate=2026-08-01&endDate=2026-08-07")
+        .expect(200);
+
+      expect(res.body.summary.totalIncome).toBe(2500);
+      expect(Transaction.aggregate).toHaveBeenCalled();
     });
   });
 
