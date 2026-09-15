@@ -140,7 +140,9 @@ export async function getFinanceAnalytics(
 
   for (const cat of categoryBreakdown) {
     if (cat.type === "expense") {
-      expenseByCategoryMap.set(cat.category.toLowerCase(), cat.totalAmount);
+      const key = cat.category.toLowerCase();
+      const existing = expenseByCategoryMap.get(key) || 0;
+      expenseByCategoryMap.set(key, Math.round((existing + (cat.totalAmount || 0)) * 100) / 100);
     }
   }
 
