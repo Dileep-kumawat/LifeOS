@@ -74,7 +74,7 @@ export function createProviderModel(provider: ProviderName, opts: ProviderCallOp
       const apiKey = opts.apiKeyOverride ?? env.GROQ_API_KEY ?? process.env.GROQ_API_KEY;
       return new ChatGroq({
         apiKey: apiKey ?? "placeholder_groq_key",
-        model: opts.modelName ?? "llama-3.3-70b-versatile",
+        model: opts.modelName ?? process.env.GROQ_MODEL ?? "openai/gpt-oss-120b",
         temperature,
         maxTokens
       });
@@ -88,7 +88,7 @@ export function createProviderModel(provider: ProviderName, opts: ProviderCallOp
         process.env.GOOGLE_API_KEY;
       return new ChatGoogleGenerativeAI({
         apiKey: apiKey ?? "placeholder_gemini_key",
-        model: opts.modelName ?? "gemini-1.5-flash",
+        model: opts.modelName ?? process.env.GEMINI_MODEL ?? "gemini-3.6-flash",
         temperature,
         maxOutputTokens: maxTokens
       });
