@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "../ui/Button";
+import { API_BASE_URL } from "../../lib/apiClient";
 
 interface GoogleSignInButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
@@ -21,7 +22,7 @@ export function GoogleSignInButton({
       onClick(e);
     } else {
       // Default browser redirect to API Google OAuth initiation endpoint
-      window.location.href = "/api/v1/auth/google";
+      window.location.href = API_BASE_URL ? `${API_BASE_URL}/api/v1/auth/google` : "/api/v1/auth/google";
     }
   };
 

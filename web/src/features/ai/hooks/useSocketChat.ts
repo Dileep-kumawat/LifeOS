@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
-import { apiClient } from "../../../lib/apiClient";
+import { apiClient, API_BASE_URL } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../store/authStore";
 import type { ChatMessage, ConversationSummary } from "../types";
 
@@ -44,7 +44,8 @@ export function useSocketChat() {
   useEffect(() => {
     fetchConversations();
 
-    const socketInstance = (io as any)(window.location.origin, {
+    const socketUrl = API_BASE_URL || window.location.origin;
+    const socketInstance = (io as any)(socketUrl, {
       auth: { token: accessToken },
       autoConnect: true
     });

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
-import { apiClient } from "../lib/apiClient";
+import { apiClient, API_BASE_URL } from "../lib/apiClient";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { DeleteAccountDialog } from "../components/auth/DeleteAccountDialog";
@@ -175,7 +175,7 @@ export function SettingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    window.location.href = "/api/v1/auth/google";
+                    window.location.href = API_BASE_URL ? `${API_BASE_URL}/api/v1/auth/google` : "/api/v1/auth/google";
                   }}
                   className="text-xs sm:w-auto"
                 >
