@@ -17,18 +17,30 @@ export function createRedisRateLimiter(options: RateLimiterOptions) {
   const { keyPrefix, windowSeconds, maxAttempts, message, keyGenerator } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
+    // If Redis is not currently ready, fail open immediately so requests are never blocked
+    if (redis.status !== "ready") {
+      logger.warn({ keyPrefix, status: redis.status }, "Redis not ready; bypassing rate limiter");
+      return next();
+    }
+
     try {
       const ip = req.ip || req.socket.remoteAddress || "unknown_ip";
       const customKey = keyGenerator ? keyGenerator(req) : ip;
       const key = `ratelimit:${keyPrefix}:${customKey}`;
 
-      const attempts = await redis.incr(key);
+      // Enforce a strict 1-second timeout so a reconnecting or stalled Redis never hangs HTTP requests
+      const incrPromise = redis.incr(key);
+      const timeoutPromise = new Promise<number>((_, reject) =>
+        setTimeout(() => reject(new Error("Redis rate limiter timed out")), 1000)
+      );
+
+      const attempts = await Promise.race([incrPromise, timeoutPromise]);
       if (attempts === 1) {
-        await redis.expire(key, windowSeconds);
+        await redis.expire(key, windowSeconds).catch(() => {});
       }
 
       if (attempts > maxAttempts) {
-        const ttl = await redis.ttl(key);
+        const ttl = await redis.ttl(key).catch(() => windowSeconds);
         const retryAfter = ttl > 0 ? ttl : windowSeconds;
         res.setHeader("Retry-After", retryAfter);
         return res.status(429).json({
@@ -40,7 +52,7 @@ export function createRedisRateLimiter(options: RateLimiterOptions) {
 
       next();
     } catch (err) {
-      // If Redis is unreachable, log warning and fail open so legitimate traffic is not blocked
+      // If Redis is unreachable, times out, or errors, log warning and fail open so legitimate traffic is not blocked
       logger.warn({ err, keyPrefix }, "Redis rate limiter error; bypassing check");
       next();
     }
