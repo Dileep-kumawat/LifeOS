@@ -21,8 +21,11 @@ export function GoogleSignInButton({
     if (onClick) {
       onClick(e);
     } else {
-      // Default browser redirect to API Google OAuth initiation endpoint
-      window.location.href = API_BASE_URL ? `${API_BASE_URL}/api/v1/auth/google` : "/api/v1/auth/google";
+      // Browser redirect to API Google OAuth initiation endpoint with return_url
+      const targetReturnUrl = `${window.location.origin}/login`;
+      const baseEndpoint = API_BASE_URL ? `${API_BASE_URL}/api/v1/auth/google` : "/api/v1/auth/google";
+      const separator = baseEndpoint.includes("?") ? "&" : "?";
+      window.location.href = `${baseEndpoint}${separator}return_url=${encodeURIComponent(targetReturnUrl)}`;
     }
   };
 
