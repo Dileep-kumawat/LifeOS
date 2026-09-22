@@ -48,10 +48,13 @@ export async function enqueueEmbeddingJob(
       { dedupeKey, delay }
     );
   } catch (err: any) {
-    if (isTest) {
-      return { queued: false, duplicate: false, jobId: dedupeKey };
-    }
-    throw err;
+    // Background embeddings are best-effort: a queue/Redis failure must never
+    // hang or 500 the caller's HTTP request (production "Pending" fix).
+    logger.warn(
+      { sourceType, sourceId: idStr, err: err?.message || err },
+      "embedding enqueue failed; continuing without background embedding (fail-open)"
+    );
+    return { queued: false, duplicate: false, jobId: dedupeKey };
   }
 }
 

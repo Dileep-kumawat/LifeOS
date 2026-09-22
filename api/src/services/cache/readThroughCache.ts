@@ -57,23 +57,41 @@ export async function getOrSetCache<T>(
   ttlSeconds: number = CACHE_TTL_SECONDS,
   fetchFn: () => Promise<T>
 ): Promise<T> {
-  // 1. Attempt reading from Redis cache
-  try {
-    const cached = await redis.get(key);
-    if (cached !== null && cached !== undefined) {
-      cacheMetrics.hits++;
-      logger.info(
-        { cacheKey: key, hit: true, hits: cacheMetrics.hits, misses: cacheMetrics.misses },
-        "Cache hit"
-      );
-      return JSON.parse(cached) as T;
-    }
-  } catch (err: any) {
-    cacheMetrics.errors++;
-    logger.warn(
-      { err: err?.message || err, cacheKey: key },
-      "Redis cache read error; falling back to direct aggregation"
+  const withCacheTimeout = <V>(promise: Promise<V>, ms = 1000): Promise<V> => {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Redis cache op timed out after ${ms}ms`)), ms)
     );
+    return Promise.race([promise, timeout]);
+  };
+
+  // Fast fail-open: with `maxRetriesPerRequest: null`, awaiting Redis while it
+  // is reconnecting hangs forever. Skip the cache entirely when not ready.
+  // NOTE: mocked Redis clients in unit tests have no `status` field — treat
+  // `undefined` as usable so cache hit/miss tests still run.
+  const redisReady = redis.status === undefined || redis.status === "ready";
+  if (!redisReady) {
+    logger.warn({ cacheKey: key, status: redis.status }, "Redis not ready; skipping cache");
+  }
+
+  // 1. Attempt reading from Redis cache
+  if (redisReady) {
+    try {
+      const cached = await withCacheTimeout(redis.get(key));
+      if (cached !== null && cached !== undefined) {
+        cacheMetrics.hits++;
+        logger.info(
+          { cacheKey: key, hit: true, hits: cacheMetrics.hits, misses: cacheMetrics.misses },
+          "Cache hit"
+        );
+        return JSON.parse(cached) as T;
+      }
+    } catch (err: any) {
+      cacheMetrics.errors++;
+      logger.warn(
+        { err: err?.message || err, cacheKey: key },
+        "Redis cache read error; falling back to direct aggregation"
+      );
+    }
   }
 
   // 2. Cache miss or Redis read error: execute direct query
@@ -86,14 +104,16 @@ export async function getOrSetCache<T>(
   const result = await fetchFn();
 
   // 3. Attempt writing back to Redis cache with TTL
-  try {
-    await redis.set(key, JSON.stringify(result), "EX", ttlSeconds);
-  } catch (err: any) {
-    cacheMetrics.errors++;
-    logger.warn(
-      { err: err?.message || err, cacheKey: key },
-      "Redis cache write error; proceeding without caching"
-    );
+  if (redisReady) {
+    try {
+      await withCacheTimeout(redis.set(key, JSON.stringify(result), "EX", ttlSeconds));
+    } catch (err: any) {
+      cacheMetrics.errors++;
+      logger.warn(
+        { err: err?.message || err, cacheKey: key },
+        "Redis cache write error; proceeding without caching"
+      );
+    }
   }
 
   return result;

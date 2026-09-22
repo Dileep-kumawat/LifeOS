@@ -219,14 +219,24 @@ calendarRouter.post(
       });
 
       if (!doc.recurrenceRule && doc.reminderLeadMinutes != null) {
-        const jobId = await scheduleEventReminder(doc);
-        if (jobId) {
-          doc.reminderJobId = jobId;
-          await doc.save();
+        try {
+          const jobId = await scheduleEventReminder(doc);
+          if (jobId) {
+            doc.reminderJobId = jobId;
+            await doc.save();
+          }
+        } catch {
+          // Background reminder scheduling is best-effort; never fail the create.
         }
       }
 
-      await enqueueEmbeddingJob("event", doc._id, userId);
+      // Fire-and-forget: embeddings must never block or fail the HTTP response.
+      // `enqueueEmbeddingJob` itself is fail-open, but isolate it regardless.
+      try {
+        await enqueueEmbeddingJob("event", doc._id, userId);
+      } catch {
+        // Swallowed: event creation already succeeded.
+      }
 
       return res.status(201).json({ event: formatEventDetail(doc) });
     } catch (_err) {
@@ -571,18 +581,31 @@ calendarRouter.patch(
       }
 
       // Cancel previous reminder job if time/lead-time/recurrence changed
+      // (best-effort; never blocks the update on Redis).
       if (doc.reminderJobId) {
-        await cancelEventReminder(doc.reminderJobId);
+        try {
+          await cancelEventReminder(doc.reminderJobId);
+        } catch {
+          // Swallowed.
+        }
         doc.reminderJobId = null;
       }
 
       // Re-schedule reminder job for non-recurring events if lead time is set
       if (!doc.recurrenceRule && doc.reminderLeadMinutes != null) {
-        doc.reminderJobId = await scheduleEventReminder(doc);
+        try {
+          doc.reminderJobId = await scheduleEventReminder(doc);
+        } catch {
+          doc.reminderJobId = null;
+        }
       }
 
       await doc.save();
-      await enqueueEmbeddingJob("event", doc._id, req.user!._id);
+      try {
+        await enqueueEmbeddingJob("event", doc._id, req.user!._id);
+      } catch {
+        // Swallowed: update already succeeded.
+      }
 
       return res.json({ event: formatEventDetail(doc) });
     } catch {

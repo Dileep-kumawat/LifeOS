@@ -55,6 +55,16 @@ export const jobsQueue = new Queue(JOBS_QUEUE_NAME, {
  * Generic job enqueue. The single entry point every feature uses to schedule
  * async work. Delayed jobs (`scheduledFor` a future timestamp) are how
  * reminders ("do this at time X, not now") work.
+ *
+ * Fault Tolerance (production pending-request fix):
+ * BullMQ/ioredis is configured with `maxRetriesPerRequest: null`, so when
+ * Redis is down/reconnecting every command queues offline FOREVER instead of
+ * rejecting. Awaiting such a command inside an Express handler hangs the HTTP
+ * request indefinitely (browser shows "Pending"). To prevent this, this
+ * function fails OPEN: when Redis is not `ready` it returns immediately, and
+ * every Redis round-trip races against a strict timeout and degrades to
+ * `{ queued: false }` instead of hanging or throwing. Callers MUST treat
+ * `queued: false` as "background work skipped, HTTP response must still succeed".
  */
 export async function enqueueJob(
   type: string,
@@ -62,6 +72,25 @@ export async function enqueueJob(
   opts: EnqueueOptions = {}
 ): Promise<EnqueueResult> {
   const { scheduledFor, delay, dedupeKey } = opts;
+
+  // Fast fail-open: never touch Redis when the connection is not usable.
+  // Mirrors the pattern in `middleware/rateLimiter.ts`.
+  // NOTE: `redis.status === undefined` means a mocked client in unit tests —
+  // treat it as usable so mocked `jobsQueue` tests still exercise the queue.
+  if (redis.status !== undefined && redis.status !== "ready") {
+    logger.warn(
+      { type, dedupeKey, status: redis.status },
+      "Redis not ready; skipping background job enqueue (fail-open)"
+    );
+    return { queued: false, duplicate: false, jobId: dedupeKey };
+  }
+
+  const withQueueTimeout = <T>(promise: Promise<T>, ms = 2000, label = "queue op"): Promise<T> => {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`BullMQ ${label} timed out after ${ms}ms`)), ms)
+    );
+    return Promise.race([promise, timeout]);
+  };
 
   let resolvedDelay: number | undefined = delay;
   if (scheduledFor) {
@@ -76,18 +105,35 @@ export async function enqueueJob(
   // `add` too, but a direct existence check lets us log the skip cleanly and
   // return an explicit `duplicate: true` to callers.
   if (dedupeKey) {
-    const existing = await jobsQueue.getJob(dedupeKey);
-    if (existing) {
-      logger.info(
-        { type, jobId: dedupeKey, scheduledFor },
-        "job skipped — a job with the same dedupeKey is already pending"
+    try {
+      const existing = await withQueueTimeout(
+        jobsQueue.getJob(dedupeKey),
+        2000,
+        "getJob"
       );
-      return { queued: false, duplicate: true, jobId: dedupeKey };
+      if (existing) {
+        logger.info(
+          { type, jobId: dedupeKey, scheduledFor },
+          "job skipped — a job with the same dedupeKey is already pending"
+        );
+        return { queued: false, duplicate: true, jobId: dedupeKey };
+      }
+    } catch (err) {
+      // Redis stalled mid-request: degrade to fail-open instead of hanging the caller.
+      logger.warn(
+        { type, dedupeKey, err: err instanceof Error ? err.message : err },
+        "queue dedupe check failed; skipping enqueue (fail-open)"
+      );
+      return { queued: false, duplicate: false, jobId: dedupeKey };
     }
   }
 
   try {
-    const job = await jobsQueue.add(type, { ...payload, type }, addOptions);
+    const job = await withQueueTimeout(
+      jobsQueue.add(type, { ...payload, type }, addOptions),
+      2000,
+      "add"
+    );
     logger.info({ type, jobId: job.id, scheduledFor, delay: resolvedDelay }, "job enqueued");
     return { queued: true, duplicate: false, jobId: job.id ?? undefined };
   } catch (err) {
@@ -100,7 +146,13 @@ export async function enqueueJob(
       );
       return { queued: false, duplicate: true, jobId: dedupeKey };
     }
-    throw err;
+    // Any other queue/Redis failure (timeout, connection drop) must NEVER hang
+    // or 500 the HTTP request — background work is best-effort.
+    logger.warn(
+      { type, dedupeKey, err: err instanceof Error ? err.message : err },
+      "job enqueue failed; continuing without background job (fail-open)"
+    );
+    return { queued: false, duplicate: false, jobId: dedupeKey };
   }
 }
 

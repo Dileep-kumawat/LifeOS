@@ -6,6 +6,9 @@ export const API_BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined
 export const apiClient = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api/v1` : "/api/v1",
   withCredentials: true,
+  // Fail fast in production instead of hanging on "Pending" forever when the
+  // backend stalls (e.g. Redis outage). Callers surface timeout as an error.
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json"
   }

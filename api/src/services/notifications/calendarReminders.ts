@@ -28,13 +28,28 @@ export async function scheduleEventReminder(event: EventDoc): Promise<string | n
 
 /**
  * Cancel a previously scheduled reminder job by ID.
+ * Fail-open with a strict timeout so a stalled Redis never hangs the HTTP request.
  */
 export async function cancelEventReminder(reminderJobId?: string | null): Promise<void> {
   if (!reminderJobId) return;
   try {
-    const job = await jobsQueue.getJob(reminderJobId);
+    // Strict timeout so a stalled Redis (maxRetriesPerRequest: null queues
+    // commands forever) can never hang the HTTP request. No redis-status
+    // import here on purpose: keeps this module mock-friendly in unit tests.
+    const getJobWithTimeout = Promise.race([
+      jobsQueue.getJob(reminderJobId),
+      new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error("cancelEventReminder getJob timed out")), 2000)
+      )
+    ]);
+    const job = await getJobWithTimeout;
     if (job) {
-      await job.remove();
+      await Promise.race([
+        job.remove(),
+        new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error("cancelEventReminder remove timed out")), 2000)
+        )
+      ]);
       logger.info({ jobId: reminderJobId }, "cancelled calendar reminder job");
     }
   } catch (err) {
