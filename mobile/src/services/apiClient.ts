@@ -1,8 +1,9 @@
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
-import Constants from "expo-constants";
 import { useAuthStore } from "../store/authStore";
 import { tokenStorage } from "./tokenStorage";
+import { resolveApiBaseUrl, resolveApiOrigin } from "../config/env";
+export { ENV } from "../config/env";
 import type {
   AuthResponse,
   LoginInput,
@@ -37,27 +38,10 @@ function parseQueryParams(url: string): Record<string, string> {
   return params;
 }
 
-// Determine local dev API base URL depending on environment, USB reverse, or Expo host IP
-export const getDefaultApiUrl = () => {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
+// Determine API base URL depending on active environment (development vs production)
+export const getDefaultApiUrl = () => resolveApiBaseUrl();
 
-  // If running in Expo Go or Dev Client, extract host machine IP
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const host = hostUri.split(":")[0];
-    if (host && host !== "localhost" && host !== "127.0.0.1") {
-      // Over Wi-Fi, connect to host machine IP on port 4000
-      return `http://${host}:4000/api/v1`;
-    }
-  }
-
-  // Physical Android device over USB cable (with adb reverse tcp:4000 tcp:4000) or iOS/Web uses localhost
-  return "http://localhost:4000/api/v1";
-};
-
-export const API_BASE_URL = getDefaultApiUrl();
+export const API_BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -212,7 +196,7 @@ export const authApi = {
     WebBrowser.maybeCompleteAuthSession();
 
     const redirectUrl = Linking.createURL("oauth");
-    const apiOrigin = getDefaultApiUrl().replace(/\/api\/v1\/?$/, "");
+    const apiOrigin = resolveApiOrigin(API_BASE_URL);
     const authUrl = `${apiOrigin}/api/v1/auth/google?return_url=${encodeURIComponent(redirectUrl)}`;
 
     const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);

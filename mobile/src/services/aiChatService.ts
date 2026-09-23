@@ -1,4 +1,5 @@
 import { apiClient, API_BASE_URL } from "./apiClient";
+import { resolveApiOrigin } from "../config/env";
 import type { DailySummary, NotificationPreferences } from "@lifeos/shared";
 
 export interface ConversationSummary {
@@ -50,12 +51,7 @@ export interface FinanceInsightsResponse {
  * e.g. "http://192.168.1.5:4000/api/v1" -> "http://192.168.1.5:4000"
  */
 export function getSocketServerUrl(): string {
-  try {
-    const url = new URL(API_BASE_URL);
-    return `${url.protocol}//${url.host}`;
-  } catch {
-    return API_BASE_URL.replace(/\/api\/v1\/?$/, "");
-  }
+  return resolveApiOrigin(API_BASE_URL);
 }
 
 export const aiChatService = {
