@@ -19,7 +19,7 @@ export const ConversationHistorySidebar: React.FC<ConversationHistorySidebarProp
   onSelectConversation,
   onDeleteConversation,
   isLoading = false,
-  isOpen = true,
+  isOpen = false,
   onToggleSidebar
 }) => {
   if (!isOpen) return null;

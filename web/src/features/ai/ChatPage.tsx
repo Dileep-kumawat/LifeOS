@@ -43,9 +43,7 @@ export const ChatPage: React.FC = () => {
   } = useSocketChat();
 
   const [input, setInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 1024 : false
-  );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Web Voice Input Hook (Client-side Web Speech & Web Audio API)
