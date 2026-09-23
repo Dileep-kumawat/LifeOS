@@ -86,6 +86,28 @@ cd mobile && npx expo start --localhost
 # Press 'a' in terminal to launch on connected Android device
 ```
 
+### Building & Sharing Standalone Android APK (EAS Cloud Build)
+
+To build a standalone `.apk` file to install on physical devices or share directly with others (via WhatsApp, Google Drive, Telegram, etc.):
+
+```bash
+# 1. Navigate to the mobile workspace
+cd mobile
+
+# 2. Log in to your Expo account (free account at https://expo.dev/signup)
+npx eas login
+
+# 3. Build standalone APK using the pre-configured preview profile
+npx eas build -p android --profile preview
+```
+
+> [!TIP]
+> - **Pre-configured Profile**: The `preview` profile in [mobile/eas.json](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile/eas.json) specifies `buildType: "apk"` and `EXPO_PUBLIC_APP_ENV: "production"`. This points the APK to the deployed cloud backend (`https://lifeos-api-hqcz.onrender.com`), so anyone installing the APK can register, log in, and use LifeOS without needing a local development server running.
+> - **Keystore prompt**: When prompted *"Generate a new Android Keystore?"*, select **Yes** (Expo manages the signing key automatically).
+> - **Download & Share**: When the build completes (~5–10 mins), EAS outputs a direct download URL and QR code for the `.apk` file.
+> - **Installing on Android**: Android will prompt to allow installations from unknown sources (*Settings → Allow from this source*).
+
+
 ---
 
 ## 4. Key Scripts Reference
