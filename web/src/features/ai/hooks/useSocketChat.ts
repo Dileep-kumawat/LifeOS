@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
-import { apiClient, API_BASE_URL } from "../../../lib/apiClient";
+import { apiClient, API_BASE_URL, refreshAccessToken } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../store/authStore";
 import type { ChatMessage, ConversationSummary } from "../types";
 
@@ -47,7 +47,11 @@ export function useSocketChat() {
     const socketUrl = API_BASE_URL || window.location.origin;
     const socketInstance = (io as any)(socketUrl, {
       auth: { token: accessToken },
-      autoConnect: true
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000
     });
 
     socketInstance.on("connect", () => {
@@ -58,13 +62,41 @@ export function useSocketChat() {
       setIsConnected(false);
     });
 
+    // Auto-refresh token if connection rejected due to token expiry
+    socketInstance.on("connect_error", async (err: any) => {
+      setIsConnected(false);
+      const errMsg = err?.message || "";
+      if (
+        errMsg.includes("Authentication") ||
+        errMsg.includes("token") ||
+        errMsg.includes("jwt") ||
+        errMsg.includes("Unauthorized")
+      ) {
+        const freshToken = await refreshAccessToken();
+        if (freshToken) {
+          socketInstance.auth = { token: freshToken };
+          socketInstance.connect();
+        }
+      }
+    });
+
     socketInstance.on("conversation_created", (data: { conversationId: string; title: string }) => {
       setActiveConversationId(data.conversationId);
+      activeConvIdRef.current = data.conversationId;
       fetchConversations();
     });
 
     socketInstance.on("user_message_ack", (data: ChatMessage) => {
-      setMessages((prev) => [...prev, { ...data, role: data.role || "user" }]);
+      setMessages((prev) => {
+        // Reconcile optimistic temp message if present, otherwise append
+        const hasTemp = prev.some((m) => m.id.startsWith("temp_"));
+        if (hasTemp) {
+          return prev.map((m) =>
+            m.id.startsWith("temp_") ? { ...data, role: data.role || "user" } : m
+          );
+        }
+        return [...prev, { ...data, role: data.role || "user" }];
+      });
       setIsStreaming(true);
       setBackupModelStatus(null);
     });
@@ -186,6 +218,7 @@ export function useSocketChat() {
   // Handler: Select conversation
   const selectConversation = (id: string | null) => {
     setActiveConversationId(id);
+    activeConvIdRef.current = id;
     if (id) {
       fetchMessages(id);
     } else {
@@ -206,14 +239,38 @@ export function useSocketChat() {
     }
   };
 
-  // Handler: Send prompt
-  const sendMessage = (content: string) => {
-    if (!socket || !content.trim()) return;
-    socket.emit("send_message", {
-      conversationId: activeConversationId || undefined,
-      content: content.trim()
-    });
-  };
+  // Handler: Send prompt with optimistic rendering
+  const sendMessage = useCallback(
+    (content: string) => {
+      const trimmed = content.trim();
+      if (!trimmed) return;
+
+      // 1. Optimistically append user message immediately so user sees instant feedback
+      const tempId = `temp_${Date.now()}`;
+      const optimisticMsg: ChatMessage = {
+        id: tempId,
+        role: "user",
+        content: trimmed,
+        createdAt: new Date().toISOString()
+      };
+
+      setMessages((prev) => [...prev, optimisticMsg]);
+      setIsStreaming(true);
+      setBackupModelStatus(null);
+
+      // 2. Ensure socket is connected and emit message
+      if (socket) {
+        if (!socket.connected) {
+          socket.connect();
+        }
+        socket.emit("send_message", {
+          conversationId: activeConvIdRef.current || undefined,
+          content: trimmed
+        });
+      }
+    },
+    [socket]
+  );
 
   // Handler: Confirm tool call
   const confirmToolCall = (message: ChatMessage) => {

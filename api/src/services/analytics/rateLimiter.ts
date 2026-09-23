@@ -24,14 +24,34 @@ export async function checkExportRateLimit(
   const hourKey = `${now.toISOString().split("T")[0]}-${now.getUTCHours()}`;
   const key = `ratelimit:export:${userId}:${hourKey}`;
 
+  // Fail open immediately if Redis is defined and not ready
+  if (redis.status !== undefined && redis.status !== "ready") {
+    logger.warn({ userId, status: redis.status }, "Redis not ready; bypassing export rate limiter");
+    return {
+      allowed: true,
+      limit,
+      remaining: limit,
+      retryAfterSeconds: 0
+    };
+  }
+
   try {
-    const currentCount = await redis.incr(key);
+    const incrPromise = redis.incr(key);
+    const timeoutPromise = new Promise<number>((_, reject) =>
+      setTimeout(() => reject(new Error("Redis export rate limiter timed out")), 1000)
+    );
+
+    const currentCount = await Promise.race([incrPromise, timeoutPromise]);
 
     if (currentCount === 1) {
-      await redis.expire(key, EXPORT_WINDOW_SECONDS);
+      await redis.expire(key, EXPORT_WINDOW_SECONDS).catch(() => {});
     }
 
-    const ttl = await redis.ttl(key);
+    const ttl = await Promise.race([
+      redis.ttl(key),
+      new Promise<number>((resolve) => setTimeout(() => resolve(EXPORT_WINDOW_SECONDS), 500))
+    ]).catch(() => EXPORT_WINDOW_SECONDS);
+
     const retryAfterSeconds = ttl > 0 ? ttl : EXPORT_WINDOW_SECONDS;
     const remaining = Math.max(0, limit - currentCount);
     const allowed = currentCount <= limit;

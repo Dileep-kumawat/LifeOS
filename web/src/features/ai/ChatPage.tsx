@@ -26,6 +26,7 @@ import { ToolConfirmationModal } from "./components/ToolConfirmationModal";
 export const ChatPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const {
+    isConnected,
     conversations,
     activeConversationId,
     messages,
@@ -164,8 +165,13 @@ export const ChatPage: React.FC = () => {
               <SquarePen className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
-            <span className="hidden sm:inline-flex text-[11px] font-medium text-[#676767] bg-[#f4f4f4] px-2.5 py-1 rounded-full border border-[#e5e5e5]">
-              RAG Context + Tool Calling Active
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium text-[#676767] bg-[#f4f4f4] px-2.5 py-1 rounded-full border border-[#e5e5e5]">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isConnected ? "bg-emerald-500" : "bg-amber-400 animate-pulse"
+                }`}
+              />
+              {isConnected ? "RAG Context + Tool Calling Active" : "Connecting..."}
             </span>
           </div>
         </header>

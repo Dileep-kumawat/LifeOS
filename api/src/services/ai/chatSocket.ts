@@ -219,15 +219,19 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
             );
           }
 
+          const controller = new AbortController();
+          const streamTimeout = setTimeout(() => controller.abort("Stream initial token timeout"), 15000);
+
           try {
             const model = createProviderModel(provider, { temperature: 0.7 });
             const modelWithTools = model.bindTools(ALL_AI_TOOLS);
 
-            const stream = await modelWithTools.stream(langChainMessages);
+            const stream = await modelWithTools.stream(langChainMessages, { signal: controller.signal });
             let aggregatedResponse: any = null;
             let streamedTextContent = "";
 
             for await (const chunk of stream) {
+              clearTimeout(streamTimeout);
               aggregatedResponse = aggregatedResponse ? aggregatedResponse.concat(chunk) : chunk;
 
               const contentChunk =
@@ -247,6 +251,7 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
                 });
               }
             }
+            clearTimeout(streamTimeout);
 
             // Check if model returned tool calls
             const toolCalls = aggregatedResponse?.tool_calls;

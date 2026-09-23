@@ -61,12 +61,29 @@ export async function checkAiRateLimit(
   const limit = overrideLimit ?? tierConfig.requestsPerDay;
   const resetAt = getResetDateUTC();
 
+  // Fail open immediately if Redis is defined and not ready, so AI chat requests never stall
+  if (redis.status !== undefined && redis.status !== "ready") {
+    logger.warn({ userId, status: redis.status }, "Redis not ready; bypassing AI rate limiter");
+    return {
+      allowed: true,
+      limit,
+      remaining: limit,
+      resetAt,
+      currentCount: 0
+    };
+  }
+
   try {
-    const currentCount = await redis.incr(key);
+    const incrPromise = redis.incr(key);
+    const timeoutPromise = new Promise<number>((_, reject) =>
+      setTimeout(() => reject(new Error("Redis AI rate limiter timed out")), 1000)
+    );
+
+    const currentCount = await Promise.race([incrPromise, timeoutPromise]);
 
     if (currentCount === 1) {
       const ttl = getSecondsUntilMidnightUTC();
-      await redis.expire(key, ttl);
+      await redis.expire(key, ttl).catch(() => {});
     }
 
     const remaining = Math.max(0, limit - currentCount);
