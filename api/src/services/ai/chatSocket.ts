@@ -152,6 +152,7 @@ export function setupChatSocket(io: Server) {
         socket.emit("user_message_ack", {
           conversationId,
           messageId: userMsg._id.toString(),
+          id: userMsg._id.toString(),
           role: userMsg.role,
           content: userMsg.content,
           createdAt: userMsg.createdAt.toISOString()
@@ -279,7 +280,8 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
                   });
                   socket.emit("chat_stream_end", {
                     conversationId,
-                    messageId: assistantMsg._id.toString()
+                    messageId: assistantMsg._id.toString(),
+                    id: assistantMsg._id.toString()
                   });
 
                   served = true;
@@ -341,7 +343,8 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
 
             socket.emit("chat_stream_end", {
               conversationId,
-              messageId: assistantMsg._id.toString()
+              messageId: assistantMsg._id.toString(),
+              id: assistantMsg._id.toString()
             });
 
             served = true;
@@ -423,7 +426,11 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
           });
 
           socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
-          socket.emit("chat_stream_end", { conversationId, messageId: followUpMsg._id.toString() });
+          socket.emit("chat_stream_end", {
+            conversationId,
+            messageId: followUpMsg._id.toString(),
+            id: followUpMsg._id.toString()
+          });
         } catch (err: any) {
           logger.error({ err }, "Error executing confirmed tool call");
           socket.emit("tool_call_failed", {
@@ -465,7 +472,11 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
           });
 
           socket.emit("chat_stream_chunk", { conversationId, chunk: textContent });
-          socket.emit("chat_stream_end", { conversationId, messageId: cancelMsg._id.toString() });
+          socket.emit("chat_stream_end", {
+            conversationId,
+            messageId: cancelMsg._id.toString(),
+            id: cancelMsg._id.toString()
+          });
         } catch (err: any) {
           logger.error({ err }, "Error handling cancel_tool_call WS event");
         }

@@ -86,20 +86,41 @@ export function useSocketChat() {
       fetchConversations();
     });
 
-    socketInstance.on("user_message_ack", (data: ChatMessage) => {
-      setMessages((prev) => {
-        // Reconcile optimistic temp message if present, otherwise append
-        const hasTemp = prev.some((m) => m.id.startsWith("temp_"));
-        if (hasTemp) {
-          return prev.map((m) =>
-            m.id.startsWith("temp_") ? { ...data, role: data.role || "user" } : m
+    socketInstance.on(
+      "user_message_ack",
+      (data: {
+        id?: string;
+        messageId?: string;
+        _id?: string;
+        role?: "user" | "assistant" | "tool" | "system";
+        content: string;
+        toolCallData?: any;
+        createdAt?: string;
+      }) => {
+        setMessages((prev) => {
+          const resolvedId = data?.id || data?.messageId || data?._id || `msg_${Date.now()}`;
+          const ackedMsg: ChatMessage = {
+            id: resolvedId,
+            role: data?.role || "user",
+            content: data?.content || "",
+            toolCallData: data?.toolCallData ?? null,
+            createdAt: data?.createdAt || new Date().toISOString()
+          };
+
+          const hasTemp = prev.some(
+            (m) => typeof m?.id === "string" && m.id.startsWith("temp_")
           );
-        }
-        return [...prev, { ...data, role: data.role || "user" }];
-      });
-      setIsStreaming(true);
-      setBackupModelStatus(null);
-    });
+          if (hasTemp) {
+            return prev.map((m) =>
+              typeof m?.id === "string" && m.id.startsWith("temp_") ? ackedMsg : m
+            );
+          }
+          return [...prev, ackedMsg];
+        });
+        setIsStreaming(true);
+        setBackupModelStatus(null);
+      }
+    );
 
     socketInstance.on("retrying_with_backup_model", (data: { message: string }) => {
       setBackupModelStatus(data.message);
@@ -125,11 +146,12 @@ export function useSocketChat() {
       });
     });
 
-    socketInstance.on("chat_stream_end", (data: { messageId: string }) => {
+    socketInstance.on("chat_stream_end", (data: { messageId?: string; id?: string }) => {
       setIsStreaming(false);
       setBackupModelStatus(null);
+      const finalId = data?.id || data?.messageId || `msg_${Date.now()}`;
       setMessages((prev) =>
-        prev.map((m) => (m.isStreaming ? { ...m, id: data.messageId, isStreaming: false } : m))
+        prev.map((m) => (m.isStreaming ? { ...m, id: finalId, isStreaming: false } : m))
       );
       fetchConversations();
     });
