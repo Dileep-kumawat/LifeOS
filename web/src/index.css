@@ -12,9 +12,16 @@ body,
 }
 
 /* ─── TipTap / ProseMirror note editor ───────────────────────────────────── */
+.notes-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 .notes-editor .tiptap {
   outline: 0;
-  min-height: 200px;
+  min-height: 450px;
+  flex: 1;
   color: #31302e;
 }
 

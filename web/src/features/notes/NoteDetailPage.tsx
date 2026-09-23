@@ -141,17 +141,17 @@ export function NoteDetailPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+    <div className="w-full flex-1 flex flex-col gap-4 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <Link
         to="/notes"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#615d59] hover:text-[#0075de]"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#615d59] hover:text-[#0075de] transition-colors w-fit"
       >
         <ArrowLeft className="size-4" data-icon="inline-start" />
         Back to Notes
       </Link>
 
       {/* Title bar */}
-      <div className="flex flex-col gap-3 rounded-xl border border-[#e6e6e6] bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 rounded-xl border border-[#e6e6e6] bg-white p-4 sm:p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <input
             value={title}
@@ -162,10 +162,10 @@ export function NoteDetailPage() {
             placeholder="Untitled"
             maxLength={300}
             aria-label="Note title"
-            className="min-w-0 flex-1 bg-transparent text-xl font-bold text-[#000000] placeholder:text-[#a39e98] focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-xl sm:text-2xl font-bold text-[#000000] placeholder:text-[#a39e98] focus:outline-none"
           />
           <span
-            className={`inline-flex shrink-0 items-center gap-1 text-[11px] font-medium ${saveMeta.className}`}
+            className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-[#f6f5f4] border border-[#e6e6e6] ${saveMeta.className}`}
           >
             <SaveIcon
               className={`size-3.5 ${saveState === "saving" ? "animate-spin" : ""}`}
@@ -179,7 +179,7 @@ export function NoteDetailPage() {
         </div>
 
         <div className="flex flex-col gap-4 border-t border-[#e6e6e6] pt-3 sm:flex-row sm:items-start">
-          <div className="w-full sm:max-w-[14rem]">
+          <div className="w-full sm:w-64 shrink-0">
             <FolderPicker
               folders={folders}
               value={folderId}
@@ -208,16 +208,14 @@ export function NoteDetailPage() {
         </div>
       </div>
 
-      {content && (
-        <NoteEditor
-          content={content}
-          onChange={(doc) => {
-            setContent(doc);
-            scheduleSave({ content: doc });
-          }}
-          placeholder="Start writing…"
-        />
-      )}
+      <NoteEditor
+        content={content ?? undefined}
+        onChange={(doc) => {
+          setContent(doc);
+          scheduleSave({ content: doc });
+        }}
+        placeholder="Start writing…"
+      />
     </div>
   );
 }

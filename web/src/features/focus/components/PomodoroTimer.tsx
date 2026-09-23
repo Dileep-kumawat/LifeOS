@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { FocusPhase, FocusLinkedType, FocusSession } from "@lifeos/shared";
 import { SessionLinkPicker } from "./SessionLinkPicker";
+import { cn } from "../../../lib/utils";
 
 export interface PomodoroTimerProps {
   /** Current active/paused focus session or null if idle */
@@ -213,7 +214,10 @@ export function PomodoroTimer({
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#e6e6e6] shadow-sm p-6 sm:p-8 max-w-xl mx-auto flex flex-col items-center relative overflow-hidden transition-all duration-200 ${className}`}
+      className={cn(
+        "w-full bg-white rounded-2xl border border-[#e6e6e6] shadow-sm p-6 sm:p-8 flex flex-col items-center relative overflow-hidden transition-all duration-200",
+        className
+      )}
       data-testid="pomodoro-timer"
     >
       {/* Background Accent Subtle Glow */}

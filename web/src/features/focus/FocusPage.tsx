@@ -238,7 +238,7 @@ export function FocusPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f4] pb-16 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#f6f5f4] pb-16 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -317,9 +317,9 @@ export function FocusPage() {
 
       {/* ─── TAB 1: TIMER VIEW ────────────────────────────────────────────── */}
       {activeTab === "timer" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
           {/* Main Column: Pomodoro Timer Component */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
+          <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-6">
             <PomodoroTimer
               session={activeSession}
               linkedType={initialLinkedType}
@@ -335,7 +335,7 @@ export function FocusPage() {
           </div>
 
           {/* Right Column: Quick Stats & Recent Focus Sessions */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
+          <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-6">
             {/* Daily Quick Stats Card */}
             <div className="bg-white rounded-xl border border-[#e6e6e6] shadow-2xs p-5">
               <h2 className="text-xs font-semibold text-[#000000] uppercase tracking-wider mb-4 flex items-center gap-2">

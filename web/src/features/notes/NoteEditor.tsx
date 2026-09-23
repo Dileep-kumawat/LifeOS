@@ -134,9 +134,9 @@ export function NoteEditor({
   }
 
   return (
-    <div className={cn("notes-editor flex flex-col gap-2", className)}>
+    <div className={cn("notes-editor flex-1 flex flex-col gap-3", className)}>
       <div
-        className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#e6e6e6] bg-white p-1.5"
+        className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#e6e6e6] bg-white p-1.5 shadow-2xs"
         role="toolbar"
         aria-label="Formatting toolbar"
       >
@@ -252,7 +252,10 @@ export function NoteEditor({
         </button>
       </div>
 
-      <EditorContent editor={editor} className="rounded-lg border border-[#e6e6e6] bg-white p-4" />
+      <EditorContent
+        editor={editor}
+        className="flex-1 flex flex-col rounded-xl border border-[#e6e6e6] bg-white p-5 sm:p-6 shadow-sm min-h-[480px]"
+      />
     </div>
   );
 }
