@@ -59,6 +59,9 @@ const SettingsPage = lazy(() =>
 const SupportHelpPage = lazy(() =>
   import("./routes/SupportHelpPage").then((m) => ({ default: m.SupportHelpPage }))
 );
+const DownloadAppPage = lazy(() =>
+  import("./routes/DownloadAppPage").then((m) => ({ default: m.DownloadAppPage }))
+);
 
 
 const router = createBrowserRouter([
@@ -232,6 +235,14 @@ const router = createBrowserRouter([
               <SupportHelpPage />
             </Suspense>
           </ProtectedRoute>
+        )
+      },
+      {
+        path: "download",
+        element: (
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <DownloadAppPage />
+          </Suspense>
         )
       }
     ]
