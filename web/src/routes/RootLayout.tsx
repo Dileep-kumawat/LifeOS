@@ -199,7 +199,7 @@ export function RootLayout() {
                   <Settings className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                   <span>Settings</span>
                 </NavLink>
-                <NavLink to="/chat" className={getDrawerNavLinkClass}>
+                <NavLink to="/support" className={getDrawerNavLinkClass}>
                   <HelpCircle className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                   <span>Support & Help</span>
                 </NavLink>
@@ -295,14 +295,26 @@ export function RootLayout() {
           <div className="border-t border-[#c1c6d5]/60 pt-4 flex flex-col gap-1">
             <NavLink
               to="/settings"
-              className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
+              className={({ isActive }) =>
+                `group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  isActive
+                    ? "bg-[#e9e8e7] text-[#005db2] font-semibold"
+                    : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98]"
+                }`
+              }
             >
               <Settings className="size-4 transition-transform duration-150 group-hover:rotate-45" />
               <span>Settings</span>
             </NavLink>
             <NavLink
-              to="/chat"
-              className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
+              to="/support"
+              className={({ isActive }) =>
+                `group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  isActive
+                    ? "bg-[#e9e8e7] text-[#005db2] font-semibold"
+                    : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98]"
+                }`
+              }
             >
               <HelpCircle className="size-4 transition-transform duration-150 group-hover:scale-110" />
               <span>Support & Help</span>

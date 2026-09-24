@@ -56,6 +56,10 @@ const ChatPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("./routes/SettingsPage").then((m) => ({ default: m.SettingsPage }))
 );
+const SupportHelpPage = lazy(() =>
+  import("./routes/SupportHelpPage").then((m) => ({ default: m.SupportHelpPage }))
+);
+
 
 const router = createBrowserRouter([
   {
@@ -206,6 +210,26 @@ const router = createBrowserRouter([
           <ProtectedRoute>
             <Suspense fallback={<RouteLoadingFallback />}>
               <SettingsPage />
+            </Suspense>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "support",
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <SupportHelpPage />
+            </Suspense>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "help",
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <SupportHelpPage />
             </Suspense>
           </ProtectedRoute>
         )
