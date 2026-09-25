@@ -158,8 +158,9 @@ LifeOS/
 
 ## 5. Mobile & Build Highlights
 
-- **EAS Build Pipeline**:
+- **EAS Build & Over-The-Air (OTA) Updates Pipeline**:
   - Root `package.json` defines `postinstall` and `eas-build-post-install` to build `@lifeos/shared` before compiling mobile app.
+  - `expo-updates` installed and configured in `mobile/app.json` (`updates.url: "https://u.expo.dev/11500448-30a4-460b-9409-c0e945fadeac"` with `runtimeVersion: { policy: "appVersion" }`). Enables instant OTA JavaScript updates (`npx eas update --auto`) to delivered APKs without user re-installations.
 - **Offline-First & Conflict Handling**:
   - SQLite/WatermelonDB local cache with background sync.
   - `ConflictResolutionScreen.tsx` on mobile to resolve client/server state conflicts.
@@ -192,8 +193,9 @@ npm run check:openapi   # OpenAPI coverage validation (127 routes documented)
 npm run build-storybook --workspace=web # Build static Storybook UI documentation
 npm run test:ws-smoke --workspace=api   # WebSocket smoke test
 
-# Mobile EAS Build
-cd mobile && npx eas-cli build -p android --profile preview
+# Mobile EAS Build & OTA Updates
+cd mobile && npx eas-cli build -p android --profile preview # Compile standalone Android APK
+cd mobile && npx eas update --auto                         # Publish over-the-air update (OTA)
 
 # Database Backup, Recovery & Index Maintenance
 npx tsx scripts/backup/backup.ts                               # Create full encrypted/compressed snapshot with manifest
@@ -288,6 +290,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [Mobile Over-The-Air (OTA) Updates & expo-updates Configuration]: Configured mobile application for instant OTA JavaScript updates powered by `expo-updates` and EAS Update; configured `runtimeVersion` policy (`"appVersion"`) and `updates.url` in `mobile/app.json`; added `npx eas update --auto` continuous delivery workflow to root `README.md`; documented in `memory.md`; enables direct continuous delivery of bug fixes and UI improvements to installed APKs without user re-installations.
 - [Mobile Support & Help Knowledge Center Screen & Navigation Parity]: Implemented complete Support & Help screen (`mobile/src/screens/main/SupportHelpScreen.tsx`) matching web `SupportHelpPage` content and Notion design aesthetics; features 6-topic filter tabs ("All Topics", "For Whom", "What Purpose", "How to Use", "Terms & Guidelines", "FAQ"), real-time search input with query filtering across questions, answers, and categories, 4 audience persona cards (High Performers, Students, Builders, Mindful Achievers), 10-app fragmentation trap vs. LifeOS solution comparison with 4 architectural pillars (Cohesion, Local-First, Sovereignty, AI), 15-minute daily operating rhythm guide (Morning, Deep Work, Evening), 9 interactive module jump cards with direct tab navigation, 4 platform terms and legal guidelines (acceptable use, GDPR/DPDP data sovereignty, AI fallback disclosure, liability limitations), interactive FAQ accordion with expand/collapse animations, rich dark gradient direct AI Chat CTA banner, and universal `PrivacyPolicyModal` (`mobile/src/components/privacy/PrivacyPolicyModal.tsx`); registered `SupportHelp` route in `RootNavigator.tsx` (`AppStack`) and integrated prominent "Support & Knowledge Center" navigation card in `SettingsScreen.tsx`; verified 0 TypeScript compilation errors across all 4 monorepo workspaces and 20/20 mobile test suites passing (121 tests).
 - [Mobile Dashboard Dual-Tier Live Server & Offline SQLite Integration]: Architected dual-tier data retrieval in `mobile/src/screens/main/DashboardScreen.tsx` combining instant local SQLite rendering with direct live server HTTP fetching (`GET /calendar/events`, `GET /habits`, `GET /habits/:id/check-ins`, `GET /finance/summary`, `GET /finance/budgets`, and `GET /notes`); when online, fetches actual live records directly from MongoDB via `apiClient`, populates state with live data, posts habit check-ins to server `/habits/:id/check-in`, and triggers background sync to mirror SQLite; when offline or disconnected, transparently falls back to local SQLite repositories (`eventRepo`, `habitRepo`, `financeRepo`, `noteRepo`) without user disruption; eliminated all hardcoded demo/mock fallbacks and wired `useFocusEffect` + pull-to-refresh (`onRefresh`); verified typecheck clean across all 4 monorepo workspaces and 19/19 mobile test suites passing (117 tests).
 - [Mobile App Download Center & Route (`/download`)]: Implemented dedicated `/download` page (`web/src/routes/DownloadAppPage.tsx`) for direct standalone Android APK distribution; features direct APK download button targeting the latest verified GitHub release (`https://github.com/Dileep-kumawat/LifeOS/releases/latest/download/lifeos.apk`), dynamic high-resolution QR code generator for desktop-to-mobile scanning, 3-step visual APK installation guide (handling Android's "Allow from this source" security permission), client-side platform auto-detection (Android vs iOS PWA guidance), copy-to-clipboard download link with toast notifications, and interactive FAQ accordion; wired navigation badges to `/download` in `RootLayout.tsx` (mobile top header, mobile drawer, and desktop sidebar); verified typecheck clean and Vite production build succeeded.

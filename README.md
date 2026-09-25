@@ -107,6 +107,24 @@ npx eas build -p android --profile preview
 > - **Download & Share**: When the build completes (~5–10 mins), EAS outputs a direct download URL and QR code for the `.apk` file.
 > - **Installing on Android**: Android will prompt to allow installations from unknown sources (*Settings → Allow from this source*).
 
+### Publishing Over-The-Air (OTA) Updates (Without Rebuilding APKs)
+
+LifeOS Mobile is configured with `expo-updates`. Once users have installed an APK built with `expo-updates`, you can deliver UI changes, bug fixes, and feature additions instantly over-the-air:
+
+```bash
+# 1. Navigate to the mobile workspace
+cd mobile
+
+# 2. Publish update over-the-air
+npx eas update --auto
+```
+
+> [!TIP]
+> - **Zero-reinstall updates**: EAS bundles your updated React Native code and uploads it to Expo's update servers. The next time users open the LifeOS app on their phones, the new version loads automatically in the background without needing to download a new `.apk`.
+> - **When to use `eas update`**: Any JavaScript, TypeScript, React components, Zustand state, styling, or bug fixes.
+> - **When a new `eas build` is required**: Only when adding or removing native libraries (packages requiring custom Android code) or upgrading the Expo SDK.
+
+
 
 ---
 
