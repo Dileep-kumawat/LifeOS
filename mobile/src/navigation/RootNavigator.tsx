@@ -35,6 +35,7 @@ import { AnalyticsScreen } from "../screens/main/AnalyticsScreen";
 import { ChatScreen } from "../screens/main/ChatScreen";
 import { SettingsScreen } from "../screens/main/SettingsScreen";
 import { ConflictResolutionScreen } from "../screens/main/ConflictResolutionScreen";
+import { SupportHelpScreen } from "../screens/main/SupportHelpScreen";
 
 import { SyncStatusIndicator } from "../components/ui/SyncStatusIndicator";
 import { ConflictNoticeBanner } from "../components/ui/ConflictNoticeBanner";
@@ -192,6 +193,24 @@ function AuthenticatedNavigator() {
         options={{
           presentation: "modal",
           headerShown: false
+        }}
+      />
+      <AppStack.Screen
+        name="SupportHelp"
+        component={SupportHelpScreen}
+        options={{
+          headerShown: true,
+          title: "Support & Help",
+          headerStyle: {
+            backgroundColor: colors.surface
+          },
+          headerTitleStyle: {
+            color: colors.ink,
+            fontWeight: "700",
+            fontSize: 18
+          },
+          headerTintColor: colors.primary,
+          headerShadowVisible: false
         }}
       />
     </AppStack.Navigator>

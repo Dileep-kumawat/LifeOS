@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Alert, TextInput, Switch } from "react-native";
-import { RefreshCw, LogOut, Sparkles, Check, Bell, Shield, Download, Trash2 } from "lucide-react-native";
+import { RefreshCw, LogOut, Sparkles, Check, Bell, Shield, Download, Trash2, HelpCircle } from "lucide-react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useSyncStore } from "../../store/syncStore";
 import { authApi } from "../../services/apiClient";
@@ -14,6 +14,7 @@ import { ThemedText } from "../../components/ui/ThemedText";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { NotificationModal } from "../../components/notifications/NotificationModal";
+import { PrivacyPolicyModal } from "../../components/privacy/PrivacyPolicyModal";
 import { colors, radius, spacing } from "../../theme";
 
 export function SettingsScreen({ navigation }: any) {
@@ -28,6 +29,7 @@ export function SettingsScreen({ navigation }: any) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
 
   // Daily Summary & Periodic Recommendations State
   const [deliveryTime, setDeliveryTime] = useState("07:00");
@@ -169,10 +171,7 @@ export function SettingsScreen({ navigation }: any) {
   };
 
   const handleShowPrivacyPolicy = () => {
-    Alert.alert(
-      "Privacy Policy & AI Disclosure",
-      "LifeOS complies with GDPR and India DPDP 2023.\n\nAI Providers & Fallback: Mistral AI → Groq → Google Gemini.\n\nNotice: Free-tier AI keys may permit provider data retention/training under their terms. Commercial enterprise keys with Zero Data Retention (ZDR) should be configured for production.\n\n30-Day Purge: Accounts requested for deletion enter a soft-deleted grace period, followed by complete cascade purge after 30 days."
-    );
+    setPrivacyModalVisible(true);
   };
 
   const handleDeleteAccount = () => {
@@ -580,6 +579,29 @@ export function SettingsScreen({ navigation }: any) {
         </View>
       </Card>
 
+      {/* Support & Knowledge Center Card */}
+      <Card style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs }}>
+            <HelpCircle size={18} color={colors.primary} />
+            <ThemedText variant="title" style={styles.sectionTitle}>
+              Support & Knowledge Center
+            </ThemedText>
+          </View>
+        </View>
+        <ThemedText variant="caption" color={colors.inkMuted} style={{ marginBottom: spacing.sm }}>
+          Complete operating guide, module workflows, FAQs, guidelines, and terms of service.
+        </ThemedText>
+        <Button
+          title="Open Support & Help Guide"
+          variant="primary"
+          size="sm"
+          fullWidth
+          onPress={() => navigation?.navigate("SupportHelp")}
+          icon={<HelpCircle size={14} color="#ffffff" />}
+        />
+      </Card>
+
       {/* Privacy & Data Protection Card */}
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
@@ -656,6 +678,12 @@ export function SettingsScreen({ navigation }: any) {
         visible={notificationModalVisible}
         onClose={() => setNotificationModalVisible(false)}
         onNavigate={handleNotificationNavigation}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        visible={privacyModalVisible}
+        onClose={() => setPrivacyModalVisible(false)}
       />
     </ScreenContainer>
   );
