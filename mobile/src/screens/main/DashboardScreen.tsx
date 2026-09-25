@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { View, StyleSheet, TouchableOpacity, RefreshControl, StatusBar } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Sparkles,
   FileText,
@@ -21,9 +22,11 @@ import { Card } from "../../components/ui/Card";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { DailySummaryCard } from "../../components/ai/DailySummaryCard";
 
+import { apiClient } from "../../services/apiClient";
 import { aiChatService, type DailySummaryResponse } from "../../services/aiChatService";
 import { notificationApiService } from "../../services/notificationApiService";
 import { NotificationModal } from "../../components/notifications/NotificationModal";
+import { syncEngine } from "../../services/syncEngine";
 import { eventRepo } from "../../db/repositories/eventRepo";
 import { habitRepo } from "../../db/repositories/habitRepo";
 import { financeRepo, type FinanceSummaryData } from "../../db/repositories/financeRepo";
@@ -67,7 +70,7 @@ export function DashboardScreen({ navigation }: any) {
     categoryBreakdown: [],
     monthlyTrends: []
   });
-  const [monthlyBudgetLimit, setMonthlyBudgetLimit] = useState<number>(2000);
+  const [monthlyBudgetLimit, setMonthlyBudgetLimit] = useState<number>(0);
   const [pinnedNote, setPinnedNote] = useState<LocalNote | null>(null);
 
   // Daily Summary State
@@ -85,11 +88,13 @@ export function DashboardScreen({ navigation }: any) {
   const todayStr = todayDate.toISOString().split("T")[0];
 
   // Format past 4 dates for streak circles [today-3, today-2, today-1, today]
-  const recent4Days = Array.from({ length: 4 }).map((_, i) => {
-    const d = new Date(todayDate);
-    d.setDate(d.getDate() - (3 - i));
-    return d.toISOString().split("T")[0];
-  });
+  const recent4Days = useMemo(() => {
+    return Array.from({ length: 4 }).map((_, i) => {
+      const d = new Date(todayDate);
+      d.setDate(d.getDate() - (3 - i));
+      return d.toISOString().split("T")[0];
+    });
+  }, [todayStr]);
 
   const loadDailySummary = useCallback(async () => {
     if (!isOnline) return;
@@ -121,15 +126,22 @@ export function DashboardScreen({ navigation }: any) {
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
 
+    // 1. FIRST: Instant load from local SQLite (Offline-First / Zero Latency)
     try {
-      // 1. Events for today
       const allEvents = await eventRepo.listEvents(user.id);
       const filteredEvents = allEvents
-        .filter((e) => e.startTime.startsWith(todayStr))
+        .filter((e) => {
+          if (!e.startTime) return false;
+          const eventDate = new Date(e.startTime);
+          const isSameDay =
+            eventDate.getFullYear() === todayDate.getFullYear() &&
+            eventDate.getMonth() === todayDate.getMonth() &&
+            eventDate.getDate() === todayDate.getDate();
+          return isSameDay || e.startTime.startsWith(todayStr);
+        })
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
       setTodayEvents(filteredEvents);
 
-      // 2. Habits & Streaks
       const allHabits = await habitRepo.listHabits(user.id);
       setHabits(allHabits);
 
@@ -146,23 +158,222 @@ export function DashboardScreen({ navigation }: any) {
       const todayCheckIns = userCheckIns.filter((ci) => ci.date === todayStr);
       setTodayCheckInsCount(todayCheckIns.length);
 
-      // 3. Finance
       const summary = await financeRepo.getFinanceSummary(user.id);
       setFinanceSummary(summary);
 
       const budgets = await financeRepo.listBudgets(user.id);
       const totalBudget = budgets.reduce((acc, b) => acc + (b.limit || 0), 0);
-      if (totalBudget > 0) {
-        setMonthlyBudgetLimit(totalBudget);
-      }
+      setMonthlyBudgetLimit(totalBudget);
 
-      // 5. Notes (Pinned or Latest)
       const allNotes = await noteRepo.listNotes(user.id);
       if (allNotes.length > 0) {
-        setPinnedNote(allNotes[0]);
+        const pinned = allNotes.find((n) => {
+          try {
+            const tags = JSON.parse(n.tags || "[]");
+            return Array.isArray(tags) && tags.some((t: string) => t.toLowerCase() === "pinned");
+          } catch {
+            return false;
+          }
+        });
+        setPinnedNote(pinned || allNotes[0]);
+      } else {
+        setPinnedNote(null);
       }
-    } catch {}
-  }, [user?.id, todayStr]);
+    } catch (localErr) {
+      console.warn("[Dashboard] Error reading local SQLite:", localErr);
+    }
+
+    // 2. SECOND: When online, fetch LIVE ACTUAL DATA directly from the server database
+    if (isOnline) {
+      try {
+        const startOfDay = new Date(todayDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(todayDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const [eventsRes, habitsRes, financeRes, budgetsRes, notesRes] = await Promise.allSettled([
+          apiClient.get<{ events: any[] }>("/calendar/events", {
+            params: {
+              rangeStart: startOfDay.toISOString(),
+              rangeEnd: endOfDay.toISOString(),
+              view: "day"
+            }
+          }),
+          apiClient.get<any[]>("/habits"),
+          apiClient.get<{
+            monthlyTotals?: { income?: number; expense?: number; net?: number };
+            categoryBreakdown?: Array<{ category: string; amount: number }>;
+          }>("/finance/summary"),
+          apiClient.get<{ budgets: any[] }>("/finance/budgets"),
+          apiClient.get<{ notes: any[] }>("/notes", { params: { limit: 10 } })
+        ]);
+
+        // A. Calendar Events from Server
+        if (eventsRes.status === "fulfilled" && Array.isArray(eventsRes.value.data?.events)) {
+          const rawServerEvents = eventsRes.value.data.events;
+          const mappedEvents: LocalEvent[] = rawServerEvents.map((e: any) => ({
+            id: e.eventId || e.occurrenceId || e.id || e._id,
+            userId: user.id,
+            title: e.title || "Untitled Event",
+            description: e.description || "",
+            location: e.location || "",
+            startTime: e.startTime,
+            endTime: e.endTime,
+            timezone: e.timezone || "UTC",
+            isAllDay: e.isAllDay ? 1 : 0,
+            recurrenceRule: e.recurrenceRule || null,
+            recurrenceEndDate: e.recurrenceEndDate || null,
+            exceptions: "[]",
+            reminderLeadMinutes: e.reminderLeadMinutes ?? null,
+            reminderJobId: null,
+            isOverride: e.isOverridden ? 1 : 0,
+            parentEventId: null,
+            syncStatus: "synced",
+            lastModifiedAt: Date.now(),
+            createdAt: e.createdAt || new Date().toISOString(),
+            updatedAt: e.updatedAt || new Date().toISOString()
+          }));
+          setTodayEvents(mappedEvents);
+        }
+
+        // B. Habits from Server
+        if (habitsRes.status === "fulfilled" && Array.isArray(habitsRes.value.data)) {
+          const rawHabits = habitsRes.value.data;
+          const mappedHabits: LocalHabit[] = rawHabits.map((h: any) => ({
+            id: h._id || h.id,
+            userId: user.id,
+            title: h.title,
+            frequency:
+              typeof h.frequency === "object" ? JSON.stringify(h.frequency) : h.frequency || "{}",
+            reminderTime: h.reminderTime || null,
+            reminderEnabled: h.reminderEnabled ? 1 : 0,
+            currentStreak: h.currentStreak || 0,
+            longestStreak: h.longestStreak || 0,
+            completionRate: h.completionRate || 0,
+            lastCheckInDate: h.lastCheckInDate || null,
+            syncStatus: "synced",
+            lastModifiedAt: Date.now(),
+            createdAt: h.createdAt || new Date().toISOString(),
+            updatedAt: h.updatedAt || new Date().toISOString()
+          }));
+          setHabits(mappedHabits);
+
+          // Fetch recent check-ins for the active habits from server
+          try {
+            const checkInPromises = mappedHabits.slice(0, 5).map(async (h) => {
+              const res = await apiClient.get<any[]>(`/habits/${h.id}/check-ins`, {
+                params: {
+                  startDate: recent4Days[0],
+                  endDate: recent4Days[3]
+                }
+              });
+              return {
+                habitId: h.id,
+                dates: (res.data || []).filter((c: any) => c.completed).map((c: any) => c.date)
+              };
+            });
+
+            const checkInResults = await Promise.allSettled(checkInPromises);
+            const serverCheckInsMap: Record<string, string[]> = {};
+            let todayCount = 0;
+
+            checkInResults.forEach((result) => {
+              if (result.status === "fulfilled" && result.value) {
+                serverCheckInsMap[result.value.habitId] = result.value.dates;
+                if (result.value.dates.includes(todayStr)) {
+                  todayCount++;
+                }
+              }
+            });
+
+            setHabitCheckInsMap((prev) => ({ ...prev, ...serverCheckInsMap }));
+            if (todayCount > 0) {
+              setTodayCheckInsCount(todayCount);
+            }
+          } catch {}
+        }
+
+        // C. Finance Summary & Budgets from Server
+        let serverExpense = 0;
+        let serverIncome = 0;
+        let serverBreakdown: Array<{ category: string; amount: number; percentage?: number }> = [];
+
+        if (financeRes.status === "fulfilled" && financeRes.value.data) {
+          const data = financeRes.value.data;
+          serverExpense = data.monthlyTotals?.expense || 0;
+          serverIncome = data.monthlyTotals?.income || 0;
+          serverBreakdown = data.categoryBreakdown || [];
+
+          const totalSpendAmt = serverBreakdown.reduce((sum, c) => sum + (c.amount || 0), 0);
+          const formattedBreakdown = serverBreakdown.map((c) => ({
+            category: c.category,
+            amount: c.amount,
+            percentage:
+              totalSpendAmt > 0
+                ? Math.round((c.amount / totalSpendAmt) * 100)
+                : c.percentage || 0
+          }));
+
+          setFinanceSummary({
+            totalExpense: serverExpense,
+            totalIncome: serverIncome,
+            netSavings: serverIncome - serverExpense,
+            savingsRate:
+              serverIncome > 0
+                ? Math.max(0, Math.round(((serverIncome - serverExpense) / serverIncome) * 100))
+                : 0,
+            categoryBreakdown: formattedBreakdown,
+            monthlyTrends: []
+          });
+        }
+
+        if (budgetsRes.status === "fulfilled" && budgetsRes.value.data?.budgets) {
+          const budgets = budgetsRes.value.data.budgets;
+          const totalLimit = budgets.reduce((acc: number, b: any) => acc + (b.limit || 0), 0);
+          setMonthlyBudgetLimit(totalLimit);
+        }
+
+        // D. Notes from Server
+        if (notesRes.status === "fulfilled" && Array.isArray(notesRes.value.data?.notes)) {
+          const serverNotes = notesRes.value.data.notes;
+          if (serverNotes.length > 0) {
+            const mappedNotes: LocalNote[] = serverNotes.map((n: any) => ({
+              id: n._id || n.id,
+              userId: user.id,
+              title: n.title,
+              content: typeof n.content === "object" ? JSON.stringify(n.content) : n.content || "",
+              contentText: n.contentText || "",
+              folderId: n.folderId || null,
+              tags: Array.isArray(n.tags) ? JSON.stringify(n.tags) : n.tags || "[]",
+              syncStatus: "synced",
+              lastModifiedAt: Date.now(),
+              createdAt: n.createdAt || new Date().toISOString(),
+              updatedAt: n.updatedAt || new Date().toISOString()
+            }));
+
+            const pinned = mappedNotes.find((n) => {
+              try {
+                const tags = JSON.parse(n.tags || "[]");
+                return (
+                  Array.isArray(tags) && tags.some((t: string) => t.toLowerCase() === "pinned")
+                );
+              } catch {
+                return false;
+              }
+            });
+            setPinnedNote(pinned || mappedNotes[0]);
+          } else {
+            setPinnedNote(null);
+          }
+        }
+
+        // Also trigger background syncEngine to reconcile local SQLite mirror
+        syncEngine.syncNow().catch(() => {});
+      } catch (serverErr) {
+        console.warn("[Dashboard] Error fetching from server API, using local SQLite:", serverErr);
+      }
+    }
+  }, [user?.id, todayStr, todayDate, isOnline, recent4Days]);
 
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -177,22 +388,60 @@ export function DashboardScreen({ navigation }: any) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadDashboardData(), loadDailySummary(), loadUnreadCount()]);
-    setRefreshing(false);
+    try {
+      if (isOnline) {
+        await syncEngine.syncNow().catch(() => {});
+      }
+      await Promise.all([loadDashboardData(), loadDailySummary(), loadUnreadCount()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
+  // Reload when tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData();
+      loadDailySummary();
+      loadUnreadCount();
+    }, [loadDashboardData, loadDailySummary, loadUnreadCount])
+  );
+
+  // Background sync on mount to ensure local SQLite has latest server data
   useEffect(() => {
     loadDashboardData();
     loadDailySummary();
     loadUnreadCount();
-  }, [loadDashboardData, loadDailySummary, loadUnreadCount]);
 
-  // Toggle habit check-in
+    if (isOnline) {
+      syncEngine
+        .syncNow()
+        .then(() => {
+          loadDashboardData();
+        })
+        .catch(() => {});
+    }
+  }, [isOnline, loadDashboardData, loadDailySummary, loadUnreadCount]);
+
+  // Toggle habit check-in (SQLite + Server API)
   const handleToggleHabit = async (habitId: string) => {
     if (!user?.id) return;
     try {
       await habitRepo.toggleCheckIn(habitId, user.id, todayStr);
+
+      if (isOnline) {
+        try {
+          const currentDates = habitCheckInsMap[habitId] || [];
+          const isCurrentlyDone = currentDates.includes(todayStr);
+          await apiClient.post(`/habits/${habitId}/check-in`, {
+            date: todayStr,
+            completed: !isCurrentlyDone
+          });
+        } catch {}
+      }
+
       await loadDashboardData();
+      syncEngine.syncNow().catch(() => {});
     } catch {}
   };
 
@@ -200,14 +449,14 @@ export function DashboardScreen({ navigation }: any) {
   const currentHour = todayDate.getHours();
   const greetingTime =
     currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
-  const firstName = user?.name ? user.name.split(" ")[0] : "Dileep";
+  const firstName = user?.name ? user.name.trim().split(" ")[0] : "Friend";
 
-  // Calculate Focus / Completion Score
+  // Calculate Focus / Completion Score based on actual data
   const totalTasks = habits.length + todayEvents.length;
   const completedTasks = todayCheckInsCount;
   const remainingCount = Math.max(0, totalTasks - completedTasks);
   const focusScore =
-    totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 86;
+    totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 100;
 
   // Format relative event time badge
   const getEventTimeBadge = (startTime: string) => {
@@ -304,7 +553,11 @@ export function DashboardScreen({ navigation }: any) {
 
         <View style={styles.heroSubRow}>
           <ThemedText variant="bodyMd" style={styles.heroSubtitle}>
-            You're on track with {remainingCount || 3} tasks remaining today
+            {totalTasks === 0
+              ? "No habits or events scheduled today"
+              : remainingCount === 0
+                ? "All caught up! You've completed all tasks today"
+                : `You're on track with ${remainingCount} ${remainingCount === 1 ? "task" : "tasks"} remaining today`}
           </ThemedText>
 
           <View style={styles.focusScorePill}>
@@ -418,51 +671,31 @@ export function DashboardScreen({ navigation }: any) {
           </View>
 
           {todayEvents.length === 0 ? (
-            <View style={styles.timelineList}>
-              {/* Default Mock / Placeholder Timeline items matching Stitch design if no events */}
-              <View style={styles.timelineItem}>
-                <View
-                  style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.primaryContainer }]}
-                />
-                <View style={styles.timelineContent}>
-                  <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
-                    Team Sync
-                  </ThemedText>
-                  <ThemedText variant="caption" style={styles.timelineItemMeta}>
-                    10:00 AM • Zoom
-                  </ThemedText>
-                </View>
-                <View style={styles.timelineBadge}>
-                  <ThemedText variant="caption" style={styles.timelineBadgeText}>
-                    in 45m
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={[styles.timelineItem, { borderBottomWidth: 0 }]}>
-                <View
-                  style={[styles.timelineDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                />
-                <View style={styles.timelineContent}>
-                  <ThemedText variant="bodySm" style={styles.timelineItemTitle}>
-                    Design Review
-                  </ThemedText>
-                  <ThemedText variant="caption" style={styles.timelineItemMeta}>
-                    2:30 PM • Room 4B
-                  </ThemedText>
-                </View>
-              </View>
+            <View style={styles.emptyCardContainer}>
+              <ThemedText variant="bodySm" style={styles.emptyCardText}>
+                No events scheduled for today
+              </ThemedText>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.emptyCardActionBtn}
+                onPress={() => navigation?.navigate("Calendar")}
+              >
+                <PlusCircle size={14} color={STITCH_COLORS.primary} />
+                <ThemedText variant="caption" style={styles.emptyCardActionBtnText}>
+                  Add Event
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.timelineList}>
-              {todayEvents.slice(0, 3).map((event, idx) => (
+              {todayEvents.slice(0, 4).map((event, idx) => (
                 <TouchableOpacity
                   key={event.id}
                   activeOpacity={0.7}
                   onPress={() => navigation?.navigate("Calendar")}
                   style={[
                     styles.timelineItem,
-                    idx === Math.min(todayEvents.length, 3) - 1 ? { borderBottomWidth: 0 } : null
+                    idx === Math.min(todayEvents.length, 4) - 1 ? { borderBottomWidth: 0 } : null
                   ]}
                 >
                   <View
@@ -518,92 +751,21 @@ export function DashboardScreen({ navigation }: any) {
 
           <View style={styles.habitsList}>
             {habits.length === 0 ? (
-              // Default Stitch preview habits if none created yet
-              <>
-                <View style={styles.habitRow}>
-                  <View style={styles.habitLeft}>
-                    <Droplets size={16} color={STITCH_COLORS.primaryContainer} />
-                    <ThemedText variant="bodySm" style={styles.habitTitle}>
-                      Hydration
-                    </ThemedText>
-                  </View>
-                  <View style={styles.streakDotsRow}>
-                    <View
-                      style={[
-                        styles.streakDot,
-                        { backgroundColor: STITCH_COLORS.primaryContainer }
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.streakDot,
-                        { backgroundColor: STITCH_COLORS.primaryContainer }
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.streakDot,
-                        { backgroundColor: STITCH_COLORS.primaryContainer }
-                      ]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.habitRow}>
-                  <View style={styles.habitLeft}>
-                    <BookOpen size={16} color={STITCH_COLORS.tertiaryContainer} />
-                    <ThemedText variant="bodySm" style={styles.habitTitle}>
-                      Reading
-                    </ThemedText>
-                  </View>
-                  <View style={styles.streakDotsRow}>
-                    <View
-                      style={[
-                        styles.streakDot,
-                        { backgroundColor: STITCH_COLORS.tertiaryContainer }
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.streakDot,
-                        { backgroundColor: STITCH_COLORS.tertiaryContainer }
-                      ]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.habitRow}>
-                  <View style={styles.habitLeft}>
-                    <Dumbbell size={16} color={STITCH_COLORS.secondary} />
-                    <ThemedText variant="bodySm" style={styles.habitTitle}>
-                      Workout
-                    </ThemedText>
-                  </View>
-                  <View style={styles.streakDotsRow}>
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.secondary }]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                    <View
-                      style={[styles.streakDot, { backgroundColor: STITCH_COLORS.surfaceHighest }]}
-                    />
-                  </View>
-                </View>
-              </>
+              <View style={styles.emptyCardContainer}>
+                <ThemedText variant="bodySm" style={styles.emptyCardText}>
+                  No habits tracked yet
+                </ThemedText>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.emptyCardActionBtn}
+                  onPress={() => navigation?.navigate("Habits & Goals")}
+                >
+                  <PlusCircle size={14} color={STITCH_COLORS.primary} />
+                  <ThemedText variant="caption" style={styles.emptyCardActionBtnText}>
+                    Create Habit
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
             ) : (
               habits.slice(0, 4).map((h, idx) => {
                 const dates = habitCheckInsMap[h.id] || [];
@@ -662,30 +824,31 @@ export function DashboardScreen({ navigation }: any) {
             <View style={styles.budgetSection}>
               <View style={styles.budgetLabelsRow}>
                 <ThemedText variant="caption" style={styles.budgetSubtitle}>
-                  Monthly Budget
+                  {monthlyBudgetLimit > 0 ? "Monthly Budget" : "Monthly Spending"}
                 </ThemedText>
                 <ThemedText variant="bodySm" style={styles.budgetAmountText}>
-                  ${Math.round(financeSummary.totalExpense || 1450).toLocaleString()} / $
-                  {Math.round(monthlyBudgetLimit || 2000).toLocaleString()}
+                  {monthlyBudgetLimit > 0
+                    ? `$${Math.round(financeSummary.totalExpense).toLocaleString()} / $${Math.round(monthlyBudgetLimit).toLocaleString()}`
+                    : `$${Math.round(financeSummary.totalExpense).toLocaleString()} spent this month`}
                 </ThemedText>
               </View>
 
-              <ProgressBar
-                progress={
-                  monthlyBudgetLimit > 0
-                    ? Math.min(
-                        100,
-                        Math.round(
-                          ((financeSummary.totalExpense || 1450) / monthlyBudgetLimit) * 100
-                        )
-                      )
-                    : 72.5
-                }
-                height={8}
-                color={STITCH_COLORS.primaryContainer}
-                backgroundColor={STITCH_COLORS.surfaceHighest}
-                style={{ marginTop: 6 }}
-              />
+              {monthlyBudgetLimit > 0 ? (
+                <ProgressBar
+                  progress={Math.min(
+                    100,
+                    Math.round((financeSummary.totalExpense / monthlyBudgetLimit) * 100)
+                  )}
+                  height={8}
+                  color={
+                    financeSummary.totalExpense > monthlyBudgetLimit
+                      ? "#ba1a1a"
+                      : STITCH_COLORS.primaryContainer
+                  }
+                  backgroundColor={STITCH_COLORS.surfaceHighest}
+                  style={{ marginTop: 6 }}
+                />
+              ) : null}
             </View>
 
             {/* Category Breakdown list */}
@@ -717,41 +880,27 @@ export function DashboardScreen({ navigation }: any) {
                   </View>
                 ))
               ) : (
-                <>
-                  <View style={styles.categorySpendRow}>
-                    <View style={styles.categoryNameCol}>
-                      <View
-                        style={[
-                          styles.categoryColorDot,
-                          { backgroundColor: STITCH_COLORS.tertiaryContainer }
-                        ]}
-                      />
-                      <ThemedText variant="caption" style={styles.categorySpendLabel}>
-                        Dining
-                      </ThemedText>
-                    </View>
-                    <ThemedText variant="bodySm" style={styles.categorySpendValue}>
-                      $320
+                <View style={styles.emptyCardContainer}>
+                  <ThemedText variant="bodySm" style={styles.emptyCardText}>
+                    No expenses logged this month
+                  </ThemedText>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.emptyCardActionBtn}
+                    onPress={() => navigation?.navigate("Finance")}
+                  >
+                    <Receipt size={14} color={STITCH_COLORS.tertiaryContainer} />
+                    <ThemedText
+                      variant="caption"
+                      style={[
+                        styles.emptyCardActionBtnText,
+                        { color: STITCH_COLORS.tertiaryContainer }
+                      ]}
+                    >
+                      Log Expense
                     </ThemedText>
-                  </View>
-
-                  <View style={styles.categorySpendRow}>
-                    <View style={styles.categoryNameCol}>
-                      <View
-                        style={[
-                          styles.categoryColorDot,
-                          { backgroundColor: STITCH_COLORS.secondary }
-                        ]}
-                      />
-                      <ThemedText variant="caption" style={styles.categorySpendLabel}>
-                        Groceries
-                      </ThemedText>
-                    </View>
-                    <ThemedText variant="bodySm" style={styles.categorySpendValue}>
-                      $450
-                    </ThemedText>
-                  </View>
-                </>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           </TouchableOpacity>
@@ -764,21 +913,38 @@ export function DashboardScreen({ navigation }: any) {
               <View style={styles.iconTitleInline}>
                 <Pin size={18} color={STITCH_COLORS.textOnSurface} />
                 <ThemedText variant="heading3" style={styles.cardSectionTitle}>
-                  Pinned Note
+                  {pinnedNote ? "Pinned Note" : "Recent Notes"}
                 </ThemedText>
               </View>
               <ChevronRight size={18} color={STITCH_COLORS.textVariant} />
             </View>
 
-            <View style={styles.pinnedNoteCard}>
-              <ThemedText variant="bodySm" style={styles.pinnedNoteTitle} numberOfLines={1}>
-                {pinnedNote?.title || "Project Apollo Ideas"}
-              </ThemedText>
-              <ThemedText variant="caption" style={styles.pinnedNoteExcerpt} numberOfLines={3}>
-                {pinnedNote?.contentText ||
-                  "Remember to look into the new framer motion API for the hero section transitions. Also need to sync with Sarah regarding the copy changes on the pricing page..."}
-              </ThemedText>
-            </View>
+            {pinnedNote ? (
+              <View style={styles.pinnedNoteCard}>
+                <ThemedText variant="bodySm" style={styles.pinnedNoteTitle} numberOfLines={1}>
+                  {pinnedNote.title || "Untitled Note"}
+                </ThemedText>
+                <ThemedText variant="caption" style={styles.pinnedNoteExcerpt} numberOfLines={3}>
+                  {pinnedNote.contentText || "No additional text content."}
+                </ThemedText>
+              </View>
+            ) : (
+              <View style={styles.emptyCardContainer}>
+                <ThemedText variant="bodySm" style={styles.emptyCardText}>
+                  No notes created yet
+                </ThemedText>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.emptyCardActionBtn}
+                  onPress={() => navigation?.navigate("Notes")}
+                >
+                  <FileText size={14} color={STITCH_COLORS.primary} />
+                  <ThemedText variant="caption" style={styles.emptyCardActionBtnText}>
+                    Create Note
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            )}
           </TouchableOpacity>
         </Card>
 
@@ -1115,5 +1281,38 @@ const styles = StyleSheet.create({
     color: STITCH_COLORS.textVariant,
     fontSize: 12,
     lineHeight: 17
+  },
+
+  // Empty States
+  emptyCardContainer: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    backgroundColor: STITCH_COLORS.surfaceLow,
+    borderRadius: radius.md,
+    marginVertical: spacing.xs
+  },
+  emptyCardText: {
+    color: STITCH_COLORS.textVariant,
+    fontSize: 13,
+    textAlign: "center"
+  },
+  emptyCardActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.sm,
+    backgroundColor: STITCH_COLORS.surfaceLowest,
+    borderWidth: 1,
+    borderColor: STITCH_COLORS.paperBorder,
+    marginTop: 2
+  },
+  emptyCardActionBtnText: {
+    color: STITCH_COLORS.primary,
+    fontSize: 12,
+    fontWeight: "600"
   }
 });
