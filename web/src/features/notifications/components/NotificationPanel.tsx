@@ -47,7 +47,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         </Button>
       </header>
 
-      <div className="max-h-96 overflow-y-auto">
+      <div className="max-h-[calc(100dvh-8rem)] sm:max-h-96 overflow-y-auto">
         {isLoading && (
           <div className="flex flex-col gap-1 p-2" aria-label="Loading notifications">
             {[0, 1, 2].map((i) => (
