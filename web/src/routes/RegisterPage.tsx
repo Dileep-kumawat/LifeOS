@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { RegisterForm } from "../components/auth/RegisterForm";
 import { apiClient, refreshAccessToken } from "../lib/apiClient";
+import { tokenStorage } from "../lib/tokenStorage";
 import { useAuthStore } from "../store/authStore";
 import type { RegisterInput } from "@lifeos/shared";
 
@@ -22,7 +23,10 @@ export function RegisterPage() {
         apiClient
           .post("/auth/refresh", { refreshToken: refreshTokenParam })
           .then((res) => {
-            const { user, accessToken } = res.data;
+            const { user, accessToken, refreshToken } = res.data;
+            if (refreshToken) {
+              tokenStorage.setRefreshToken(refreshToken);
+            }
             setAuth(user, accessToken);
             navigate("/", { replace: true });
           })
@@ -52,7 +56,10 @@ export function RegisterPage() {
 
   const handleRegister = async (data: RegisterInput) => {
     const response = await apiClient.post("/auth/register", data);
-    const { user, accessToken } = response.data;
+    const { user, accessToken, refreshToken } = response.data;
+    if (refreshToken) {
+      tokenStorage.setRefreshToken(refreshToken);
+    }
     setAuth(user, accessToken);
     navigate("/", { replace: true });
   };

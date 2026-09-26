@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { apiClient } from "../lib/apiClient";
+import { tokenStorage } from "../lib/tokenStorage";
 import { NotificationBell } from "../features/notifications";
 import { cn } from "../lib/utils";
 import { useIsInsideNativeApp } from "../lib/platform";
@@ -53,7 +54,8 @@ export function RootLayout() {
 
   const handleLogout = async () => {
     try {
-      await apiClient.post("/auth/logout");
+      const storedRefreshToken = tokenStorage.getRefreshToken();
+      await apiClient.post("/auth/logout", storedRefreshToken ? { refreshToken: storedRefreshToken } : {});
     } finally {
       clearAuth();
       navigate("/login");

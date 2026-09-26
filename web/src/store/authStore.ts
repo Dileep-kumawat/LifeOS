@@ -13,6 +13,8 @@ interface AuthState {
   setIsInitializing: (initializing: boolean) => void;
 }
 
+import { tokenStorage } from "../lib/tokenStorage";
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
@@ -36,13 +38,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       isInitializing: false
     }),
 
-  clearAuth: () =>
+  clearAuth: () => {
+    tokenStorage.clearRefreshToken();
     set({
       user: null,
       accessToken: null,
       isAuthenticated: false,
       isInitializing: false
-    }),
+    });
+  },
 
   setIsInitializing: (isInitializing) => set({ isInitializing })
 }));

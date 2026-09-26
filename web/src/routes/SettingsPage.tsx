@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import { apiClient, API_BASE_URL } from "../lib/apiClient";
+import { tokenStorage } from "../lib/tokenStorage";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { DeleteAccountDialog } from "../components/auth/DeleteAccountDialog";
@@ -18,7 +19,8 @@ export function SettingsPage() {
 
   const handleLogout = async () => {
     try {
-      await apiClient.post("/auth/logout");
+      const storedRefreshToken = tokenStorage.getRefreshToken();
+      await apiClient.post("/auth/logout", storedRefreshToken ? { refreshToken: storedRefreshToken } : {});
     } finally {
       clearAuth();
       navigate("/login");

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { LoginForm } from "../components/auth/LoginForm";
 import { apiClient, refreshAccessToken } from "../lib/apiClient";
+import { tokenStorage } from "../lib/tokenStorage";
 import { useAuthStore } from "../store/authStore";
 import type { LoginInput } from "@lifeos/shared";
 
@@ -25,7 +26,10 @@ export function LoginPage() {
         apiClient
           .post("/auth/refresh", { refreshToken: refreshTokenParam })
           .then((res) => {
-            const { user, accessToken } = res.data;
+            const { user, accessToken, refreshToken } = res.data;
+            if (refreshToken) {
+              tokenStorage.setRefreshToken(refreshToken);
+            }
             setAuth(user, accessToken);
             navigate(from, { replace: true });
           })
@@ -55,7 +59,10 @@ export function LoginPage() {
 
   const handleLogin = async (data: LoginInput) => {
     const response = await apiClient.post("/auth/login", data);
-    const { user, accessToken } = response.data;
+    const { user, accessToken, refreshToken } = response.data;
+    if (refreshToken) {
+      tokenStorage.setRefreshToken(refreshToken);
+    }
     setAuth(user, accessToken);
     navigate(from, { replace: true });
   };
