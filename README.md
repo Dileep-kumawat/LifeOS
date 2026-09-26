@@ -15,6 +15,7 @@ LifeOS/
 ├── api/                   # Express REST API v1 & Socket.IO real-time server (Port 4000)
 ├── web/                   # React 18 + Vite + Tailwind CSS Web Application (Port 5173)
 ├── mobile/                # Expo React Native App with dynamic Floating Sliding Dock
+├── mobile-v2/             # Capacitor 7 Android App (pixel-for-pixel responsive web shell)
 ├── packages/
 │   └── shared/            # Shared TypeScript types, Zod schemas, and design tokens
 ├── scripts/
@@ -85,6 +86,25 @@ adb reverse tcp:4000 tcp:4000    # LifeOS API backend
 cd mobile && npx expo start --localhost
 # Press 'a' in terminal to launch on connected Android device
 ```
+
+### Mobile v2 (Capacitor Android Native Shell)
+
+LifeOS Mobile v2 wraps the responsive web app in a native Android shell with full-bleed WebView, Chrome Custom Tabs OAuth (`lifeos://oauth`), native status bar, and FCM push notifications.
+
+```bash
+# 1. Configure mobile-v2/.env (or leave defaults for deployed Vercel site):
+# CAPACITOR_WEB_URL=https://life-os-web-puce.vercel.app
+# CAPACITOR_DEV=true
+
+# 2. Run directly on connected device or emulator:
+cd mobile-v2
+npm run cap:run
+
+# Or install pre-built APK directly via ADB:
+adb install -r "mobile-v2/android/app/build/outputs/apk/debug/app-debug.apk"
+adb shell am start -n com.lifeos.v2/.MainActivity
+```
+See [mobile-v2/README.md](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile-v2/README.md) for full configuration, Chrome DevTools remote debugging, and Android Studio workflows.
 
 ### Building & Sharing Standalone Android APK (EAS Cloud Build)
 

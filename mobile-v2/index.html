@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <title>LifeOS</title>
+    <style>
+      :root {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --primary: #0075de;
+        --bg: #ffffff;
+        --text: #37352f;
+        --muted: #787774;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: calc(var(--safe-top) + 20px) 24px calc(var(--safe-bottom) + 20px);
+        text-align: center;
+      }
+      .loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 360px;
+        width: 100%;
+      }
+      .logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: #0075de;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        box-shadow: 0 4px 14px rgba(0, 117, 222, 0.3);
+        margin-bottom: 24px;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e3e2e0;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        letter-spacing: -0.3px;
+      }
+      p {
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 24px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+      }
+      .btn-primary:active {
+        opacity: 0.9;
+        transform: scale(0.98);
+      }
+      .error-card {
+        display: none;
+        background: #fff8f8;
+        border: 1px solid #fed7d7;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+        width: 100%;
+      }
+      .error-card p {
+        color: #c53030;
+        margin-bottom: 12px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader-container">
+      <div class="logo">L</div>
+      <div class="spinner" id="spinner"></div>
+      <h1 id="status-title">Connecting to LifeOS...</h1>
+      <p id="status-desc">Loading your personal operating system.</p>
+      <div class="error-card" id="error-card">
+        <p id="error-text">Could not connect to the LifeOS server. Check your network or dev server.</p>
+        <button class="btn btn-primary" id="retry-btn">Retry Connection</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

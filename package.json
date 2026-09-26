@@ -7,12 +7,15 @@
     "api",
     "web",
     "mobile",
+    "mobile-v2",
     "packages/*"
   ],
   "scripts": {
     "dev:api": "npm run dev --workspace=api",
     "dev:web": "npm run dev --workspace=web",
     "dev:mobile": "npm run start --workspace=mobile",
+    "dev:mobile-v2": "npm run dev --workspace=mobile-v2",
+    "build:mobile-v2": "npm run build --workspace=mobile-v2",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=api && npm run build --workspace=web",
     "build:shared": "npm run build --workspace=packages/shared",
     "postinstall": "npm run build --workspace=packages/shared",

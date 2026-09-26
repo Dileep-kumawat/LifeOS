@@ -7,10 +7,11 @@
 
 ## 1. High-Level Architecture & Tech Stack
 
-- **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `packages/shared`).
+- **Monorepo Architecture**: `npm` Workspaces (`api`, `web`, `mobile`, `mobile-v2`, `packages/shared`).
 - **Backend (`/api`)**: Node.js 22 LTS, Express + TypeScript, Mongoose (MongoDB), Redis (Caching/BullMQ/Socket.IO adapter), Zod, Pino logging, Passport.js (JWT Access + Refresh tokens, Google OAuth 2.0 & ID Token verification), Swagger (`/api/v1/docs`, 127 routes documented), Sentry, Helmet security headers, auditService.
 - **Frontend Web (`/web`)**: React 18 + Vite, TypeScript, Tailwind CSS, Zustand, TanStack Query, React Router v6 with dynamic `React.lazy()` route splitting & `<Suspense>` boundaries (`RouteLoadingFallback`), TipTap & Recharts chunk isolation, Google Sign-In button (`GoogleSignInButton`), Connected Accounts management in Settings, Support & Help Center (`SupportHelpPage`, `/support` & `/help` routes with target audience, purpose, module guides, guidelines, legal terms, interactive FAQ, and direct AI Chat assistance CTA), Web Speech API + Web Audio API inline Voice Input (`useWebVoiceInput`, `VoiceWaveform`), PrivacyPolicyModal, Storybook (50+ stories), Sentry, `rollup-plugin-visualizer` bundle reporting (`web/BUNDLE_REPORT.md`).
 - **Mobile (`/mobile`)**: Expo SDK 52 (React Native), TypeScript, React Navigation with Instagram-style Swipeable Activity Pager (`ActivityPager.tsx`) synced in real-time two-way lock-step with dynamic Floating Sliding Dock (`FloatingDock.tsx`, `useDockHeight` clearance hook, `BlurView`, `LinearGradient` edge fade masks, Reanimated spring physics, fixed static center indicator with proximity-driven transforms, gesture horizontal scrolling with auto-centering, single-fire haptic feedback, memoized subcomponents), Support & Help Knowledge Center (`SupportHelpScreen` on `AppStack`, accessible via Settings & Knowledge Center, complete content parity with web: audience personas, unified purpose & 4 pillars, module-by-module guide, 15-min daily operating rhythm, guidelines & legal terms, interactive FAQ accordion, and direct AI Chat assistance CTA; plus `PrivacyPolicyModal`), Google Sign-In button (`GoogleSignInButton`), On-device Speech Recognizer & inline Voice Input (`useMobileVoiceInput`, `mobileVoiceService`, `VoiceWaveform`), SQLite local storage, EAS Build, Sentry.
+- **Mobile v2 (`/mobile-v2`)**: Capacitor 7 Android client, full-bleed WebView wrapping the responsive website pixel-for-pixel with zero local SQLite/offline sync duplication; native status bar matching website theming (`#ffffff`), splash screen (`@capacitor/splash-screen`), hardware back button handling with confirm-exit, Chrome Custom Tabs Google OAuth interception with `lifeos://oauth` bridge and token shuttling to `LoginPage`, and FCM push notification registration (`/api/v1/notifications/fcm-token`) with deep-link routing.
 - **Shared Package (`/packages/shared`)**: Shared Zod schemas, TypeScript types, design system tokens, and utility functions.
 - **Infra & DevOps**: Docker Compose (`mongo`, `redis`, `api`), GitHub Actions CI (`ci.yml`, `backup-verification.yml`, `deploy-staging.yml`).
 
@@ -36,7 +37,7 @@ LifeOS/
 │   │   ├── store/         # Zustand global state slices
 │   │   ├── routes/        # Page routes & layout wrappers
 │   │   └── index.css      # Design tokens & Tailwind setup
-├── mobile/                # Expo React Native App
+├── mobile/                # Expo React Native App (v1 architecture)
 │   ├── src/
 │   │   ├── components/    # Reusable UI & privacy modals (PrivacyPolicyModal, etc.)
 │   │   ├── db/            # Local DB setup & offline sync logic
@@ -45,6 +46,11 @@ LifeOS/
 │   │   ├── store/         # Mobile Zustand state
 │   │   └── services/      # API client & offline sync engine
 │   └── eas.json           # EAS Build configuration (preview, production profiles)
+├── mobile-v2/             # Capacitor Android Native App (v2 side-by-side candidate)
+│   ├── android/           # Native Android Studio project (Gradle 8.11, JDK 17, MainActivity.java)
+│   ├── src/               # Native TypeScript shell & Capacitor plugin bridges (OAuth, FCM push, deep link routing)
+│   ├── capacitor.config.ts# Capacitor 7 configuration (CAPACITOR_WEB_URL, status bar, splash screen)
+│   └── package.json       # Mobile-v2 workspace package manifest
 ├── packages/
 │   └── shared/            # Monorepo shared package
 │       ├── src/
@@ -193,9 +199,14 @@ npm run check:openapi   # OpenAPI coverage validation (127 routes documented)
 npm run build-storybook --workspace=web # Build static Storybook UI documentation
 npm run test:ws-smoke --workspace=api   # WebSocket smoke test
 
-# Mobile EAS Build & OTA Updates
+# Mobile EAS Build & OTA Updates (v1)
 cd mobile && npx eas-cli build -p android --profile preview # Compile standalone Android APK
 cd mobile && npx eas update --auto                         # Publish over-the-air update (OTA)
+
+# Mobile-v2 Capacitor Build & Sync (v2 Candidate)
+npm run dev:mobile-v2                                      # Start mobile-v2 Vite dev server
+cd mobile-v2 && npm run cap:build                          # Build shell and sync Android assets
+cd mobile-v2/android && .\gradlew assembleDebug            # Compile installable standalone Android debug APK
 
 # Database Backup, Recovery & Index Maintenance
 npx tsx scripts/backup/backup.ts                               # Create full encrypted/compressed snapshot with manifest
@@ -290,6 +301,7 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [Mobile-v2 Capacitor Android Native Client Architecture]: Created new workspace `/mobile-v2` as a side-by-side v2 candidate running a full-bleed native WebView wrapping the web application pixel-for-pixel with zero duplicated state, database, or offline sync logic; configured Capacitor 7 with `@capacitor/core`, `@capacitor/android`, `@capacitor/app`, `@capacitor/browser`, `@capacitor/push-notifications`, `@capacitor/status-bar`, and `@capacitor/splash-screen`; styled status bar with clean light theme (`#ffffff`) matching web; implemented native hardware back button handling with in-page history check and confirm-exit dialog; configured Chrome Custom Tabs Google OAuth interception with `lifeos://oauth` deep link return and token shuttling to `LoginPage.tsx`; implemented FCM device token registration with backend `POST /api/v1/notifications/fcm-token` and deep link push routing (`calendar_reminder`, `habit_reminder`, `budget_alert`); built standalone debug APK `app-debug.apk` (5.35MB) with Gradle 8.11 and JDK 17; preserved `/api`, `/web`, and existing `/mobile` workspaces completely intact.
 - [Mobile Over-The-Air (OTA) Updates & expo-updates Configuration]: Configured mobile application for instant OTA JavaScript updates powered by `expo-updates` and EAS Update; configured `runtimeVersion` policy (`"appVersion"`) and `updates.url` in `mobile/app.json`; added `npx eas update --auto` continuous delivery workflow to root `README.md`; documented in `memory.md`; enables direct continuous delivery of bug fixes and UI improvements to installed APKs without user re-installations.
 - [Mobile Support & Help Knowledge Center Screen & Navigation Parity]: Implemented complete Support & Help screen (`mobile/src/screens/main/SupportHelpScreen.tsx`) matching web `SupportHelpPage` content and Notion design aesthetics; features 6-topic filter tabs ("All Topics", "For Whom", "What Purpose", "How to Use", "Terms & Guidelines", "FAQ"), real-time search input with query filtering across questions, answers, and categories, 4 audience persona cards (High Performers, Students, Builders, Mindful Achievers), 10-app fragmentation trap vs. LifeOS solution comparison with 4 architectural pillars (Cohesion, Local-First, Sovereignty, AI), 15-minute daily operating rhythm guide (Morning, Deep Work, Evening), 9 interactive module jump cards with direct tab navigation, 4 platform terms and legal guidelines (acceptable use, GDPR/DPDP data sovereignty, AI fallback disclosure, liability limitations), interactive FAQ accordion with expand/collapse animations, rich dark gradient direct AI Chat CTA banner, and universal `PrivacyPolicyModal` (`mobile/src/components/privacy/PrivacyPolicyModal.tsx`); registered `SupportHelp` route in `RootNavigator.tsx` (`AppStack`) and integrated prominent "Support & Knowledge Center" navigation card in `SettingsScreen.tsx`; verified 0 TypeScript compilation errors across all 4 monorepo workspaces and 20/20 mobile test suites passing (121 tests).
 - [Mobile Dashboard Dual-Tier Live Server & Offline SQLite Integration]: Architected dual-tier data retrieval in `mobile/src/screens/main/DashboardScreen.tsx` combining instant local SQLite rendering with direct live server HTTP fetching (`GET /calendar/events`, `GET /habits`, `GET /habits/:id/check-ins`, `GET /finance/summary`, `GET /finance/budgets`, and `GET /notes`); when online, fetches actual live records directly from MongoDB via `apiClient`, populates state with live data, posts habit check-ins to server `/habits/:id/check-in`, and triggers background sync to mirror SQLite; when offline or disconnected, transparently falls back to local SQLite repositories (`eventRepo`, `habitRepo`, `financeRepo`, `noteRepo`) without user disruption; eliminated all hardcoded demo/mock fallbacks and wired `useFocusEffect` + pull-to-refresh (`onRefresh`); verified typecheck clean across all 4 monorepo workspaces and 19/19 mobile test suites passing (117 tests).
@@ -458,6 +470,7 @@ Standing environment variables (names only) and system ports across workspaces.
   - **Backend (`/api`)**: `NODE_ENV`, `PORT` (default 4000), `MONGO_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `AI_PROVIDER_ORDER`. Optional: `MISTRAL_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_VISION_API_KEY`, `SENTRY_DSN`, `RESEND_API_KEY`, `POSTMARK_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `GOOGLE_MOBILE_CLIENT_ID`, `GOOGLE_ANDROID_CLIENT_ID`, `SWAGGER_ALLOWED_IPS`, `BACKUP_DIR`, `BACKUP_ENCRYPTION_KEY`, `AUDIT_LOG_RETENTION_DAYS`, `AI_LOG_RETENTION_DAYS`, `MONGO_VECTOR_INDEX`.
   - **Frontend Web (`/web`)**: `VITE_API_URL` (REQUIRED in production on Vercel — must point at the Render API origin, otherwise `/api/v1` hits the static host), `VITE_VAPID_PUBLIC_KEY`. Optional: `VITE_SENTRY_DSN`.
   - **Mobile (`/mobile`)**: `EXPO_PUBLIC_APP_ENV` (or `EXPO_PUBLIC_ENV`: `"development"` | `"production"`; switches between local server and deployed Render API `https://lifeos-api-hqcz.onrender.com`), `EXPO_PUBLIC_API_URL` (optional custom endpoint override).
+  - **Mobile v2 (`/mobile-v2`)**: `CAPACITOR_WEB_URL` (target web domain inside webview, e.g. `https://lifeos.vercel.app`), `CAPACITOR_DEV` (`"true"` | `"false"`, enables dev server cleartext & webview inspection), `CAPACITOR_DEV_URL` (e.g. `http://10.0.2.2:5173`), `VITE_API_URL` (backend REST origin for push token registration).
 - **System Ports Overview**:
   - `4000`: Express API REST & WebSocket server.
   - `5173`: Vite Web application dev server.
