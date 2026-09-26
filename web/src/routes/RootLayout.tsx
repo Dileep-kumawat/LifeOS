@@ -81,7 +81,7 @@ export function RootLayout() {
     >
       {/* ─── Mobile / Tablet Top Header (<lg) ────────────────────────────── */}
       {!isChat && (
-        <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40 transition-all duration-200">
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40 transition-all duration-200 box-border">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
@@ -133,7 +133,7 @@ export function RootLayout() {
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-72 max-w-[80vw] bg-[#faf9f8] h-full shadow-2xl z-50 flex flex-col p-5 animate-in slide-in-from-left duration-200">
+          <div className="relative w-72 max-w-[80vw] bg-[#faf9f8] h-full shadow-2xl z-50 flex flex-col p-5 pt-[calc(1.25rem+env(safe-area-inset-top,0px))] pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] animate-in slide-in-from-left duration-200 box-border">
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#c1c6d5]/60">
               <div>
@@ -366,7 +366,7 @@ export function RootLayout() {
 
       {/* ─── BottomNavBar (Mobile 5-item Shared Nav) ────────────────────── */}
       {!isChat && (
-        <nav className="lg:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-2 py-1.5 bg-[#faf9f8]/95 backdrop-blur-md border-t border-[#c1c6d5] shadow-lg">
+        <nav className="lg:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom,0px))] bg-[#faf9f8]/95 backdrop-blur-md border-t border-[#c1c6d5] shadow-lg box-border">
           <NavLink
             to="/"
             end
@@ -437,7 +437,7 @@ export function RootLayout() {
           "flex-1 lg:ml-64 flex flex-col min-w-0",
           isChat
             ? "h-full p-0 overflow-hidden"
-            : "min-h-[calc(100vh-3.5rem)] lg:min-h-screen pt-14 lg:pt-0 pb-20 lg:pb-12"
+            : "min-h-[calc(100vh-3.5rem)] lg:min-h-screen pt-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pb-12"
         )}
       >
         {/* Content Outlet */}

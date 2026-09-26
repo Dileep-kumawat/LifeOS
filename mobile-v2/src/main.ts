@@ -164,8 +164,8 @@ export async function handleAppUrlOpen(url: string): Promise<void> {
 async function configureSystemUI(): Promise<void> {
   try {
     await StatusBar.setStyle({ style: Style.Light });
-    await StatusBar.setBackgroundColor({ color: "#ffffff" });
-    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setBackgroundColor({ color: "#00000000" });
+    await StatusBar.setOverlaysWebView({ overlay: true });
   } catch (e) {
     console.warn("[LifeOS Native] StatusBar config:", e);
   }

@@ -47,26 +47,26 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Set status bar styling to clean light theme (#ffffff background with dark icons)
-     * matching the LifeOS website appearance.
+     * Configure edge-to-edge display with transparent system bars and dark icons
+     * so webview safe-area insets seamlessly handle status bar and gesture navigation bar.
      */
     private void configureStatusBar() {
         Window window = getWindow();
         if (window == null) return;
 
-        window.setStatusBarColor(Color.WHITE);
+        // Ensure window lays out edge-to-edge
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            WindowInsetsController insetsController = window.getInsetsController();
-            if (insetsController != null) {
-                insetsController.setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                );
-            }
-        } else {
-            View decorView = window.getDecorView();
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        // Set transparent system bars so webview content bleeds through
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+
+        // Configure dark icons for light theme background
+        androidx.core.view.WindowInsetsControllerCompat controller =
+            androidx.core.view.WindowCompat.getInsetsController(window, window.getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(true);
+            controller.setAppearanceLightNavigationBars(true);
         }
     }
 
