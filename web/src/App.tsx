@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { queryClient } from "./lib/queryClient";
 import { refreshAccessToken } from "./lib/apiClient";
@@ -62,7 +62,19 @@ const SupportHelpPage = lazy(() =>
 const DownloadAppPage = lazy(() =>
   import("./routes/DownloadAppPage").then((m) => ({ default: m.DownloadAppPage }))
 );
+import { useIsInsideNativeApp } from "./lib/platform";
 
+function DownloadRouteGuard() {
+  const isNative = useIsInsideNativeApp();
+  if (isNative) {
+    return <Navigate to="/" replace />;
+  }
+  return (
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <DownloadAppPage />
+    </Suspense>
+  );
+}
 
 const router = createBrowserRouter([
   {
@@ -239,11 +251,7 @@ const router = createBrowserRouter([
       },
       {
         path: "download",
-        element: (
-          <Suspense fallback={<RouteLoadingFallback />}>
-            <DownloadAppPage />
-          </Suspense>
-        )
+        element: <DownloadRouteGuard />
       }
     ]
   },

@@ -82,6 +82,18 @@ public class MainActivity extends BridgeActivity {
 
         webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
             @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                view.evaluateJavascript("window.LIFEOS_APP_SHELL = true;", null);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                view.evaluateJavascript("window.LIFEOS_APP_SHELL = true;", null);
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (request != null && request.getUrl() != null) {
                     if (interceptOAuthUrl(request.getUrl())) {

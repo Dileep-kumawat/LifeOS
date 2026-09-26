@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Navigate, Link } from "react-router-dom";
 import {
   Download,
   QrCode,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
-import { Link } from "react-router-dom";
+import { useIsInsideNativeApp } from "../lib/platform";
 
 export const APK_DOWNLOAD_URL =
   "https://github.com/Dileep-kumawat/LifeOS/releases/latest/download/lifeos.apk";
@@ -59,6 +60,12 @@ const FAQ_ITEMS: FaqItem[] = [
 ];
 
 export function DownloadAppPage() {
+  const isInsideNative = useIsInsideNativeApp();
+
+  if (isInsideNative) {
+    return <Navigate to="/" replace />;
+  }
+
   const user = useAuthStore((state) => state.user);
   const [copied, setCopied] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);

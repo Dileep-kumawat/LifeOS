@@ -293,6 +293,7 @@ export async function initializeNativeShell(): Promise<void> {
   }
 
   // Expose global bridge helper on window
+  (window as any).LIFEOS_APP_SHELL = true;
   (window as any).LifeOSNative = {
     startGoogleOAuth,
     syncFcmTokenWithBackend,

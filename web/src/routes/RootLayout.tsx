@@ -23,6 +23,7 @@ import { useAuthStore } from "../store/authStore";
 import { apiClient } from "../lib/apiClient";
 import { NotificationBell } from "../features/notifications";
 import { cn } from "../lib/utils";
+import { useIsInsideNativeApp } from "../lib/platform";
 
 export function RootLayout() {
   const user = useAuthStore((state) => state.user);
@@ -31,6 +32,7 @@ export function RootLayout() {
   const navigate = useNavigate();
   const isChat = location.pathname.startsWith("/chat");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const isNativeApp = useIsInsideNativeApp();
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -102,14 +104,16 @@ export function RootLayout() {
           </div>
 
           <div className="flex items-center gap-1">
-            <NavLink
-              to="/download"
-              className="p-2 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-all duration-150 active:scale-95"
-              aria-label="Download Android App"
-              title="Download Android App"
-            >
-              <Smartphone className="size-5" />
-            </NavLink>
+            {!isNativeApp && (
+              <NavLink
+                to="/download"
+                className="p-2 text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] rounded-lg transition-all duration-150 active:scale-95"
+                aria-label="Download Android App"
+                title="Download Android App"
+              >
+                <Smartphone className="size-5" />
+              </NavLink>
+            )}
             <NotificationBell align="end" />
             <NavLink
               to="/chat"
@@ -212,13 +216,15 @@ export function RootLayout() {
                   <HelpCircle className="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
                   <span>Support & Help</span>
                 </NavLink>
-                <NavLink to="/download" className={getDrawerNavLinkClass}>
-                  <Smartphone className="size-4 shrink-0 text-[#005db2] transition-transform duration-150 group-hover:scale-110" />
-                  <span className="flex-1 font-semibold text-[#005db2]">Download App</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#005db2]/10 text-[#005db2]">
-                    APK
-                  </span>
-                </NavLink>
+                {!isNativeApp && (
+                  <NavLink to="/download" className={getDrawerNavLinkClass}>
+                    <Smartphone className="size-4 shrink-0 text-[#005db2] transition-transform duration-150 group-hover:scale-110" />
+                    <span className="flex-1 font-semibold text-[#005db2]">Download App</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#005db2]/10 text-[#005db2]">
+                      APK
+                    </span>
+                  </NavLink>
+                )}
               </div>
             </div>
 
@@ -335,24 +341,26 @@ export function RootLayout() {
               <HelpCircle className="size-4 transition-transform duration-150 group-hover:scale-110" />
               <span>Support & Help</span>
             </NavLink>
-            <NavLink
-              to="/download"
-              className={({ isActive }) =>
-                `group flex items-center justify-between px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-                  isActive
-                    ? "bg-[#e9e8e7] text-[#005db2] font-semibold"
-                    : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98]"
-                }`
-              }
-            >
-              <div className="flex items-center gap-3">
-                <Smartphone className="size-4 text-[#005db2] transition-transform duration-150 group-hover:scale-110" />
-                <span className="font-semibold text-[#005db2]">Download App</span>
-              </div>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#005db2]/10 text-[#005db2]">
-                APK
-              </span>
-            </NavLink>
+            {!isNativeApp && (
+              <NavLink
+                to="/download"
+                className={({ isActive }) =>
+                  `group flex items-center justify-between px-4 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
+                    isActive
+                      ? "bg-[#e9e8e7] text-[#005db2] font-semibold"
+                      : "text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98]"
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <Smartphone className="size-4 text-[#005db2] transition-transform duration-150 group-hover:scale-110" />
+                  <span className="font-semibold text-[#005db2]">Download App</span>
+                </div>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#005db2]/10 text-[#005db2]">
+                  APK
+                </span>
+              </NavLink>
+            )}
             <NavLink
               to="/notes"
               className="group flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium text-[#414753] hover:text-[#005db2] hover:bg-[#e9e8e7] hover:translate-x-0.5 active:scale-[0.98] transition-all duration-150"
