@@ -38,10 +38,16 @@ export function NoteDetailPage() {
   // Local editing state — the source of truth for the inputs. Initialised
   // from the loaded note exactly once so refetches never clobber edits.
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState<ProseMirrorDoc | null>(null);
+  const [content, setContent] = useState<ProseMirrorDoc | string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [folderId, setFolderId] = useState<string | null>(null);
   const initializedRef = useRef(false);
+
+  // Reset local state if route id changes
+  useEffect(() => {
+    initializedRef.current = false;
+    setContent(null);
+  }, [id]);
 
   useEffect(() => {
     if (note && !initializedRef.current) {
@@ -208,11 +214,23 @@ export function NoteDetailPage() {
         </div>
       </div>
 
+      {typeof (note as any)?.content === "string" && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+          <AlertTriangle className="size-4 shrink-0" />
+          <span>
+            This note was originally stored as plain text. It has been converted to rich text; editing and saving will modernize its format.
+          </span>
+        </div>
+      )}
+
       <NoteEditor
-        content={content ?? undefined}
+        key={id}
+        content={(content !== null ? content : note.content) ?? undefined}
         onChange={(doc) => {
           setContent(doc);
-          scheduleSave({ content: doc });
+          if (initializedRef.current) {
+            scheduleSave({ content: doc });
+          }
         }}
         placeholder="Start writing…"
       />

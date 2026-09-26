@@ -95,7 +95,7 @@ LifeOS/
   - `HabitCheckIn`: Daily check-in timestamps & completions.
   - `Goal`: Key results, target date, progress percentage, parent goal.
 - **Notes & Knowledge**:
-  - `Note`: Title, markdown content, tags, folder ID, pinned status.
+  - `Note`: Title, ProseMirror JSON rich-text `content`, `contentText` plain-text search mirror, tags, folder ID.
   - `NoteFolder`: Hierarchical tree folders for notes.
   - `NoteVersion`: Revision history & delta diffs.
 - **Offline Sync & Tombstones**:

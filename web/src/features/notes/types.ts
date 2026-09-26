@@ -6,7 +6,7 @@ export type ProseMirrorDoc = JSONContent;
 export interface Note {
   id: string;
   title: string;
-  content: ProseMirrorDoc;
+  content: ProseMirrorDoc | string;
   contentText: string;
   folderId: string | null;
   tags: string[];

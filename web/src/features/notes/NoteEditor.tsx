@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
+import { convertTextToProseMirrorDocument } from "@lifeos/shared";
 import {
   Bold,
   Italic,
@@ -22,11 +23,32 @@ import { cn } from "../../lib/utils";
 import type { ProseMirrorDoc } from "./types";
 
 export interface NoteEditorProps {
-  content?: ProseMirrorDoc;
+  content?: ProseMirrorDoc | string;
   onChange?: (content: ProseMirrorDoc) => void;
   readOnly?: boolean;
   placeholder?: string;
   className?: string;
+}
+
+export function normalizeToProseMirrorDoc(content: unknown): ProseMirrorDoc {
+  if (!content) {
+    return { type: "doc", content: [] };
+  }
+  if (typeof content === "string") {
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed === "object" && parsed.type === "doc") {
+        return parsed as ProseMirrorDoc;
+      }
+    } catch {
+      // not JSON string
+    }
+    return convertTextToProseMirrorDocument(content);
+  }
+  if (typeof content === "object" && (content as any).type === "doc") {
+    return content as ProseMirrorDoc;
+  }
+  return { type: "doc", content: [] };
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -59,7 +81,7 @@ export function NoteEditor({
         Image,
         Placeholder.configure({ placeholder })
       ],
-      content,
+      content: content ? normalizeToProseMirrorDoc(content) : undefined,
       editable: !readOnly,
       editorProps: {
         handlePaste: (_view, event) => {
@@ -85,6 +107,17 @@ export function NoteEditor({
     },
     []
   );
+
+  // Synchronize incoming content (e.g. on initial async load from server or prop change)
+  useEffect(() => {
+    if (!editor || content === undefined || editor.isDestroyed) return;
+    const targetDoc = normalizeToProseMirrorDoc(content);
+    const currentJSON = editor.getJSON();
+    // Only setContent if different to avoid cursor jumps during active typing
+    if (JSON.stringify(currentJSON) !== JSON.stringify(targetDoc)) {
+      editor.commands.setContent(targetDoc, { emitUpdate: false });
+    }
+  }, [editor, content]);
 
   // Refresh the toolbar's active/availability states on every transaction.
   const toolbar = useEditorState({
