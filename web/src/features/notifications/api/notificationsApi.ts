@@ -18,6 +18,7 @@ export interface NotificationsListResponse {
 
 export interface ListNotificationsParams {
   readStatus?: "read" | "unread";
+  channel?: "push" | "in_app" | "email";
   page?: number;
   limit?: number;
 }

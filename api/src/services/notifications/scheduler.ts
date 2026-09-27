@@ -95,7 +95,7 @@ export async function scheduleNotification(
     },
     scheduledFor,
     deliveryStatus: "pending",
-    readStatus: "unread"
+    readStatus: channel === "in_app" ? "unread" : "read"
   });
 
   let enqueued: EnqueueResult = { queued: false, duplicate: false, jobId: undefined };

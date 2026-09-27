@@ -109,9 +109,19 @@ export function NotificationModal({ visible, onClose, onNavigate }: Notification
     try {
       const res = await notificationApiService.listNotifications({
         readStatus: filter === "unread" ? "unread" : undefined,
+        channel: "in_app",
         limit: 30
       });
-      setNotifications(res.notifications || []);
+      const rawList = res.notifications || [];
+      const seen = new Set<string>();
+      const deduped = rawList.filter((n) => {
+        const summaryDate = (n.payload?.data as any)?.summaryDate;
+        const key = `${n.type}__${n.payload?.title || ""}__${summaryDate || n.scheduledFor?.slice(0, 16)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setNotifications(deduped);
     } catch (error) {
       console.warn("Failed to fetch notifications:", error);
     } finally {

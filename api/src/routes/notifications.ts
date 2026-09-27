@@ -123,7 +123,7 @@ notificationsRouter.get(
 
     const filter: Record<string, unknown> = { userId };
     if (readStatus) filter.readStatus = readStatus;
-    if (channel) filter.channel = channel;
+    filter.channel = channel || "in_app";
     if (type) filter.type = type;
 
     const total = await Notification.countDocuments(filter);
@@ -170,7 +170,7 @@ notificationsRouter.get(
  */
 notificationsRouter.get("/notifications/unread-count", async (req: Request, res: Response) => {
   const userId = req.user!._id.toString();
-  const unread = await countUnreadNotifications(Notification, userId);
+  const unread = await countUnreadNotifications(Notification, userId, "in_app");
   return res.json({ unread });
 });
 

@@ -26,9 +26,12 @@ export interface NotificationCollectionLike {
  */
 export async function countUnreadNotifications(
   collection: NotificationCollectionLike,
-  userId: string
+  userId: string,
+  channel?: string
 ): Promise<number> {
-  return collection.countDocuments({ userId, readStatus: "unread" });
+  const filter: Record<string, unknown> = { userId, readStatus: "unread" };
+  if (channel) filter.channel = channel;
+  return collection.countDocuments(filter);
 }
 
 /**

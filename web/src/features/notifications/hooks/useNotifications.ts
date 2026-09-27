@@ -33,7 +33,7 @@ export function useUnreadCount() {
 export function useNotifications() {
   return useQuery({
     queryKey: notificationKeys.list(),
-    queryFn: () => notificationsApi.list({ limit: 20 }),
+    queryFn: () => notificationsApi.list({ limit: 20, channel: "in_app" }),
     select: (data) => data.notifications,
     refetchInterval: UNREAD_POLL_INTERVAL_MS
   });

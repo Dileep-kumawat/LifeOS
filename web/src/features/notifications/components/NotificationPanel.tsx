@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { BellOff, CheckCheck } from "lucide-react";
 import type { Notification as AppNotification } from "@lifeos/shared";
@@ -21,7 +22,19 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
 
-  const hasUnread = notifications?.some((n) => n.readStatus === "unread") ?? false;
+  const displayedNotifications = useMemo(() => {
+    if (!notifications) return [];
+    const seen = new Set<string>();
+    return notifications.filter((n) => {
+      const summaryDate = (n.payload?.data as any)?.summaryDate;
+      const dedupeKey = `${n.type}__${n.payload?.title || ""}__${summaryDate || n.scheduledFor?.slice(0, 16)}`;
+      if (seen.has(dedupeKey)) return false;
+      seen.add(dedupeKey);
+      return true;
+    });
+  }, [notifications]);
+
+  const hasUnread = displayedNotifications.some((n) => n.readStatus === "unread");
 
   const handleOpen = (notification: AppNotification) => {
     if (notification.readStatus === "unread") {
@@ -71,7 +84,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
           </div>
         )}
 
-        {!isLoading && !isError && (!notifications || notifications.length === 0) && (
+        {!isLoading && !isError && (!displayedNotifications || displayedNotifications.length === 0) && (
           <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-[#f6f5f4] text-[#a39e98]">
               <BellOff className="size-5" />
@@ -83,9 +96,9 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
           </div>
         )}
 
-        {!isLoading && !isError && notifications && notifications.length > 0 && (
+        {!isLoading && !isError && displayedNotifications && displayedNotifications.length > 0 && (
           <ul>
-            {notifications.map((notification) => (
+            {displayedNotifications.map((notification) => (
               <li key={notification.id}>
                 <NotificationItem notification={notification} onOpen={handleOpen} />
               </li>
