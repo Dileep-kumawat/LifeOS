@@ -48,6 +48,8 @@ LifeOS/
 │   └── eas.json           # EAS Build configuration (preview, production profiles)
 ├── mobile-v2/             # Capacitor Android Native App (v2 side-by-side candidate)
 │   ├── android/           # Native Android Studio project (Gradle 8.11, JDK 17, MainActivity.java)
+│   ├── assets/            # Official LifeOS high-resolution brand assets (icon.png, adaptive-icon.png, splash-icon.png, favicon.png)
+│   ├── scripts/           # Native asset pipeline scripts (generate-assets.ps1)
 │   ├── src/               # Native TypeScript shell & Capacitor plugin bridges (OAuth, FCM push, deep link routing)
 │   ├── capacitor.config.ts# Capacitor 7 configuration (CAPACITOR_WEB_URL, status bar, splash screen)
 │   └── package.json       # Mobile-v2 workspace package manifest
@@ -465,6 +467,10 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
   - Wrap pure subcomponents and animated children in `React.memo()`.
   - Wrap callbacks passed to child/animated elements in `useCallback()`.
   - Extract static style/gradient arrays outside render functions to avoid re-allocation thrash. Drive 60fps animations via Reanimated worklets and shared values without triggering React renders. See [FloatingDock.tsx](file:///c:/Users/dilee_jc6ujqb/Documents/Web%20Development%202.0/projects/LifeOS/mobile/src/navigation/FloatingDock.tsx).
+- **Mobile v2 Android Brand Assets & Density Buckets**:
+  - Sourced directly from `mobile/assets/` (`icon.png`, `adaptive-icon.png`, `splash-icon.png`, `favicon.png`) into `mobile-v2/assets/` with `#ffffff` background matching `mobile/app.json`'s `android.adaptiveIcon.backgroundColor` and `splash.backgroundColor`.
+  - Density buckets for Android adaptive icon foreground (`mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_foreground.png`), legacy launcher icons (`ic_launcher.png`, `ic_launcher_round.png`), and splash screens (`drawable-{port,land}-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/splash.png`, `drawable/splash.png`) are generated via `npm run generate:assets` (`mobile-v2/scripts/generate-assets.ps1`).
+  - Adaptive icon foreground layers are centered within the 66% Android safe-zone radius (40% mark width, max distance from center 115.36px on a 132px safe-zone radius at xxxhdpi), ensuring zero cropping across circle, squircle, and rounded launcher masks. Stale template vectors (`drawable-v24/ic_launcher_foreground.xml` and `drawable/ic_launcher_background.xml`) are purged.
 
 ---
 
