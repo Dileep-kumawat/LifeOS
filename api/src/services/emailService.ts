@@ -83,10 +83,23 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ sent: bool
       } catch {
         errorMessage = response.statusText;
       }
-      logger.error(
-        { status: response.status, errorMessage },
-        "Failed to send email via Brevo"
-      );
+
+      if (response.status === 401 && (errorMessage.includes("IP address") || errorMessage.includes("authorised_ips"))) {
+        logger.error(
+          { status: response.status, errorMessage, url: "https://app.brevo.com/security/authorised_ips" },
+          "Brevo rejected email: Calling IP address is not authorized. Whitelist your IP or disable IP restrictions in Brevo Security Settings (https://app.brevo.com/security/authorised_ips)."
+        );
+      } else if (response.status === 400 && (errorMessage.includes("sender") || errorMessage.includes("unverified"))) {
+        logger.error(
+          { status: response.status, errorMessage, senderEmail },
+          "Brevo rejected email: Sender email is not verified. Ensure BREVO_SENDER_EMAIL matches an authorized sender in Brevo."
+        );
+      } else {
+        logger.error(
+          { status: response.status, errorMessage },
+          "Failed to send email via Brevo"
+        );
+      }
       return { sent: false };
     }
 
