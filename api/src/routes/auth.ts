@@ -943,6 +943,53 @@ authRouter.post("/auth/logout", async (req: Request, res: Response) => {
  *             example:
  *               message: If an account exists for that email, a reset link has been sent.
  */
+/**
+ * Resolves the client base URL for password reset links.
+ * Prefers explicitly configured FRONTEND_URL. If FRONTEND_URL is default localhost,
+ * checks CORS_ORIGIN or validates the caller's Origin header against trusted domains.
+ */
+function resolveFrontendBaseUrl(req: Request): string {
+  // 1. If FRONTEND_URL is explicitly configured to a non-localhost URL, always use it
+  if (
+    env.FRONTEND_URL &&
+    !env.FRONTEND_URL.includes("localhost") &&
+    !env.FRONTEND_URL.includes("127.0.0.1")
+  ) {
+    return env.FRONTEND_URL.replace(/\/+$/, "");
+  }
+
+  // 2. If CORS_ORIGIN is a production domain, use it as fallback
+  if (
+    env.CORS_ORIGIN &&
+    !env.CORS_ORIGIN.includes("localhost") &&
+    !env.CORS_ORIGIN.includes("127.0.0.1")
+  ) {
+    const primaryCors = env.CORS_ORIGIN.split(",")[0].trim().replace(/\/+$/, "");
+    if (primaryCors.startsWith("http://") || primaryCors.startsWith("https://")) {
+      return primaryCors;
+    }
+  }
+
+  // 3. Inspect Origin / Referer safely against known trusted hosts (prevents Host Header injection)
+  const incoming = req.get("origin") || req.get("referer");
+  if (incoming) {
+    try {
+      const parsed = new URL(incoming);
+      const originBase = `${parsed.protocol}//${parsed.host}`;
+      if (
+        originBase === env.FRONTEND_URL ||
+        originBase === env.CORS_ORIGIN ||
+        parsed.hostname.endsWith(".vercel.app") ||
+        parsed.hostname === "localhost"
+      ) {
+        return originBase;
+      }
+    } catch {}
+  }
+
+  return (env.FRONTEND_URL || "http://localhost:5173").replace(/\/+$/, "");
+}
+
 authRouter.post(
   "/auth/forgot-password",
   forgotPasswordRateLimiter,
@@ -997,7 +1044,8 @@ authRouter.post(
       user.passwordResetExpiresAt = passwordResetExpires;
       await user.save();
 
-      const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+      const frontendBaseUrl = resolveFrontendBaseUrl(req);
+      const resetUrl = `${frontendBaseUrl}/reset-password?token=${resetToken}`;
 
       // Dispatch email asynchronously without blocking the response timing
       sendPasswordResetEmail(user.email, user.name, resetUrl).catch((err) => {

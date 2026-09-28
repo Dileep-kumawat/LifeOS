@@ -128,6 +128,38 @@ describe("Forgot & Reset Password Flow with Brevo", () => {
       );
     });
 
+    it("uses production origin header when FRONTEND_URL is localhost", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ messageId: "<123@brevo>" })
+      });
+
+      const userDoc: any = {
+        _id: new Types.ObjectId(),
+        email: "alice@example.com",
+        name: "Alice Smith",
+        passwordHash: "$2a$12$someExistingHash",
+        status: "active",
+        save: vi.fn().mockResolvedValue(true)
+      };
+
+      vi.mocked(User.findOne).mockReturnValue({
+        select: vi.fn().mockResolvedValue(userDoc)
+      } as any);
+
+      await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .set("Origin", "https://life-os-web-puce.vercel.app")
+        .send({ email: "alice@example.com" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.brevo.com/v3/smtp/email",
+        expect.objectContaining({
+          body: expect.stringContaining("https://life-os-web-puce.vercel.app/reset-password?token=")
+        })
+      );
+    });
+
     it("unknown email returns the identical 200 and sends nothing", async () => {
       vi.mocked(User.findOne).mockReturnValue({
         select: vi.fn().mockResolvedValue(null)
