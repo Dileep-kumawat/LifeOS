@@ -38,7 +38,7 @@ const userSchema = new Schema(
     emailVerified: { type: Boolean, default: false },
     status: {
       type: String,
-      enum: ["active", "suspended", "soft_deleted"],
+      enum: ["active", "suspended", "soft_deleted", "pending_deletion"],
       default: "active",
       required: true,
       index: true
@@ -51,9 +51,10 @@ const userSchema = new Schema(
     },
     deletedAt: { type: Date, default: null },
 
-    // Password reset fields
-    passwordResetTokenHash: { type: String, default: null },
-    passwordResetExpiresAt: { type: Date, default: null },
+    // Password reset fields (hidden by default)
+    passwordResetTokenHash: { type: String, default: null, select: false },
+    passwordResetExpires: { type: Date, default: null, select: false },
+    passwordResetExpiresAt: { type: Date, default: null, select: false },
 
     // Phase 10 OAuth & identity fields
     googleId: { type: String, default: null, sparse: true, index: true },

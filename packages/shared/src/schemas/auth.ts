@@ -31,10 +31,16 @@ export const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Reset token is required"),
-  password: passwordSchema
-});
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Reset token is required"),
+    newPassword: passwordSchema.optional(),
+    password: passwordSchema.optional()
+  })
+  .refine((data) => Boolean(data.newPassword || data.password), {
+    message: "Password must be at least 10 characters long and contain at least one letter and one number",
+    path: ["newPassword"]
+  });
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 

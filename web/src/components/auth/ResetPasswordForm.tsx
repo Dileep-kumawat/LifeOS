@@ -72,11 +72,13 @@ export function ResetPasswordForm({
               id="password"
               type="password"
               placeholder="At least 10 chars with letter & number"
-              aria-invalid={!!errors.password}
+              aria-invalid={!!errors.password || !!(errors as any).newPassword}
               {...register("password")}
             />
-            {errors.password && (
-              <span className="text-xs text-red-500">{errors.password.message}</span>
+            {(errors.password || (errors as any).newPassword) && (
+              <span className="text-xs text-red-500">
+                {errors.password?.message || (errors as any).newPassword?.message}
+              </span>
             )}
           </div>
         </CardContent>

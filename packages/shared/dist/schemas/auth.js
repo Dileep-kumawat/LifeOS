@@ -20,9 +20,15 @@ export const loginSchema = z.object({
 export const forgotPasswordSchema = z.object({
     email: z.string().email("Invalid email address").toLowerCase().trim()
 });
-export const resetPasswordSchema = z.object({
+export const resetPasswordSchema = z
+    .object({
     token: z.string().min(1, "Reset token is required"),
-    password: passwordSchema
+    newPassword: passwordSchema.optional(),
+    password: passwordSchema.optional()
+})
+    .refine((data) => Boolean(data.newPassword || data.password), {
+    message: "Password must be at least 10 characters long and contain at least one letter and one number",
+    path: ["newPassword"]
 });
 export const googleAuthSchema = z.object({
     idToken: z.string().min(1, "Google ID token is required")

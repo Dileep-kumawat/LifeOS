@@ -34,7 +34,11 @@ import {
 import { googleAuthService, type GoogleVerifiedIdentity } from "../auth/googleAuthService.js";
 import { env } from "../config/env.js";
 import { logger } from "../logger.js";
-import { sendPasswordResetEmail } from "../services/emailService.js";
+import {
+  sendPasswordResetEmail,
+  sendGoogleAccountNoticeEmail,
+  sendPasswordChangedConfirmationEmail
+} from "../services/emailService.js";
 import { scheduleAccountPurge } from "../services/accountPurgeQueue.js";
 import { seedDefaultCategories } from "../services/financeCategory.js";
 import { auditService } from "../services/auditService.js";
@@ -937,30 +941,82 @@ authRouter.post("/auth/logout", async (req: Request, res: Response) => {
  *               properties:
  *                 message: { type: string }
  *             example:
- *               message: If an account exists with that email, a password reset link has been sent.
+ *               message: If an account exists for that email, a reset link has been sent.
  */
 authRouter.post(
   "/auth/forgot-password",
   forgotPasswordRateLimiter,
   validate(forgotPasswordSchema),
   async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email, status: "active" });
+    const email = (req.body.email || "").toString().trim().toLowerCase();
+    const user = await User.findOne({ email }).select(
+      "+passwordHash +passwordResetTokenHash +passwordResetExpires +passwordResetExpiresAt"
+    );
 
     if (user) {
+      // Silently skip suspended or pending deletion users to avoid status disclosure
+      if (
+        user.status === "suspended" ||
+        user.status === "pending_deletion" ||
+        user.status === "soft_deleted"
+      ) {
+        return res.json({
+          message: "If an account exists for that email, a reset link has been sent."
+        });
+      }
+
+      // If user has no passwordHash (Google-only OAuth account), send Google notice email
+      if (user.passwordHash === null) {
+        sendGoogleAccountNoticeEmail(user.email, user.name).catch((err) => {
+          logger.error({ err }, "Failed to send Google account notice email");
+        });
+
+        auditService
+          .log({
+            req,
+            action: "PASSWORD_RESET_REQUESTED",
+            resourceType: "auth",
+            targetUserId: user._id.toString(),
+            outcome: "SUCCESS",
+            metadata: { accountType: "google_oauth" }
+          })
+          .catch(() => {});
+
+        return res.json({
+          message: "If an account exists for that email, a reset link has been sent."
+        });
+      }
+
+      // Standard password account: generate cryptographically secure 32-byte token
       const resetToken = crypto.randomBytes(32).toString("hex");
       const passwordResetTokenHash = hashToken(resetToken);
-      const passwordResetExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
       user.passwordResetTokenHash = passwordResetTokenHash;
-      user.passwordResetExpiresAt = passwordResetExpiresAt;
+      user.passwordResetExpires = passwordResetExpires;
+      user.passwordResetExpiresAt = passwordResetExpires;
       await user.save();
 
-      await sendPasswordResetEmail({ toEmail: user.email, resetToken });
+      const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+      // Dispatch email asynchronously without blocking the response timing
+      sendPasswordResetEmail(user.email, user.name, resetUrl).catch((err) => {
+        logger.error({ err }, "Failed to send password reset email");
+      });
+
+      auditService
+        .log({
+          req,
+          action: "PASSWORD_RESET_REQUESTED",
+          resourceType: "auth",
+          targetUserId: user._id.toString(),
+          outcome: "SUCCESS"
+        })
+        .catch(() => {});
     }
 
     return res.json({
-      message: "If an account exists with that email, a password reset link has been sent."
+      message: "If an account exists for that email, a reset link has been sent."
     });
   }
 );
@@ -982,7 +1038,7 @@ authRouter.post(
  *             reset:
  *               value:
  *                 token: 6f3b2c8d9e0a1f4b5c6d7e8f9a0b1c2d
- *                 password: NewSecret12345
+ *                 newPassword: NewSecret12345
  *     responses:
  *       200:
  *         description: Password reset successful
@@ -1002,30 +1058,56 @@ authRouter.post(
   resetPasswordRateLimiter,
   validate(resetPasswordSchema),
   async (req: Request, res: Response) => {
-    const { token, password } = req.body;
+    const { token } = req.body;
+    const newPassword = req.body.newPassword || req.body.password;
     const tokenHash = hashToken(token);
 
     const user = await User.findOne({
       passwordResetTokenHash: tokenHash,
-      passwordResetExpiresAt: { $gt: new Date() },
+      $or: [
+        { passwordResetExpires: { $gt: new Date() } },
+        { passwordResetExpiresAt: { $gt: new Date() } }
+      ],
       status: "active"
-    });
+    }).select("+passwordResetTokenHash +passwordResetExpires +passwordResetExpiresAt");
 
     if (!user) {
+      await auditService.log({
+        req,
+        action: "PASSWORD_RESET_COMPLETED",
+        resourceType: "auth",
+        outcome: "ERROR",
+        reason: "INVALID_OR_EXPIRED_TOKEN"
+      });
+
       return res.status(400).json({
         error: "BadRequest",
         message: "Invalid or expired password reset token."
       });
     }
 
-    user.passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-    user.passwordResetTokenHash = undefined;
-    user.passwordResetExpiresAt = undefined;
+    user.passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    user.passwordResetTokenHash = null as any;
+    user.passwordResetExpires = null as any;
+    user.passwordResetExpiresAt = null as any;
     await user.save();
 
     // Force re-login everywhere after password reset
     await revokeAllUserTokens(user._id.toString());
     clearRefreshCookie(res);
+
+    // Send confirmation email asynchronously via Brevo
+    sendPasswordChangedConfirmationEmail(user.email, user.name).catch((err) => {
+      logger.error({ err }, "Failed to send password changed confirmation email");
+    });
+
+    await auditService.log({
+      req,
+      action: "PASSWORD_RESET_COMPLETED",
+      resourceType: "auth",
+      targetUserId: user._id.toString(),
+      outcome: "SUCCESS"
+    });
 
     return res.json({
       message: "Password reset successful. Please log in with your new password."
@@ -1369,15 +1451,20 @@ authRouter.delete("/auth/sessions/:id", requireAuth, async (req: Request, res: R
  *           format: email
  *     ResetPasswordInput:
  *       type: object
- *       required: [token, password]
+ *       required: [token]
  *       properties:
  *         token:
  *           type: string
  *           minLength: 1
- *         password:
+ *         newPassword:
  *           type: string
  *           minLength: 10
  *           description: Must be at least 10 chars long and contain at least one letter and one number.
+ *           example: NewSecret12345
+ *         password:
+ *           type: string
+ *           minLength: 10
+ *           description: Legacy alias for newPassword.
  *           example: NewSecret12345
  *     UserProfile:
  *       type: object

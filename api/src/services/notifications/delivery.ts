@@ -33,7 +33,7 @@ export interface DeliveryDeps {
   sendPush(sub: PushSubscriptionLike, payload: object): Promise<PushSendLike>;
   deleteSubscriptions(ids: string[]): Promise<void>;
   markDelivered(id: string, sentAt: Date): Promise<void>;
-  sendEmail?(args: { toEmail: string; subject: string; text: string }): Promise<void>;
+  sendEmail?(args: { toEmail: string; subject: string; text: string }): Promise<void | { sent: boolean }>;
   prefsUserEmail?: string;
   hasActiveFocusSession?(userId: string): Promise<boolean>;
 }

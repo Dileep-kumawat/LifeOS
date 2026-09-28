@@ -32,15 +32,26 @@ export declare const forgotPasswordSchema: z.ZodObject<{
     email: string;
 }>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
-export declare const resetPasswordSchema: z.ZodObject<{
+export declare const resetPasswordSchema: z.ZodEffects<z.ZodObject<{
     token: z.ZodString;
-    password: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>;
+    newPassword: z.ZodOptional<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>>;
+    password: z.ZodOptional<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>>;
 }, "strip", z.ZodTypeAny, {
-    password: string;
     token: string;
+    password?: string | undefined;
+    newPassword?: string | undefined;
 }, {
-    password: string;
     token: string;
+    password?: string | undefined;
+    newPassword?: string | undefined;
+}>, {
+    token: string;
+    password?: string | undefined;
+    newPassword?: string | undefined;
+}, {
+    token: string;
+    password?: string | undefined;
+    newPassword?: string | undefined;
 }>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export declare const googleAuthSchema: z.ZodObject<{

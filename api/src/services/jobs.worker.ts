@@ -128,7 +128,7 @@ async function handleDeliverNotification(job: Job<DeliverNotificationJobData>): 
       Notification.updateOne({ _id: id }, { $set: { deliveryStatus: "sent", sentAt } }).then(
         () => undefined
       ),
-    sendEmail: (args) => sendEmail(args),
+    sendEmail: (args) => sendEmail(args).then(() => undefined),
     prefsUserEmail: user.email
   };
 

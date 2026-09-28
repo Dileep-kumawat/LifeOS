@@ -21,6 +21,11 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   POSTMARK_API_KEY: z.string().optional(),
 
+  // Brevo Transactional Email Configuration
+  BREVO_API_KEY: z.string().optional(),
+  BREVO_SENDER_EMAIL: z.string().optional(),
+  BREVO_SENDER_NAME: z.string().default("LifeOS"),
+
   // Web Push VAPID keys (Phase 2 notifications). REQUIRED — the API fails
   // fast on boot if any are missing so push senders never start half-wired.
   // webpush.generateVAPIDKeys() produces a public/private pair. The subject
