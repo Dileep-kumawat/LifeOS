@@ -172,17 +172,17 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
   const details = renderDetails();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="tool-confirm-modal-title"
         aria-describedby="tool-confirm-modal-desc"
-        className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden"
+        className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
+        <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
           <div className="flex items-center gap-3">
             {details.icon}
             <div>
@@ -203,7 +203,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 flex flex-col gap-4">
+        <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1">
           <p id="tool-confirm-modal-desc" className="text-sm font-medium text-[#31302e]">
             {details.description}
           </p>
@@ -222,7 +222,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e6e6e6] bg-slate-50">
+        <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t border-[#e6e6e6] bg-slate-50">
           <button
             type="button"
             onClick={onCancel}

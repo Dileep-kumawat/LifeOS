@@ -508,7 +508,7 @@ export function PomodoroTimer({
 
       {/* Link Picker Modal Popover */}
       {showLinkPicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
           <SessionLinkPicker
             selectedType={linkedType}
             selectedId={linkedId}

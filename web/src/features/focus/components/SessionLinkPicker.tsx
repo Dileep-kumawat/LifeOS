@@ -98,9 +98,9 @@ export function SessionLinkPicker({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-[#e6e6e6] shadow-sm p-4 w-full max-w-md">
+    <div className="bg-white rounded-xl border border-[#e6e6e6] shadow-xl p-4 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#e6e6e6]">
+      <div className="flex shrink-0 items-center justify-between pb-3 border-b border-[#e6e6e6]">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-[#000000]">Link Session To</span>
         </div>
@@ -117,7 +117,7 @@ export function SessionLinkPicker({
       </div>
 
       {/* Type Tabs */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#f6f5f4] rounded-lg mt-3">
+      <div className="grid shrink-0 grid-cols-3 gap-1.5 p-1 bg-[#f6f5f4] rounded-lg mt-3">
         <button
           type="button"
           onClick={() => setActiveTab("topic")}
@@ -157,7 +157,7 @@ export function SessionLinkPicker({
       </div>
 
       {/* Search Input */}
-      <div className="relative mt-3">
+      <div className="relative shrink-0 mt-3">
         <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#a39e98]" />
         <input
           type="text"
@@ -169,7 +169,7 @@ export function SessionLinkPicker({
       </div>
 
       {/* Item List */}
-      <div className="mt-3 max-h-52 overflow-y-auto divide-y divide-[#f6f5f4] border border-[#e6e6e6] rounded-lg">
+      <div className="mt-3 flex-1 min-h-0 overflow-y-auto divide-y divide-[#f6f5f4] border border-[#e6e6e6] rounded-lg">
         {/* Unlink Option */}
         <button
           type="button"

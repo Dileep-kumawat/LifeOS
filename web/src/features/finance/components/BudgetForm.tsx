@@ -62,16 +62,27 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-md bg-white p-6 rounded-xl border border-neutral-200 shadow-sm"
+      className="flex flex-col rounded-xl border border-neutral-200 bg-white shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200"
     >
-      <div className="flex flex-col gap-1 border-b border-neutral-100 pb-3">
-        <h3 className="text-lg font-semibold text-neutral-900">
-          {isEdit ? `Edit Budget: ${initialValues?.category}` : "Create New Category Budget"}
-        </h3>
-        <p className="text-xs text-neutral-500">
-          Set spending limits per category to track overspend automatically.
-        </p>
+      <div className="flex shrink-0 items-start justify-between border-b border-neutral-100 px-6 py-4 bg-[#faf9f8]">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold text-neutral-900">
+            {isEdit ? `Edit Budget: ${initialValues?.category}` : "Create New Category Budget"}
+          </h3>
+          <p className="text-xs text-neutral-500">
+            Set spending limits per category to track overspend automatically.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-neutral-400 hover:text-neutral-600 text-sm p-1 rounded-md"
+        >
+          ✕
+        </button>
       </div>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
 
       {activeError && (
         <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
@@ -147,9 +158,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           <option value="monthly">Monthly (Default)</option>
         </select>
       </div>
+      </div>
 
       {/* Form Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+      <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t border-neutral-100 bg-[#faf9f8]">
         <button
           type="button"
           onClick={onCancel}

@@ -390,7 +390,7 @@ export function FinancePage() {
 
       {/* Budget Form Modal */}
       {isBudgetFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs overflow-y-auto">
           <BudgetForm
             categories={categories}
             initialValues={

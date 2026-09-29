@@ -81,22 +81,23 @@ export function HabitForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-6 rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-md max-w-lg w-full"
+      className="flex flex-col rounded-xl border border-[#e6e6e6] bg-white shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200"
     >
-      <div className="flex items-center justify-between border-b border-[#e6e6e6] pb-4">
-        <h2 className="text-xl font-bold text-[#000000]">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#e6e6e6] px-6 py-4 bg-[#faf9f8]">
+        <h2 className="text-lg sm:text-xl font-bold text-[#000000]">
           {initialValues?._id ? "Edit Habit" : "Create New Habit"}
         </h2>
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs text-[#615d59] hover:text-[#000000]"
+          className="text-xs text-[#615d59] hover:text-[#000000] p-1 rounded-md transition-colors"
         >
           Cancel
         </button>
       </div>
 
-      {/* Habit Title */}
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 sm:p-6">
+        {/* Habit Title */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="habit-title" className="text-xs font-semibold text-[#31302e]">
           Habit Title <span className="text-red-500">*</span>
@@ -240,20 +241,21 @@ export function HabitForm({
           </p>
         )}
       </div>
+      </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 border-t border-[#e6e6e6] pt-4">
+      <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#e6e6e6] px-6 py-4 bg-[#faf9f8]">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-[#e6e6e6] bg-white px-4 py-2 text-xs font-medium text-[#31302e] hover:bg-[#f6f5f4]"
+          className="rounded-lg border border-[#e6e6e6] bg-white px-4 py-2 text-xs font-medium text-[#31302e] hover:bg-[#f6f5f4] transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting || !title.trim()}
-          className="rounded-lg bg-[#0075de] px-5 py-2 text-xs font-semibold text-white hover:bg-[#005bab] disabled:opacity-50"
+          className="rounded-lg bg-[#0075de] px-5 py-2 text-xs font-semibold text-white hover:bg-[#005bab] disabled:opacity-50 transition-colors shadow-xs"
         >
           {isSubmitting ? "Saving..." : initialValues?._id ? "Update Habit" : "Create Habit"}
         </button>

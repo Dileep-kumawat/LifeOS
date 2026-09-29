@@ -781,7 +781,7 @@ export function StudyPage() {
 
       {/* Flashcard Modal */}
       {isFlashcardModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs"
             onClick={() => {
@@ -789,29 +789,44 @@ export function StudyPage() {
               setEditingFlashcard(null);
             }}
           />
-          <div className="relative w-full max-w-lg rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-xl z-50">
-            <h3 className="text-lg font-bold text-[#000000] mb-4">
-              {editingFlashcard ? "Edit Flashcard" : "New Flashcard"}
-            </h3>
-            <FlashcardForm
-              subjects={subjects}
-              topics={topics}
-              defaultSubjectId={selectedSubjectId || undefined}
-              initialData={editingFlashcard || undefined}
-              onCancel={() => {
-                setIsFlashcardModalOpen(false);
-                setEditingFlashcard(null);
-              }}
-              onSubmit={async (data) => {
-                if (editingFlashcard) {
-                  await updateFlashcardMutation.mutateAsync({ id: editingFlashcard.id, data });
-                } else {
-                  await createFlashcardMutation.mutateAsync(data);
-                }
-                setIsFlashcardModalOpen(false);
-                setEditingFlashcard(null);
-              }}
-            />
+          <div className="relative w-full max-w-lg rounded-xl border border-[#e6e6e6] bg-white shadow-xl z-50 my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#e6e6e6] px-6 py-4 bg-[#faf9f8]">
+              <h3 className="text-lg font-bold text-[#000000]">
+                {editingFlashcard ? "Edit Flashcard" : "New Flashcard"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFlashcardModalOpen(false);
+                  setEditingFlashcard(null);
+                }}
+                className="text-[#615d59] hover:text-[#000000] p-1 rounded-md transition-colors"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <FlashcardForm
+                subjects={subjects}
+                topics={topics}
+                defaultSubjectId={selectedSubjectId || undefined}
+                initialData={editingFlashcard || undefined}
+                onCancel={() => {
+                  setIsFlashcardModalOpen(false);
+                  setEditingFlashcard(null);
+                }}
+                onSubmit={async (data) => {
+                  if (editingFlashcard) {
+                    await updateFlashcardMutation.mutateAsync({ id: editingFlashcard.id, data });
+                  } else {
+                    await createFlashcardMutation.mutateAsync(data);
+                  }
+                  setIsFlashcardModalOpen(false);
+                  setEditingFlashcard(null);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

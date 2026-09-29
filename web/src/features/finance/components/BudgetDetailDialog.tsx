@@ -20,10 +20,10 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
   if (!isOpen || !budget) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-xl max-w-lg w-full p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-xl max-w-lg w-full my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-neutral-100 pb-4">
+        <div className="flex shrink-0 items-start justify-between border-b border-neutral-100 px-6 py-4 bg-[#faf9f8]">
           <div>
             <span className="text-xs uppercase tracking-wider font-semibold text-neutral-400">
               Budget Detail
@@ -39,6 +39,7 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
           </button>
         </div>
 
+        <div className="p-6 flex flex-col gap-6 overflow-y-auto flex-1">
         {/* Progress Bar Display */}
         <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-100">
           <BudgetProgressBar
@@ -89,9 +90,10 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
             </div>
           )}
         </div>
+        </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <div className="flex shrink-0 items-center justify-between px-6 py-4 border-t border-neutral-100 bg-[#faf9f8]">
           <button
             onClick={() => onDelete(budget.id)}
             className="px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-full transition-colors"
@@ -101,13 +103,13 @@ export const BudgetDetailDialog: React.FC<BudgetDetailDialogProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full"
+              className="px-4 py-2 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors"
             >
               Close
             </button>
             <button
               onClick={() => onEdit(budget)}
-              className="px-4 py-2 text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-full"
+              className="px-4 py-2 text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-full transition-colors shadow-xs"
             >
               Edit Limit
             </button>

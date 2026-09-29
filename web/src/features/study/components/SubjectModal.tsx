@@ -80,7 +80,7 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
@@ -88,9 +88,9 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-md rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-xl border border-[#e6e6e6] bg-white shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#e6e6e6]">
+        <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#faf9f8]">
           <h2 className="text-lg font-bold text-[#000000]">{title}</h2>
           <button
             type="button"
@@ -103,7 +103,8 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-1 flex-col overflow-hidden">
+          <div className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Subject Name */}
           <div>
             <label className="block text-xs font-semibold text-[#31302e] uppercase tracking-wider mb-1.5">
@@ -181,8 +182,10 @@ export const SubjectModal: React.FC<SubjectModalProps> = ({
             </p>
           </div>
 
+          </div>
+
           {/* Buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#e6e6e6]">
+          <div className="flex shrink-0 items-center justify-end gap-2.5 px-6 py-4 border-t border-[#e6e6e6] bg-[#faf9f8]">
             <button
               type="button"
               onClick={onClose}

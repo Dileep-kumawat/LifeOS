@@ -94,7 +94,7 @@ export function GoalListPage() {
 
       {/* Goal Form Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
           <GoalForm
             onSubmit={async (data) => {
               await createGoalMutation.mutateAsync(data);

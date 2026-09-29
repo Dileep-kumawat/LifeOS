@@ -470,6 +470,10 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
   - Sourced directly from `mobile/assets/` (`icon.png`, `adaptive-icon.png`, `splash-icon.png`, `favicon.png`) into `mobile-v2/assets/` with `#ffffff` background matching `mobile/app.json`'s `android.adaptiveIcon.backgroundColor` and `splash.backgroundColor`.
   - Density buckets for Android adaptive icon foreground (`mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_foreground.png`), legacy launcher icons (`ic_launcher.png`, `ic_launcher_round.png`), and splash screens (`drawable-{port,land}-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/splash.png`, `drawable/splash.png`) are generated via `npm run generate:assets` (`mobile-v2/scripts/generate-assets.ps1`).
   - Adaptive icon foreground layers are centered within the 66% Android safe-zone radius (40% mark width, max distance from center 115.36px on a 132px safe-zone radius at xxxhdpi), ensuring zero cropping across circle, squircle, and rounded launcher masks. Stale template vectors (`drawable-v24/ic_launcher_foreground.xml` and `drawable/ic_launcher_background.xml`) are purged.
+- **Responsive Form Modal Layout & Viewport Overflow Protection**:
+  - Modal overlay containers MUST include `overflow-y-auto` (e.g., `fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/40 backdrop-blur-xs`).
+  - Modal cards MUST specify `my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden` (or `overflow-y-auto` on Dialog content containers) to prevent browser flex-centering from clipping off-screen headers into negative coordinate space when dynamic form data (e.g., milestones checklist, long descriptions, keyboard popup) expands.
+  - Multi-input forms (`GoalForm`, `HabitForm`, `BudgetForm`, `TopicModal`, `SubjectModal`, `FlashcardForm`) MUST separate structure into pinned `shrink-0` header, `flex-1 overflow-y-auto` form body, and pinned `shrink-0` action button footer so users never lose cancel/submit affordances on mobile devices.
 
 ---
 
