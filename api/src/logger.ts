@@ -25,6 +25,11 @@ export const logger = pino({
       "resetToken",
       "passwordResetTokenHash",
       "BREVO_API_KEY",
+      "FIREBASE_SERVICE_ACCOUNT_JSON",
+      "private_key",
+      "privateKey",
+      "keys.auth",
+      "keys.p256dh",
       "apiKey",
       "api-key",
       "code"

@@ -175,11 +175,21 @@ export const createPushSubscriptionSchema = z.object({
 });
 export type CreatePushSubscriptionInput = z.infer<typeof createPushSubscriptionSchema>;
 
-/** DELETE /notifications/push-subscription body — address the subscription by endpoint. */
+/** DELETE /notifications/push-subscription & DELETE /notifications/subscription body */
 export const deletePushSubscriptionSchema = z.object({
-  endpoint: z.string().url("endpoint must be a valid URL")
+  endpoint: z.string().min(1, "endpoint is required")
 });
 export type DeletePushSubscriptionInput = z.infer<typeof deletePushSubscriptionSchema>;
+
+export const deleteSubscriptionSchema = deletePushSubscriptionSchema;
+export type DeleteSubscriptionInput = DeletePushSubscriptionInput;
+
+/** POST /notifications/test body */
+export const testNotificationSchema = z.object({
+  title: z.string().max(100).optional(),
+  body: z.string().max(300).optional()
+});
+export type TestNotificationInput = z.infer<typeof testNotificationSchema>;
 
 /** GET /notifications query — pagination + readStatus filter. */
 export const listNotificationsQuerySchema = z.object({

@@ -22,6 +22,9 @@ export function getDeepLinkUrl(notification: DeepLinkSource): string {
   if (typeof data.href === "string" && data.href.length > 0) {
     return data.href;
   }
+  if (typeof data.deepLink === "string" && data.deepLink.length > 0) {
+    return data.deepLink;
+  }
 
   switch (notification.type) {
     case "calendar_reminder":
@@ -36,7 +39,21 @@ export function getDeepLinkUrl(notification: DeepLinkSource): string {
       return typeof data.budgetId === "string" && data.budgetId
         ? `/finance?tab=budgets&budgetId=${encodeURIComponent(data.budgetId)}`
         : "/finance?tab=budgets";
+    case "focus_session_alert":
+      return "/focus";
+    case "daily_summary":
+      return "/dashboard";
     default:
       return "/";
   }
 }
+
+export function resolveNativePushRoute(data: Record<string, any> = {}): string {
+  if (typeof data.href === "string" && data.href) return data.href;
+  if (typeof data.deepLink === "string" && data.deepLink) return data.deepLink;
+  return getDeepLinkUrl({
+    type: data.type,
+    payload: { data }
+  });
+}
+

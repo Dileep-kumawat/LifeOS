@@ -24,6 +24,38 @@ export function serviceWorkerSupported(): boolean {
   return typeof navigator !== "undefined" && "serviceWorker" in navigator;
 }
 
+/** Detects if current browser is Brave via official brave API. */
+export async function isBraveBrowser(): Promise<boolean> {
+  if (typeof navigator === "undefined") return false;
+  try {
+    const nav = navigator as unknown as { brave?: { isBrave?: () => Promise<boolean> } };
+    if (nav.brave && typeof nav.brave.isBrave === "function") {
+      return await nav.brave.isBrave();
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/** Detects if current environment is iOS Safari / WebKit. */
+export function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && (navigator.maxTouchPoints || 0) > 1)
+  );
+}
+
+/** Detects if web app is running as an installed PWA on home screen. */
+export function isStandalonePWA(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true
+  );
+}
+
 /**
  * VAPID public key (base64url) → the Uint8Array the PushManager expects for
  * `applicationServerKey`. Reads `VITE_VAPID_PUBLIC_KEY`; returns null when
@@ -42,6 +74,22 @@ export function getApplicationServerKey(): Uint8Array<ArrayBuffer> | null {
     return bytes;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Unsubscribe any stale pre-existing subscription to prevent key mismatch AbortErrors.
+ */
+export async function clearStalePushSubscription(
+  registration: ServiceWorkerRegistration
+): Promise<void> {
+  try {
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) {
+      await existing.unsubscribe();
+    }
+  } catch {
+    /* best-effort cleanup */
   }
 }
 

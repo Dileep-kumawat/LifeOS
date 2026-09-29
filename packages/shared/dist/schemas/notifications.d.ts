@@ -674,7 +674,7 @@ export declare const createPushSubscriptionSchema: z.ZodObject<{
     userAgent?: string | undefined;
 }>;
 export type CreatePushSubscriptionInput = z.infer<typeof createPushSubscriptionSchema>;
-/** DELETE /notifications/push-subscription body — address the subscription by endpoint. */
+/** DELETE /notifications/push-subscription & DELETE /notifications/subscription body */
 export declare const deletePushSubscriptionSchema: z.ZodObject<{
     endpoint: z.ZodString;
 }, "strip", z.ZodTypeAny, {
@@ -683,6 +683,26 @@ export declare const deletePushSubscriptionSchema: z.ZodObject<{
     endpoint: string;
 }>;
 export type DeletePushSubscriptionInput = z.infer<typeof deletePushSubscriptionSchema>;
+export declare const deleteSubscriptionSchema: z.ZodObject<{
+    endpoint: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    endpoint: string;
+}, {
+    endpoint: string;
+}>;
+export type DeleteSubscriptionInput = DeletePushSubscriptionInput;
+/** POST /notifications/test body */
+export declare const testNotificationSchema: z.ZodObject<{
+    title: z.ZodOptional<z.ZodString>;
+    body: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    title?: string | undefined;
+    body?: string | undefined;
+}, {
+    title?: string | undefined;
+    body?: string | undefined;
+}>;
+export type TestNotificationInput = z.infer<typeof testNotificationSchema>;
 /** GET /notifications query — pagination + readStatus filter. */
 export declare const listNotificationsQuerySchema: z.ZodObject<{
     readStatus: z.ZodOptional<z.ZodEnum<["read", "unread"]>>;

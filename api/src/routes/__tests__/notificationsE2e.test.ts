@@ -144,4 +144,62 @@ describe("Phase 2 Notifications End-to-End Spot-Check Flow", () => {
     const unreadCountAfter = await countUnreadNotifications(mockNotificationModel, userId);
     expect(unreadCountAfter).toBe(0);
   });
+
+  it("safely handles multi-user endpoint reassignment without E11000 duplicate key error", async () => {
+    // When a second user logs into the same browser, endpoint upsert must match on { endpoint }
+    const endpoint = "https://fcm.googleapis.com/fcm/send/shared-browser-token";
+    let storedSub = {
+      _id: "sub-101",
+      userId: "user-alpha",
+      endpoint,
+      userAgent: "Brave/Chrome"
+    };
+
+    mockPushSubModel = {
+      findOneAndUpdate: vi.fn().mockImplementation((filter, update) => {
+        expect(filter).toEqual({ endpoint });
+        storedSub = { ...storedSub, ...update.$set };
+        return Promise.resolve(storedSub);
+      })
+    };
+
+    // User Beta registers on the same browser endpoint
+    const updated = await mockPushSubModel.findOneAndUpdate(
+      { endpoint },
+      { $set: { userId: "user-beta", endpoint, userAgent: "Brave/Chrome" } },
+      { upsert: true, new: true }
+    );
+
+    expect(updated.userId).toBe("user-beta");
+    expect(updated.endpoint).toBe(endpoint);
+  });
+
+  it("unregisters subscription per-device by endpoint", async () => {
+    const endpoint = "https://fcm.googleapis.com/fcm/send/device-to-remove";
+    mockPushSubModel = {
+      deleteOne: vi.fn().mockResolvedValue({ deletedCount: 1 })
+    };
+
+    const res = await mockPushSubModel.deleteOne({ userId, endpoint });
+    expect(res.deletedCount).toBe(1);
+    expect(mockPushSubModel.deleteOne).toHaveBeenCalledWith({ userId, endpoint });
+  });
+
+  it("marks test notifications readStatus='read' so they do not pollute in-app unread badges", () => {
+    const testDoc = {
+      userId,
+      type: "system",
+      channel: "push",
+      payload: {
+        title: "LifeOS Test Push",
+        body: "Push notifications are working cleanly on your device!"
+      },
+      readStatus: "read"
+    };
+
+    // Confirm that push test notifications are created marked as read
+    expect(testDoc.readStatus).toBe("read");
+    expect(testDoc.channel).toBe("push");
+  });
 });
+

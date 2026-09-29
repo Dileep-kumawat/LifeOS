@@ -3,6 +3,7 @@ import type {
   CreatePushSubscriptionInput,
   Notification as AppNotification,
   NotificationPreferences,
+  TestNotificationInput,
   UpdateNotificationPreferencesInput
 } from "@lifeos/shared";
 
@@ -84,5 +85,48 @@ export const notificationsApi = {
       }
     );
     return response.data;
+  },
+
+  async registerFcmToken(
+    token: string,
+    meta?: { deviceType?: "android" | "ios" | "web"; deviceName?: string }
+  ): Promise<{ subscription: { id: string; endpoint: string; deviceType?: string } }> {
+    const response = await apiClient.post<{ subscription: { id: string; endpoint: string; deviceType?: string } }>(
+      "/notifications/fcm-token",
+      {
+        token,
+        deviceType: meta?.deviceType || "android",
+        deviceName: meta?.deviceName
+      }
+    );
+    return response.data;
+  },
+
+  async unregisterFcmToken(token: string): Promise<{ deleted: number }> {
+    const response = await apiClient.delete<{ deleted: number }>("/notifications/fcm-token", {
+      data: { token }
+    });
+    return response.data;
+  },
+
+  async unregisterSubscription(endpoint: string): Promise<{ deleted: number }> {
+    const response = await apiClient.delete<{ deleted: number }>("/notifications/subscription", {
+      data: { endpoint }
+    });
+    return response.data;
+  },
+
+  async sendTestNotification(input?: TestNotificationInput): Promise<{
+    success: boolean;
+    message: string;
+    notificationId: string;
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      notificationId: string;
+    }>("/notifications/test", input || {});
+    return response.data;
   }
 };
+

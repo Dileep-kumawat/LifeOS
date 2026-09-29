@@ -52,7 +52,8 @@ const envSchema = z.object({
   MISTRAL_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
-  GOOGLE_API_KEY: z.string().optional()
+  GOOGLE_API_KEY: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

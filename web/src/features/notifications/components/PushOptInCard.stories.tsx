@@ -4,12 +4,25 @@ import { PushOptInCard } from "./PushOptInCard";
 import type { UsePushPermission } from "../hooks/usePushPermission";
 
 function permissionMock(overrides: Partial<UsePushPermission>): UsePushPermission {
+  const status = overrides.status ?? "default";
+  const defaultDeviceState =
+    status === "subscribed"
+      ? "registered"
+      : status === "denied"
+        ? "blocked"
+        : status === "unsupported"
+          ? "unsupported"
+          : "not_registered";
+
   return {
-    status: "default",
+    status,
+    deviceState: defaultDeviceState,
     isUpdating: false,
+    isSendingTest: false,
     error: null,
     request: () => Promise.resolve(),
     disable: () => Promise.resolve(),
+    sendTest: () => Promise.resolve({ success: true, message: "Test sent" }),
     ...overrides
   };
 }

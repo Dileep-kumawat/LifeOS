@@ -6,6 +6,9 @@
     if (typeof data.href === "string" && data.href.length > 0) {
       return data.href;
     }
+    if (typeof data.deepLink === "string" && data.deepLink.length > 0) {
+      return data.deepLink;
+    }
     switch (notification.type) {
       case "calendar_reminder":
         return typeof data.eventId === "string" && data.eventId ? `/calendar?eventId=${encodeURIComponent(data.eventId)}` : "/calendar";
@@ -13,6 +16,10 @@
         return typeof data.habitId === "string" && data.habitId ? `/habits?habitId=${encodeURIComponent(data.habitId)}` : "/habits";
       case "budget_alert":
         return typeof data.budgetId === "string" && data.budgetId ? `/finance?tab=budgets&budgetId=${encodeURIComponent(data.budgetId)}` : "/finance?tab=budgets";
+      case "focus_session_alert":
+        return "/focus";
+      case "daily_summary":
+        return "/dashboard";
       default:
         return "/";
     }
@@ -42,11 +49,10 @@
     const title = data.title || String(event.data?.text() ?? "") || "LifeOS";
     const options = {
       body: data.body || "",
-      icon: data.icon,
-      badge: data.badge,
-      tag: "lifeos",
+      icon: data.icon || "/web-app-manifest-192x192.png",
+      badge: data.badge || "/favicon-96x96.png",
+      tag: `lifeos-${data.type ?? "alert"}`,
       data: {
-        // Keep only the deep-link payload the click handler needs.
         type: data.type ?? "system",
         payload: { data: data.data ?? {} }
       }
@@ -63,13 +69,49 @@
           type: "window",
           includeUncontrolled: true
         });
-        const visible = clients.find((c) => c.visibilityState === "visible");
-        const target = visible ?? clients[0];
+        const origin = self.location.origin;
+        const visible = clients.find((c) => {
+          try {
+            return c.visibilityState === "visible" && new URL(c.url).origin === origin;
+          } catch {
+            return false;
+          }
+        });
+        const target = visible ?? clients.find((c) => {
+          try {
+            return new URL(c.url).origin === origin;
+          } catch {
+            return false;
+          }
+        });
         if (target) {
           await target.navigate(url);
           await target.focus();
         } else {
           await self.clients.openWindow(url);
+        }
+      })()
+    );
+  });
+  self.addEventListener("pushsubscriptionchange", (event) => {
+    event.waitUntil(
+      (async () => {
+        try {
+          const oldSubscription = event.oldSubscription;
+          const newSubscription = event.newSubscription || await self.registration.pushManager.subscribe(oldSubscription?.options);
+          if (!newSubscription) return;
+          const clients = await self.clients.matchAll({
+            type: "window",
+            includeUncontrolled: true
+          });
+          for (const client of clients) {
+            client.postMessage({
+              type: "PUSH_SUBSCRIPTION_CHANGED",
+              endpoint: newSubscription.endpoint,
+              subscription: newSubscription.toJSON()
+            });
+          }
+        } catch {
         }
       })()
     );

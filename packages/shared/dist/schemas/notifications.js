@@ -142,9 +142,15 @@ export const createPushSubscriptionSchema = z.object({
     }),
     userAgent: z.string().max(500).optional()
 });
-/** DELETE /notifications/push-subscription body — address the subscription by endpoint. */
+/** DELETE /notifications/push-subscription & DELETE /notifications/subscription body */
 export const deletePushSubscriptionSchema = z.object({
-    endpoint: z.string().url("endpoint must be a valid URL")
+    endpoint: z.string().min(1, "endpoint is required")
+});
+export const deleteSubscriptionSchema = deletePushSubscriptionSchema;
+/** POST /notifications/test body */
+export const testNotificationSchema = z.object({
+    title: z.string().max(100).optional(),
+    body: z.string().max(300).optional()
 });
 /** GET /notifications query — pagination + readStatus filter. */
 export const listNotificationsQuerySchema = z.object({

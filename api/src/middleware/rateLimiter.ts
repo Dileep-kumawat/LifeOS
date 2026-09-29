@@ -178,3 +178,18 @@ export const userDataExportRateLimiter = createRedisRateLimiter({
     return userId ? `export:${userId}` : `ip:${ip}`;
   }
 });
+
+/**
+ * Test push notification trigger rate limiter: 5 requests per 10 minutes per user.
+ */
+export const testNotificationRateLimiter = createRedisRateLimiter({
+  keyPrefix: "test_notification",
+  windowSeconds: 10 * 60,
+  maxAttempts: 5,
+  message: "Too many test notifications requested. Please wait a few minutes before trying again.",
+  keyGenerator: (req) => {
+    const userId = (req as any).user?._id?.toString();
+    const ip = req.ip || req.socket.remoteAddress || "unknown_ip";
+    return userId ? `test_notif:${userId}` : `ip:${ip}`;
+  }
+});

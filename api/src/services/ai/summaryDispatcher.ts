@@ -43,8 +43,11 @@ export async function dispatchDailySummaries(
     const currentHHMM = forcedTime ?? getCurrentHHMM(now, userTimezone);
     const dateKey = forcedDateKey ?? dateKeyInZone(now, userTimezone);
 
-    // If current time matches delivery time (or if time is forced)
-    if (currentHHMM === userDeliveryTime || forcedTime) {
+    // Catch-up logic: triggers once current local time reaches or passes the configured delivery time
+    // on this date. If a Render restart or redeploy caused the exact 07:00 minute tick to be missed,
+    // the next 5-minute interval catches up. Existing Summary lookup + dedupeKey guarantees zero duplicates.
+    const isDue = forcedTime ? true : currentHHMM >= userDeliveryTime;
+    if (isDue) {
       const userId = user._id.toString();
       const existing = await Summary.findOne({ userId, date: dateKey });
 

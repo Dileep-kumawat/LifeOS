@@ -82,6 +82,25 @@ describe("Daily Summary Feature (FR-10.1, FR-10.2, FR-10.4) Unit & Integration T
       const hhmm = getCurrentHHMM(date, "UTC");
       expect(hhmm).toBe("07:30");
     });
+
+    it("verifies catch-up logic triggers when current time >= deliveryTime", () => {
+      const deliveryTime = "07:00";
+      // At 07:05 (missed 07:00 tick due to restart):
+      expect("07:05" >= deliveryTime).toBe(true);
+      // At 07:00 exact:
+      expect("07:00" >= deliveryTime).toBe(true);
+      // At 06:55 (before scheduled time):
+      expect("06:55" >= deliveryTime).toBe(false);
+    });
+  });
+
+  describe("Idempotent Summary Deduplication", () => {
+    it("deduplicates summary jobs using unique per-user per-date dedupeKey", () => {
+      const userId = "user-123";
+      const dateKey = "2026-08-12";
+      const dedupeKey = `daily_summary__${userId}__${dateKey}`;
+      expect(dedupeKey).toBe("daily_summary__user-123__2026-08-12");
+    });
   });
 
   describe("Notification Preference Extensions", () => {

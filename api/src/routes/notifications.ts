@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import {
   createPushSubscriptionSchema,
   deletePushSubscriptionSchema,
+  deleteSubscriptionSchema,
+  testNotificationSchema,
   listNotificationsQuerySchema,
   markAllReadSchema,
   notificationIdParamsSchema,
@@ -25,6 +27,9 @@ import {
   applyPreferenceUpdates,
   DEFAULT_PREFERENCES
 } from "../services/notifications/preferences.js";
+import { testNotificationRateLimiter } from "../middleware/rateLimiter.js";
+import { enqueueJob } from "../services/queue.js";
+import { DELIVER_NOTIFICATION_TYPE } from "../services/notifications/scheduler.js";
 
 export const notificationsRouter = Router();
 
@@ -445,9 +450,11 @@ notificationsRouter.post(
     };
 
     const subscription = await PushSubscription.findOneAndUpdate(
-      { userId, endpoint },
+      { endpoint },
       {
         $set: {
+          userId,
+          type: "web",
           endpoint,
           keys,
           userAgent: userAgent ?? req.headers["user-agent"] ?? ""
@@ -573,9 +580,10 @@ notificationsRouter.post(
 
     const endpoint = `fcm:${token}`;
     const subscription = await PushSubscription.findOneAndUpdate(
-      { userId, endpoint },
+      { endpoint },
       {
         $set: {
+          userId,
           type: "fcm",
           endpoint,
           fcmToken: token,
@@ -628,6 +636,125 @@ notificationsRouter.delete("/notifications/fcm-token", async (req: Request, res:
   const result = await PushSubscription.deleteOne({ userId, endpoint });
   return res.json({ deleted: result.deletedCount ?? 0 });
 });
+
+/**
+ * @openapi
+ * /notifications/test:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Trigger an immediate test push notification
+ *     description: |
+ *       Dispatches an immediate test push notification to all registered
+ *       Web Push subscriptions and FCM devices for the authenticated user.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string, example: "LifeOS Test Notification" }
+ *               body: { type: string, example: "Push notifications are working cleanly on your device!" }
+ *     responses:
+ *       200:
+ *         description: Test notification scheduled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 notificationId: { type: string }
+ *       401:
+ *         description: Authentication required
+ *       429:
+ *         description: Rate limit exceeded
+ */
+notificationsRouter.post(
+  "/notifications/test",
+  testNotificationRateLimiter,
+  validate(testNotificationSchema),
+  async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const body = (req.body ?? {}) as { title?: string; body?: string };
+    const title = body.title || "LifeOS Test Notification";
+    const content = body.body || "Push notifications are working cleanly on your device!";
+
+    const item = {
+      title,
+      body: content,
+      data: { href: "/settings", type: "system" }
+    };
+
+    const doc = await Notification.create({
+      userId,
+      type: "system",
+      channel: "push",
+      payload: {
+        title,
+        body: content,
+        data: { href: "/settings", type: "system" },
+        items: [item]
+      },
+      scheduledFor: new Date(),
+      deliveryStatus: "pending",
+      readStatus: "read"
+    });
+
+    await enqueueJob(DELIVER_NOTIFICATION_TYPE, { notificationId: doc._id.toString() });
+
+    return res.json({
+      success: true,
+      message: "Test notification enqueued for delivery",
+      notificationId: doc._id.toString()
+    });
+  }
+);
+
+/**
+ * @openapi
+ * /notifications/subscription:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Unregister a push subscription or device token by endpoint
+ *     description: |
+ *       Unregisters either a Web Push endpoint URL or an FCM token (`fcm:...`).
+ *       Guaranteed safe per-device unsubscribe.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [endpoint]
+ *             properties:
+ *               endpoint: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subscription removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 deleted: { type: number }
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Authentication required
+ */
+notificationsRouter.delete(
+  "/notifications/subscription",
+  validate(deleteSubscriptionSchema),
+  async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const { endpoint } = req.body as { endpoint: string };
+
+    const result = await PushSubscription.deleteOne({ userId, endpoint });
+    return res.json({ deleted: result.deletedCount ?? 0 });
+  }
+);
 
 /**
  * @openapi
