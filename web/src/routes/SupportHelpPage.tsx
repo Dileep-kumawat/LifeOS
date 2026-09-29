@@ -26,7 +26,8 @@ import {
   CheckCircle2,
   Clock,
   Layers,
-  HeartHandshake
+  HeartHandshake,
+  Settings
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
@@ -817,8 +818,9 @@ export function SupportHelpPage() {
               variant="outline"
               size="lg"
               onClick={() => navigate("/settings")}
-              className="border-white/30 text-white hover:bg-white/10 rounded-full text-xs font-semibold"
+              className="bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60 hover:text-white rounded-full text-sm font-semibold flex items-center justify-center gap-2 px-6"
             >
+              <Settings className="size-4" />
               <span>Manage Settings</span>
             </Button>
           </div>
