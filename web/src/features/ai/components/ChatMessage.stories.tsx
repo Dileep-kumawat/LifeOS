@@ -88,3 +88,38 @@ export const UncertaintySignal: Story = {
     }
   }
 };
+
+export const MarkdownWithTableAndCode: Story = {
+  args: {
+    message: {
+      id: "msg-6",
+      role: "assistant",
+      content: `Here is your requested schedule and breakdown:
+
+### Tomorrow's Schedule
+| Time | Item | Action |
+|------|------|--------|
+| 08:00 | Deep work | Focus |
+| 10:30 | Review PRs | Collaboration |
+| 14:00 | System Architecture | Planning |
+
+#### Action Items:
+- [x] Complete morning reflection
+- [ ] Review sprint goals
+- [ ] Prepare weekly report
+
+Here is a quick helper snippet:
+\`\`\`typescript
+interface ScheduleItem {
+  time: string;
+  item: string;
+  action: string;
+}
+\`\`\`
+
+For details, visit [LifeOS Documentation](https://lifeos.internal).`,
+      createdAt: "2026-08-11T10:03:00.000Z"
+    }
+  }
+};
+
