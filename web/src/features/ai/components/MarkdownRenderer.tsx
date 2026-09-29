@@ -142,7 +142,7 @@ const PreBlock: React.FC<React.ComponentPropsWithoutRef<"pre"> & ExtraProps> = (
   };
 
   return (
-    <div className="group/code relative my-3 rounded-lg overflow-hidden border border-[#e5e5e5] dark:border-neutral-800 bg-[#1e1e1e] text-slate-100 shadow-2xs font-mono text-xs">
+    <div className="group/code relative my-3 rounded-xl overflow-hidden border border-hairline bg-[#1e1e1e] text-slate-100 shadow-2xs font-mono text-xs">
       <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#2d2d2d] border-b border-[#3e3e3e] text-slate-400">
         <span className="text-[11px] font-medium lowercase tracking-wide">
           {language}
@@ -181,14 +181,15 @@ const PreBlock: React.FC<React.ComponentPropsWithoutRef<"pre"> & ExtraProps> = (
 
 /**
  * Static mapping of HTML elements to custom styled Tailwind components.
+ * Configured to seamlessly inherit the chat UI's light Notion theme.
  */
 const markdownComponents: Components = {
-  // Tables: horizontal scroll wrapper, rounded border, shaded header, top-aligned padded cells
+  // Tables: horizontal scroll wrapper, light card border, shaded light header, clean rows
   table: ({ node: _node, children, className, ...props }) => (
-    <div className="my-3 w-full overflow-x-auto rounded-lg border border-[#e5e5e5] dark:border-neutral-800 shadow-2xs">
+    <div className="my-3 w-full overflow-x-auto rounded-xl border border-hairline bg-surface shadow-2xs">
       <table
         className={clsx(
-          "w-full min-w-[320px] border-collapse text-left text-xs sm:text-sm text-[#0d0d0d] dark:text-neutral-200",
+          "w-full min-w-[320px] border-collapse text-left text-xs sm:text-sm text-inherit",
           className
         )}
         {...props}
@@ -200,7 +201,7 @@ const markdownComponents: Components = {
   thead: ({ node: _node, children, className, ...props }) => (
     <thead
       className={clsx(
-        "bg-[#f6f5f4] dark:bg-neutral-800/80 border-b border-[#e5e5e5] dark:border-neutral-800 text-[#0d0d0d] dark:text-neutral-100 font-semibold",
+        "bg-canvas-soft border-b border-hairline text-ink font-semibold",
         className
       )}
       {...props}
@@ -211,7 +212,7 @@ const markdownComponents: Components = {
   tbody: ({ node: _node, children, className, ...props }) => (
     <tbody
       className={clsx(
-        "divide-y divide-[#e5e5e5] dark:divide-neutral-800 bg-white dark:bg-neutral-900",
+        "divide-y divide-hairline bg-surface",
         className
       )}
       {...props}
@@ -222,7 +223,7 @@ const markdownComponents: Components = {
   tr: ({ node: _node, children, className, ...props }) => (
     <tr
       className={clsx(
-        "hover:bg-[#fbfbfa] dark:hover:bg-neutral-800/40 transition-colors",
+        "hover:bg-canvas-soft/60 transition-colors",
         className
       )}
       {...props}
@@ -233,7 +234,7 @@ const markdownComponents: Components = {
   th: ({ node: _node, children, className, ...props }) => (
     <th
       className={clsx(
-        "px-3.5 py-2.5 sm:px-4 sm:py-3 text-left font-semibold align-top text-[#0d0d0d] dark:text-neutral-100 whitespace-nowrap",
+        "px-4 py-2.5 sm:py-3 text-left font-semibold align-top text-ink whitespace-nowrap",
         className
       )}
       {...props}
@@ -244,7 +245,7 @@ const markdownComponents: Components = {
   td: ({ node: _node, children, className, ...props }) => (
     <td
       className={clsx(
-        "px-3.5 py-2.5 sm:px-4 sm:py-3 align-top leading-relaxed text-[#31302e] dark:text-neutral-300",
+        "px-4 py-2.5 sm:py-3 align-top leading-relaxed text-inherit",
         className
       )}
       {...props}
@@ -253,11 +254,11 @@ const markdownComponents: Components = {
     </td>
   ),
 
-  // Paragraphs
+  // Paragraphs inherit color, size, and line-height directly from chat container
   p: ({ node: _node, children, className, ...props }) => (
     <p
       className={clsx(
-        "mb-2.5 last:mb-0 leading-relaxed text-[#31302e] dark:text-neutral-200",
+        "mb-2.5 last:mb-0 leading-relaxed text-inherit",
         className
       )}
       {...props}
@@ -266,13 +267,13 @@ const markdownComponents: Components = {
     </p>
   ),
 
-  // Lists
+  // Lists inherit normal chat text styling
   ul: ({ node: _node, children, className, ...props }) => {
     const isTaskList = className?.includes("contains-task-list");
     return (
       <ul
         className={clsx(
-          "my-2 space-y-1.5 text-[#31302e] dark:text-neutral-200",
+          "my-2 space-y-1.5 text-inherit",
           isTaskList ? "list-none pl-0" : "list-disc pl-5",
           className
         )}
@@ -285,7 +286,7 @@ const markdownComponents: Components = {
   ol: ({ node: _node, children, className, ...props }) => (
     <ol
       className={clsx(
-        "my-2 list-decimal pl-5 space-y-1.5 text-[#31302e] dark:text-neutral-200",
+        "my-2 list-decimal pl-5 space-y-1.5 text-inherit",
         className
       )}
       {...props}
@@ -298,7 +299,7 @@ const markdownComponents: Components = {
     return (
       <li
         className={clsx(
-          "leading-relaxed",
+          "leading-relaxed text-inherit",
           isTaskItem && "list-none flex items-start gap-2",
           className
         )}
@@ -319,7 +320,7 @@ const markdownComponents: Components = {
           readOnly
           disabled
           className={clsx(
-            "mr-2 mt-1 h-3.5 w-3.5 rounded border-[#d1d5db] dark:border-neutral-600 text-[#0075de] accent-[#0075de] cursor-default shrink-0",
+            "mr-2 mt-1 h-3.5 w-3.5 rounded border-hairline text-brand-primary accent-brand-primary cursor-default shrink-0",
             className
           )}
           {...props}
@@ -329,24 +330,31 @@ const markdownComponents: Components = {
     return <input type={type} className={className} {...props} />;
   },
 
-  // Strong
+  // Strong: crisp, bold text matching normal ink
   strong: ({ node: _node, children, className, ...props }) => (
     <strong
-      className={clsx("font-semibold text-[#0d0d0d] dark:text-white", className)}
+      className={clsx("font-semibold text-ink", className)}
       {...props}
     >
       {children}
     </strong>
   ),
 
-  // Links: open in new tab with security attributes
+  // Emphasis
+  em: ({ node: _node, children, className, ...props }) => (
+    <em className={clsx("italic", className)} {...props}>
+      {children}
+    </em>
+  ),
+
+  // Links: primary blue with hover state
   a: ({ node: _node, href, children, className, ...props }) => (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       className={clsx(
-        "text-[#0075de] dark:text-[#62aef0] hover:underline font-medium break-all",
+        "text-brand-primary hover:text-brand-primary-active underline font-medium break-all",
         className
       )}
       {...props}
@@ -370,10 +378,11 @@ const markdownComponents: Components = {
         </code>
       );
     }
+    // Inline code: visible dark text on subtle light gray pill with light border
     return (
       <code
         className={clsx(
-          "font-mono bg-[#f6f5f4] dark:bg-neutral-800 text-[#0075de] dark:text-[#62aef0] text-[12px] px-1.5 py-0.5 rounded border border-[#e6e6e6] dark:border-neutral-700",
+          "font-mono bg-canvas-soft text-ink font-medium text-[12px] px-1.5 py-0.5 rounded border border-hairline",
           className
         )}
         {...props}
@@ -387,7 +396,7 @@ const markdownComponents: Components = {
   h1: ({ node: _node, children, className, ...props }) => (
     <h1
       className={clsx(
-        "text-lg font-bold text-[#0d0d0d] dark:text-white mt-4 mb-2 pb-1 border-b border-[#e5e5e5] dark:border-neutral-800",
+        "text-lg font-bold text-ink mt-4 mb-2 pb-1 border-b border-hairline",
         className
       )}
       {...props}
@@ -398,7 +407,7 @@ const markdownComponents: Components = {
   h2: ({ node: _node, children, className, ...props }) => (
     <h2
       className={clsx(
-        "text-base font-bold text-[#0d0d0d] dark:text-white mt-3 mb-1.5",
+        "text-base font-bold text-ink mt-3 mb-1.5",
         className
       )}
       {...props}
@@ -409,7 +418,7 @@ const markdownComponents: Components = {
   h3: ({ node: _node, children, className, ...props }) => (
     <h3
       className={clsx(
-        "text-sm font-bold text-[#0075de] dark:text-[#62aef0] mt-2.5 mb-1",
+        "text-sm font-bold text-brand-primary mt-2.5 mb-1",
         className
       )}
       {...props}
@@ -420,7 +429,7 @@ const markdownComponents: Components = {
   h4: ({ node: _node, children, className, ...props }) => (
     <h4
       className={clsx(
-        "text-xs font-bold text-[#615d59] dark:text-neutral-400 uppercase tracking-wider mt-2 mb-1",
+        "text-xs font-bold text-ink-muted uppercase tracking-wider mt-2 mb-1",
         className
       )}
       {...props}
@@ -433,7 +442,7 @@ const markdownComponents: Components = {
   blockquote: ({ node: _node, children, className, ...props }) => (
     <blockquote
       className={clsx(
-        "border-l-3 border-[#0075de] pl-3 py-1.5 bg-[#f6f5f4] dark:bg-neutral-800/50 italic text-[#31302e] dark:text-neutral-300 my-2 rounded-r",
+        "border-l-3 border-brand-primary pl-3 py-1.5 bg-canvas-soft italic text-inherit my-2 rounded-r",
         className
       )}
       {...props}
@@ -445,7 +454,7 @@ const markdownComponents: Components = {
   // Horizontal Rule
   hr: ({ node: _node, className, ...props }) => (
     <hr
-      className={clsx("my-3 border-t border-[#e5e5e5] dark:border-neutral-800", className)}
+      className={clsx("my-3 border-t border-hairline", className)}
       {...props}
     />
   )
@@ -505,12 +514,12 @@ const MarkdownRendererComponent: React.FC<MarkdownRendererProps> = ({ content })
   return (
     <MarkdownErrorBoundary
       fallback={
-        <div className="whitespace-pre-wrap break-words text-sm text-[#31302e] dark:text-neutral-200">
+        <div className="whitespace-pre-wrap break-words text-sm text-inherit">
           {content}
         </div>
       }
     >
-      <div className="markdown-content text-sm leading-relaxed text-[#31302e] dark:text-neutral-200">
+      <div className="markdown-content text-inherit text-sm leading-relaxed">
         <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
           {processed}
         </ReactMarkdown>
