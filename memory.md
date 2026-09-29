@@ -111,7 +111,7 @@ LifeOS/
 - **AI & Notifications**:
   - `AiRequestLog`: Token usage & prompt history log.
   - `Conversation` & `Message`: Chat history with AI assistant.
-  - `Embedding`: Vector embeddings for RAG search over user data.
+  - `Embedding`: Vector embeddings for RAG search over user data (`userId`, `sourceType`: note|goal|habit|event|transaction|budget, `sourceId`, `title`, `embeddedText`, `vector`: 1024-dim Mistral embed, `version`, `model`). Atlas Vector Search index configured as `vector_index`.
   - `Summary`: Daily/weekly AI-generated life performance summaries.
   - `Recommendation`: Periodic weekly/monthly AI-generated performance recommendations grounded in productivity & finance metrics (FR-10.3).
   - `Notification` & `PushSubscription`: System alerts & Web Push / Mobile Push endpoints.
@@ -192,6 +192,10 @@ npm run dev:web         # Start Vite Web App (Port 5173)
 npm run dev:mobile      # Start Expo Metro bundler
 docker compose up       # Launch Mongo + Redis + API containers
 
+# Standalone Background Worker
+npm run worker --workspace=api      # Start standalone background jobs worker process
+npm run dev:worker --workspace=api  # Start standalone worker in tsx development mode
+
 # Verification & Build Pipeline
 npm run build           # Monorepo build: shared -> api -> web
 npm run lint            # Monorepo ESLint check
@@ -200,6 +204,10 @@ npm run test            # Monorepo unit & integration tests
 npm run check:openapi   # OpenAPI coverage validation (127 routes documented)
 npm run build-storybook --workspace=web # Build static Storybook UI documentation
 npm run test:ws-smoke --workspace=api   # WebSocket smoke test
+
+# AI & RAG Management Tooling
+npx tsx scripts/ai/backfill-embeddings.ts [--user=<userId>] [--force] # Idempotent batch embedding backfill
+npx tsx scripts/diagnose-rag.ts [--user=<userId>]                     # Diagnose DB record counts, embeddings & search indexes
 
 # Mobile EAS Build & OTA Updates (v1)
 cd mobile && npx eas-cli build -p android --profile preview # Compile standalone Android APK
@@ -299,10 +307,26 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
   - [ ] Stream AI response: new tokens auto-scroll to bottom, prompt chips disappear, and tool confirmation modal triggers correctly.
   - [ ] Tap Mic icon in chat input bar: transitions cleanly to live waveform with level-reactive animation, and tapping X discards without sending; tapping checkmark completes transcript and populates input field.
 
+### `AI Assistant, Structured Context & RAG Pipeline` (`/api/src/services/ai/retriever.ts`, `structuredContext.ts`, `chatSocket.ts`, `embeddingJob.ts`)
+- **Fragility Mechanism**:
+  - Dual-channel context synthesis: merges real-time deterministic database state (today's schedule with timezone recurrence expansion, active habits with today's completion status from `HabitCheckIn`, active goals, budgets, and recent notes) with semantic vector search (Mistral 1024-dim embeddings via MongoDB Atlas Vector Search).
+  - Background embedding pipeline: Redis fail-open rule returns `{ queued: false }` when Redis is offline or timing out; `enqueueEmbeddingJob` must trigger non-blocking `setImmediate` inline fallback to guarantee embeddings are never dropped even if BullMQ is disconnected.
+  - User isolation: All vector searches, local cosine similarity fallbacks, and structured context queries strictly enforce user scoping (`{ userId: userObjectId }` and `$or: [{ userId: ObjectId }, { userId: string }]`).
+- **Past Regressions / Failure Modes**:
+  - Semantic vector search returning 0 hits due to missing Atlas `vector_index` definition or pre-existing documents lacking embeddings (resolved with `scripts/ai/backfill-embeddings.ts`).
+  - Date-scoped and habit completion queries ("habits before day ends", "my current schedule") failing under pure vector search because check-in documents (`HabitCheckIn`) were not embedded; assistant triggered strict FR-2.6 uncertainty refusal ("I don't have enough data in your account to answer that").
+  - Event creation in `syncProcessor.ts` and habit check-ins in `routes/habits.ts` omitting `enqueueEmbeddingJob` hooks.
+- **Mandatory Verification Checklist**:
+  - [ ] In `/chat`, ask: "What habits should I focus on completing before the day ends based on my current schedule?": verifies AI lists pending vs completed habits and references today's calendar events.
+  - [ ] In `/chat`, ask: "What is on my schedule today?": verifies AI lists today's events with time boundaries.
+  - [ ] Verify user isolation: query with user A; confirm zero records or embeddings from user B are returned.
+  - [ ] Verify empty account behavior: user with 0 records receives clean FR-2.6 uncertainty message without hallucinations.
+
 ---
 
 ## 9. Recent Fixes Log (rolling, capped)
 
+- [AI RAG Context Retrieval & Deterministic Real-time Context Merging Fix (FR-2.1 - FR-2.6, FR-2.10)]: Resolved production bug where AI Assistant on `/chat` returned "I don't have enough data in your account to answer that" for date-scoped questions like "What habits should I focus on completing before the day ends based on my current schedule?"; root causes identified: (1) 0 user embeddings existed in MongoDB Atlas and Atlas `vector_index` search index was unconfigured, (2) event creation in `syncProcessor.ts` and habit check-ins in `habits.ts` lacked embedding enqueue hooks, (3) BullMQ queue fail-open silently dropped jobs without fallback, and (4) pure semantic vector search cannot know today's check-in status or schedule window without deterministic DB reads; created deterministic real-time context builder (`api/src/services/ai/structuredContext.ts`) querying today's schedule with recurrence expansion, active habits with `[COMPLETED TODAY]` vs `[PENDING - NOT COMPLETED TODAY]` status, active goals, budgets, and notes; merged structured state with semantic RAG in `api/src/services/ai/chatSocket.ts`; added non-blocking `setImmediate` inline fallback in `enqueueEmbeddingJob` when queue fails open; created idempotent batch backfill engine (`scripts/ai/backfill-embeddings.ts`) and backfilled all 27 user records in MongoDB Atlas; created canonical Atlas search index definition (`docs/atlas-vector-index.json`); created standalone background worker (`api/src/worker.ts`); verified 42/42 AI tests passing (8 new tests in `structuredContext.test.ts`), 127/127 OpenAPI routes, 0 TypeScript errors across all 4 workspaces, and 0 ESLint errors.
 - [Web & Mobile-v2 Comprehensive Responsive & WebView Layout Overhaul]: Audited all routes and dialogs across viewports (320px–1024px+); fixed horizontal blowout caused by unconstrained flex children lacking `min-w-0` in `TodayScheduleWidget.tsx`, `TodayHabitsWidget.tsx`, `GoalsOverviewWidget.tsx`, `SubjectCard.tsx`, and `SettingsPage.tsx`; made StudyPage tabs (`overflow-x-auto no-scrollbar`) and topic filter/action bar (`flex-wrap`) responsive; wrapped Finance `BudgetList.tsx` search/button controls and `BudgetProgressBar.tsx` header amounts/badges; fixed Calendar `EventForm.tsx` body overflow (`flex-1 min-h-0`) and squished datetime pickers (`grid-cols-1 sm:grid-cols-2`), and hid timeLabel on mobile month chips; standardized `Dialog.tsx` primitives and `TopicDetailModal.tsx` / `ToolConfirmationModal.tsx` with `shrink-0` pinned header/footer, `overscroll-contain`, and `max-h-[calc(100dvh-2rem)]`; replaced `min-h-screen`/`100vh` with `min-h-dvh`/`100dvh` in `RootLayout.tsx`, `LoginPage.tsx`, `RegisterPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`, `FocusPage.tsx`, `SupportHelpPage.tsx`, and `DownloadAppPage.tsx`; added landscape safe-area insets (`safe-area-inset-left/right`) and >=44px tap targets; made TipTap `NoteEditor.tsx` toolbar horizontally scrollable; added global 16px mobile input zoom guard and overscroll-behavior in `index.css`; verified zero desktop regressions, clean typecheck across all 4 workspaces, 0 lint errors, 35/35 web vitest tests passing, and clean Vite production build.
 - [Web Finance InsightsCard Responsive Overflow Fix]: Resolved issue on mobile/responsive viewports where the "Get Insights" button and text input in InsightsCard overflowed the card boundaries; updated InsightsCard.tsx input and button container to flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5, added min-w-0 and w-full to the focusArea text input, added w-full sm:w-auto shrink-0 whitespace-nowrap to the button, reduced mobile card padding from p-6 to p-4 sm:p-6, and added responsive stacking to the card header and error banner; verified typecheck clean across all 4 monorepo workspaces and 35/35 web vitest tests passing.
 - [Brevo Transactional Email & Password Reset Security Flow (FR-1.3, NFR-2.2, NFR-2.3)]: Implemented production "Forgot Password" and "Reset Password" flow using Brevo SMTP/Email REST API with Node 22 native fetch (`api/src/services/emailService.ts`, AbortController 10s timeout, fail-open error handling); updated User model with `passwordResetTokenHash` (SHA-256) and `passwordResetExpires` (30-minute TTL) with `select: false`; enhanced `POST /api/v1/auth/forgot-password` with constant-time response preventing user enumeration, background email dispatch, Google-only account detection (`passwordHash === null`) sending sign-in guidance without creating tokens, silent bypass for `suspended`/`pending_deletion` accounts, and `PASSWORD_RESET_REQUESTED` audit logging; enhanced `POST /api/v1/auth/reset-password` to validate token hash and expiry, bcrypt hash new password, clear reset fields, revoke all active `RefreshToken` sessions, emit `PASSWORD_RESET_COMPLETED` audit events, and send confirmation emails; added `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` to `api/src/config/env.ts`, `.env.example`, and Pino redactions in `api/src/logger.ts`; updated `web/src/routes/ResetPasswordPage.tsx` and `web/src/App.tsx` to support `?token=` URL query params, displaying branded error/success states; verified 9/9 password reset vitest integration tests, 35/35 web vitest tests, 127/127 OpenAPI coverage, and 0 TypeScript compilation errors across all 4 workspaces.
@@ -317,7 +341,6 @@ Components and modules with non-obvious coupling, timing sensitivities, or high 
 - [Mobile Dashboard Dual-Tier Live Server & Offline SQLite Integration]: Architected dual-tier data retrieval in `mobile/src/screens/main/DashboardScreen.tsx` combining instant local SQLite rendering with direct live server HTTP fetching (`GET /calendar/events`, `GET /habits`, `GET /habits/:id/check-ins`, `GET /finance/summary`, `GET /finance/budgets`, and `GET /notes`); when online, fetches actual live records directly from MongoDB via `apiClient`, populates state with live data, posts habit check-ins to server `/habits/:id/check-in`, and triggers background sync to mirror SQLite; when offline or disconnected, transparently falls back to local SQLite repositories (`eventRepo`, `habitRepo`, `financeRepo`, `noteRepo`) without user disruption; eliminated all hardcoded demo/mock fallbacks and wired `useFocusEffect` + pull-to-refresh (`onRefresh`); verified typecheck clean across all 4 monorepo workspaces and 19/19 mobile test suites passing (117 tests).
 - [Mobile App Download Center & Route (`/download`)]: Implemented dedicated `/download` page (`web/src/routes/DownloadAppPage.tsx`) for direct standalone Android APK distribution; features direct APK download button targeting the latest verified GitHub release (`https://github.com/Dileep-kumawat/LifeOS/releases/latest/download/lifeos.apk`), dynamic high-resolution QR code generator for desktop-to-mobile scanning, 3-step visual APK installation guide (handling Android's "Allow from this source" security permission), client-side platform auto-detection (Android vs iOS PWA guidance), copy-to-clipboard download link with toast notifications, and interactive FAQ accordion; wired navigation badges to `/download` in `RootLayout.tsx` (mobile top header, mobile drawer, and desktop sidebar); verified typecheck clean and Vite production build succeeded.
 - [Support & Help Knowledge Center & Routing (`SupportHelpPage`)]: Implemented dedicated Support & Help page (`web/src/routes/SupportHelpPage.tsx`) lazy-routed via `/support` and `/help` with `RouteLoadingFallback`; wired side nav and mobile drawer links to `/support` with active state indicators instead of redirecting directly to `/chat`; built comprehensive Notion-aesthetic knowledge base featuring Target Audience profiles, Core Purpose & Value Proposition (resolving the 10-app fragmentation trap), Module-by-Module Guidelines & 15-minute daily operating rhythm, Platform Terms & Guidelines (acceptable use, GDPR/DPDP data sovereignty, AI fallback disclosures, and warranty disclaimers), searchable interactive FAQ accordion, and prominent direct CTA banner redirecting users to the AI Assistant (`/chat`) for real-time assistance; verified typecheck clean, 15/15 web vitest tests passing, and Vite production bundle compilation succeeded.
-- [Mobile App Icon & Android Adaptive Logo Configuration]: Generated high-resolution app icon assets (`mobile/assets/icon.png` 1024x1024, `mobile/assets/adaptive-icon.png` with 66% safe-zone central alignment to prevent launcher masking crop, `mobile/assets/splash-icon.png`, and `mobile/assets/favicon.png`) from the official LifeOS brand mark; wired `icon`, `splash`, `android.adaptiveIcon` (`foregroundImage` + `#ffffff` background), and `ios.icon` in `mobile/app.json`; verified configuration via `npx expo config --type public` and verified clean typecheck across all 4 monorepo workspaces.
 
 
 ---
@@ -335,8 +358,18 @@ Standing codebase conventions to preserve consistency across web, mobile, and ba
   - **Observability**: Operation counters (`hits`, `misses`, `errors`) are included in structured Pino logs (`logger.info`).
   - **Habit Streak Document Caching**: Habit streak statistics (`currentStreak`, `longestStreak`, `completionRate`, `lastCheckInDate`) are calculated exclusively at check-in write-time (`updateHabitStats` in `habits.ts` & `syncProcessor.ts`) and persisted directly to the `Habit` document; all read paths consume cached fields without live recomputation.
 
+- **Deterministic Real-time Structured Context + Vector RAG Merging**:
+  - The AI Assistant chat pipeline (`api/src/services/ai/chatSocket.ts`) merges deterministic real-time database state (`getStructuredContext`) with semantic vector search (`retrieveContext`).
+  - Date-scoped and state-dependent queries (today's schedule with timezone recurrence expansion, active habits with `[COMPLETED TODAY]` vs `[PENDING - NOT COMPLETED TODAY]` status from `HabitCheckIn`, active goals, budgets, and recent notes) are sourced directly from MongoDB queries scoped strictly by `{ userId: userObjectId }`.
+  - Semantic vector search (`retrieveContext`) runs over 1024-dimensional Mistral embeddings stored in the `embeddings` collection via Atlas Vector Search (`vector_index`), with local cosine similarity fallback.
+  - The FR-2.6 uncertainty refusal ("I don't have enough data in your account to answer that") triggers ONLY when NEITHER structured database state nor semantic vector context contains relevant records.
+
+- **Embedding Non-Blocking Inline Fallback on Queue Disconnect**:
+  - `enqueueEmbeddingJob` (`api/src/services/ai/embeddingJob.ts`) attempts to enqueue embedding extraction via BullMQ (`jobsQueue`).
+  - If Redis is disconnected, unavailable, or triggers the fail-open rule (`{ queued: false }`), `enqueueEmbeddingJob` automatically triggers a non-blocking `setImmediate` inline fallback calling `generateAndSaveEmbedding` directly. This guarantees embedding writes are never silently dropped even during local development without Redis or production Redis stalls, while preserving the non-blocking response contract.
+
 - **Background Jobs Are Best-Effort, Never Response-Blocking**:
-  - `enqueueJob` (`api/src/services/queue.ts`) never throws on Redis failure — it returns `{ queued: false }`; `enqueueEmbeddingJob` warns and continues; routes isolate reminder/embedding calls in try/catch so `Event.create` success always yields HTTP 201 even when the queue is down.
+  - `enqueueJob` (`api/src/services/queue.ts`) never throws on Redis failure — it returns `{ queued: false }`; `enqueueEmbeddingJob` warns and falls back inline; routes isolate reminder/embedding calls in try/catch so `Event.create` success always yields HTTP 201 even when the queue is down.
   - Web `apiClient` sets `timeout: 30000` so a stalled backend surfaces as an error instead of an infinite "Pending" row.
 
 - **Web JWT Silent Refresh & Token Rotation Convention**:

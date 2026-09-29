@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Embedding, type SourceType } from "../../models/Embedding.js";
 import { generateEmbedding } from "./embeddings.js";
+import { env } from "../../config/env.js";
 import { logger } from "../../logger.js";
 
 export interface RetrievedItem {
@@ -78,6 +79,10 @@ export async function retrieveContext(
 
   // Generate embedding for user query
   const queryVector = await generateEmbedding(cleanQuery);
+  logger.info(
+    { queryLength: cleanQuery.length, vectorDimensions: queryVector.length },
+    "Retriever: query embedding generated"
+  );
 
   let candidateResults: RetrievedItem[] = [];
 
@@ -92,7 +97,7 @@ export async function retrieveContext(
     const pipeline: any[] = [
       {
         $vectorSearch: {
-          index: process.env.MONGO_VECTOR_INDEX || "vector_index",
+          index: env.MONGO_VECTOR_INDEX || process.env.MONGO_VECTOR_INDEX || "vector_index",
           path: "vector",
           queryVector,
           numCandidates: topK * 10,
@@ -124,6 +129,15 @@ export async function retrieveContext(
         snippet: createSnippet(doc.embeddedText || ""),
         score: doc.score ?? 0
       }));
+      logger.info(
+        {
+          method: "atlas",
+          filterUserId: userIdStr,
+          hitCount: candidateResults.length,
+          topScores: candidateResults.map((r) => Number(r.score.toFixed(3)))
+        },
+        "Retriever: Atlas vector search executed"
+      );
     }
   } catch (err: any) {
     logger.debug(
@@ -134,11 +148,17 @@ export async function retrieveContext(
 
   // Fallback if $vectorSearch is not supported (e.g. local Docker Mongo / Vitest) or returned no results
   if (candidateResults.length === 0) {
-    const filter: Record<string, any> = { userId: userIdStr };
+    const userObjectId = mongoose.Types.ObjectId.isValid(userIdStr)
+      ? new mongoose.Types.ObjectId(userIdStr)
+      : userIdStr;
+    const filter: Record<string, any> = {
+      $or: [{ userId: userObjectId }, { userId: userIdStr }]
+    };
     if (options.sourceType) filter.sourceType = options.sourceType;
 
     const docs = await Embedding.find(filter).lean();
     if (docs.length === 0) {
+      logger.info({ filterUserId: userIdStr, hitCount: 0 }, "Retriever: local search found 0 user embeddings");
       return { results: [], total: 0, query: cleanQuery };
     }
 
@@ -157,10 +177,29 @@ export async function retrieveContext(
 
     scored.sort((a, b) => b.score - a.score);
     candidateResults = scored.slice(0, topK);
+
+    logger.info(
+      {
+        method: "local_cosine",
+        filterUserId: userIdStr,
+        hitCount: candidateResults.length,
+        topScores: candidateResults.map((r) => Number(r.score.toFixed(3)))
+      },
+      "Retriever: Local cosine similarity search executed"
+    );
   }
 
   // Apply minScore threshold for uncertainty/low-confidence signalling
   const filteredResults = candidateResults.filter((r) => r.score >= minScore);
+
+  logger.info(
+    {
+      totalCandidates: candidateResults.length,
+      filteredHits: filteredResults.length,
+      minScore
+    },
+    "Retriever: Context retrieval complete"
+  );
 
   return {
     results: filteredResults,

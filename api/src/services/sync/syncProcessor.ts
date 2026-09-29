@@ -352,6 +352,7 @@ async function processSinglePushItem(
         const checkIn = await HabitCheckIn.findOneAndDelete({ _id: id, userId: userObjectId });
         if (checkIn) {
           await updateHabitStatsForSync(checkIn.habitId, userObjectId, checkIn.date);
+          await enqueueEmbeddingJob("habit", checkIn.habitId, userObjectId);
           await recordTombstone(userId, module, id);
         }
         return { id, module, status: "applied" };
@@ -383,6 +384,7 @@ async function processSinglePushItem(
         );
 
         await updateHabitStatsForSync(habitId, userObjectId, date);
+        await enqueueEmbeddingJob("habit", habitId, userObjectId);
         return { id, module, status: "applied", serverRecord: checkIn.toObject() };
       }
       break;
@@ -612,6 +614,7 @@ async function processSinglePushItem(
     case "events": {
       if (operation === "delete") {
         await Event.findOneAndDelete({ _id: id, userId: userObjectId });
+        await deleteEmbedding("event", id);
         await recordTombstone(userId, module, id);
         return { id, module, status: "applied" };
       }
@@ -675,6 +678,8 @@ async function processSinglePushItem(
         } else {
           doc = await Event.create({ _id: id, ...eventData });
         }
+
+        await enqueueEmbeddingJob("event", doc._id, userObjectId);
 
         return {
           id,

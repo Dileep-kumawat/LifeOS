@@ -459,6 +459,7 @@ habitsRouter.post("/habits/:id/check-in", async (req: Request, res: Response) =>
 
     // Recalculate streak and write stats back to Habit document in the same operation
     await updateHabitStats(habit, userId, date);
+    await enqueueEmbeddingJob("habit", habit._id, userId);
 
     return res.json({
       checkIn,

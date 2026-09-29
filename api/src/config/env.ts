@@ -48,6 +48,7 @@ const envSchema = z.object({
 
   // Phase 3 AI Provider Config & API Keys
   AI_PROVIDER_ORDER: z.string().default("mistral,groq,gemini"),
+  MONGO_VECTOR_INDEX: z.string().default("vector_index"),
   MISTRAL_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),

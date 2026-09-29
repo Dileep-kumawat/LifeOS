@@ -76,7 +76,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 
   try {
-    const vector = await client.embedQuery(cleanText);
+    const embedPromise = client.embedQuery(cleanText);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Embedding API request timed out after 10000ms")), 10000)
+    );
+    const vector = await Promise.race([embedPromise, timeoutPromise]);
     return vector;
   } catch (err: any) {
     logger.warn({ err: err.message }, "Embedding API call failed — using fallback mock vector");

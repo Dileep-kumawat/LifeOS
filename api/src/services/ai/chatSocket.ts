@@ -7,6 +7,7 @@ import { User } from "../../models/User.js";
 import { Conversation } from "../../models/Conversation.js";
 import { Message } from "../../models/Message.js";
 import { retrieveContext } from "./retriever.js";
+import { getStructuredContext } from "./structuredContext.js";
 import { createProviderModel } from "./providers.js";
 import { getProviderOrder, callAI } from "./callAI.js";
 import { ALL_AI_TOOLS, executeToolCall } from "./tools.js";
@@ -149,6 +150,11 @@ export function setupChatSocket(io: Server) {
           content
         });
 
+        logger.info(
+          { userId, conversationId, messageLength: content.length },
+          "AI Chat: user message received"
+        );
+
         socket.emit("user_message_ack", {
           conversationId,
           messageId: userMsg._id.toString(),
@@ -158,8 +164,27 @@ export function setupChatSocket(io: Server) {
           createdAt: userMsg.createdAt.toISOString()
         });
 
-        // Prompt 2 RAG Retrieval
+        // 1. Fetch deterministic structured context (today's schedule, habits & check-ins, goals, budgets, notes)
+        const structuredCtx = await getStructuredContext(userId, { referenceDate: new Date() });
+        logger.info(
+          {
+            userId,
+            counts: structuredCtx.counts,
+            hasAnyData: structuredCtx.hasAnyData
+          },
+          "AI Chat: structured context fetched"
+        );
+
+        // 2. Fetch semantic vector context (top-k semantic RAG)
         const rag = await retrieveContext(userId, content, { topK: 5, minScore: 0.15 });
+        logger.info(
+          {
+            userId,
+            hitCount: rag.results.length,
+            topScores: rag.results.map((r) => Number(r.score.toFixed(3)))
+          },
+          "AI Chat: vector search complete"
+        );
 
         // Retrieve last 10 messages for memory window (FR-2.5)
         const recentMessages = await Message.find({ conversationId })
@@ -177,16 +202,20 @@ export function setupChatSocket(io: Server) {
                     `-[${r.sourceType.toUpperCase()}] ${r.title}: ${r.snippet} (relevance score: ${r.score.toFixed(2)})`
                 )
                 .join("\n")
-            : "No relevant records found in user account.";
+            : "No additional relevant semantic records found.";
 
         const systemPromptText = `You are LifeOS AI, an intelligent productivity operating system assistant.
 Current date/time: ${new Date().toISOString()}.
 
-User Account Context (Retrieved via RAG):
+User Real-time Account Data (Deterministic Database State):
+${structuredCtx.formattedContext}
+
+Additional Context (Retrieved via Semantic Vector Search):
 ${ragContextText}
 
 CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
-- If the user is asking about specific personal data (such as events, habits, notes, financial data, or productivity statistics) and the retrieved context above is empty or does NOT contain sufficient relevant information, you MUST state clearly: "I don't have enough data in your account to answer that."
+- If the user is asking about specific personal data (such as events, habits, notes, financial data, or productivity statistics) and NEITHER the deterministic database state NOR the retrieved vector context above contains sufficient relevant information, you MUST state clearly: "I don't have enough data in your account to answer that."
+- If the context DOES contain relevant records (e.g. today's habits and completion status, today's schedule, notes, goals, or budgets), answer the user's question directly, accurately, and thoroughly using the provided data.
 - Do NOT invent, hallucinate, or fabricate events, habits, notes, or statistics that are not present in the context.
 - For general advice or strategy queries (e.g. financial principles, study techniques), provide helpful general advice while clarifying that it is general guidance.`;
 
@@ -199,6 +228,17 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
           if (m.role === "assistant" && m.content) langChainMessages.push(new AIMessage(m.content));
         }
         langChainMessages.push(new HumanMessage(content));
+
+        const promptLength = systemPromptText.length + content.length;
+        logger.info(
+          {
+            userId,
+            conversationId,
+            promptLength,
+            messageCount: langChainMessages.length
+          },
+          "AI Chat: final prompt assembled"
+        );
 
         // Provider Fallback Chain with Streaming & Tool Binding (FR-2.10, FR-2.14)
         const providerOrder = getProviderOrder();
@@ -311,6 +351,17 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
                 }
               });
 
+              logger.info(
+                {
+                  userId,
+                  provider,
+                  attempt: i + 1,
+                  toolName,
+                  toolCallId
+                },
+                "AI Chat: tool call proposed by provider"
+              );
+
               socket.emit("tool_call_proposed", {
                 conversationId,
                 messageId: assistantMsg._id.toString(),
@@ -340,6 +391,16 @@ CRITICAL UNCERTAINTY SIGNALING INSTRUCTIONS (FR-2.6):
               role: "assistant",
               content: textContent
             });
+
+            logger.info(
+              {
+                userId,
+                provider,
+                attempt: i + 1,
+                responseLength: textContent.length
+              },
+              "AI Chat: text response served by provider"
+            );
 
             socket.emit("chat_stream_end", {
               conversationId,

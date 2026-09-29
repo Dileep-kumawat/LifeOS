@@ -57,7 +57,7 @@ function formatEventDetail(doc: EventDoc) {
 
 // Load every override document referenced by a batch of series docs so
 // expansion can substitute instance-specific titles/times.
-async function collectOverrides(events: EventDoc[]): Promise<Map<string, EventDoc>> {
+export async function collectOverrides(events: EventDoc[]): Promise<Map<string, EventDoc>> {
   const ids = new Set<string>();
   for (const event of events) {
     for (const exception of event.exceptions || []) {
@@ -72,7 +72,7 @@ async function collectOverrides(events: EventDoc[]): Promise<Map<string, EventDo
 // Shared predicate for finding candidate events that could overlap a window.
 // Recurring events can't be range-filtered exactly in the DB (the rule needs
 // expanding), so we pre-filter them on a rough bound then expand in memory.
-function overlapWindowQuery(
+export function overlapWindowQuery(
   userId: any,
   start: Date,
   end: Date,

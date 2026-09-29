@@ -42,18 +42,48 @@ export async function enqueueEmbeddingJob(
   const delay = opts.immediate || isTest ? 0 : (opts.delay ?? DEFAULT_EMBEDDING_DEBOUNCE_MS);
 
   try {
-    return await enqueueJob(
+    const result = await enqueueJob(
       "embedding",
       { sourceType, sourceId: idStr, userId: userStr },
       { dedupeKey, delay }
     );
+
+    // If queue is down or skipped due to Redis being unavailable, fall back to
+    // an asynchronous inline generation in the background so writes are never
+    // left silently unembedded.
+    if (!result.queued && !result.duplicate && process.env.NODE_ENV !== "test") {
+      logger.info(
+        { sourceType, sourceId: idStr },
+        "Queue unavailable for embedding job — triggering asynchronous inline fallback embedding"
+      );
+      setImmediate(() => {
+        generateAndSaveEmbedding(sourceType, idStr, userStr).catch((inlineErr) => {
+          logger.warn(
+            { sourceType, sourceId: idStr, err: inlineErr?.message || inlineErr },
+            "Asynchronous inline embedding fallback failed"
+          );
+        });
+      });
+    }
+
+    return result;
   } catch (err: any) {
     // Background embeddings are best-effort: a queue/Redis failure must never
     // hang or 500 the caller's HTTP request (production "Pending" fix).
     logger.warn(
       { sourceType, sourceId: idStr, err: err?.message || err },
-      "embedding enqueue failed; continuing without background embedding (fail-open)"
+      "embedding enqueue failed; attempting asynchronous inline fallback"
     );
+    if (process.env.NODE_ENV !== "test") {
+      setImmediate(() => {
+        generateAndSaveEmbedding(sourceType, idStr, userStr).catch((inlineErr) => {
+          logger.warn(
+            { sourceType, sourceId: idStr, err: inlineErr?.message || inlineErr },
+            "Asynchronous inline embedding fallback failed"
+          );
+        });
+      });
+    }
     return { queued: false, duplicate: false, jobId: dedupeKey };
   }
 }
@@ -83,6 +113,55 @@ const SOURCE_MODELS: Record<SourceType, any> = {
 };
 
 /**
+ * Synchronously or directly processes and saves an embedding record for a source document.
+ * Used both by the BullMQ worker and as an async fallback when the queue is down,
+ * as well as by the backfill script.
+ */
+export async function generateAndSaveEmbedding(
+  sourceType: SourceType,
+  sourceId: string | object,
+  userId: string | object
+): Promise<void> {
+  const idStr = sourceId.toString();
+  const userStr = userId.toString();
+
+  const model = SOURCE_MODELS[sourceType];
+  if (!model) {
+    logger.warn({ sourceType }, "unknown sourceType in generateAndSaveEmbedding — skipping");
+    return;
+  }
+
+  const doc = await model.findOne({ _id: idStr, userId: userStr });
+  if (!doc) {
+    // Source document was deleted — clean up stale embedding
+    await Embedding.deleteOne({ sourceType, sourceId: idStr });
+    logger.info(
+      { sourceType, sourceId: idStr },
+      "generateAndSaveEmbedding: source document missing — cleaned up embedding"
+    );
+    return;
+  }
+
+  const { title, embeddedText } = formatSourceRecordForEmbedding(sourceType, doc);
+  const vector = await generateEmbedding(embeddedText);
+
+  await Embedding.findOneAndUpdate(
+    { sourceType, sourceId: idStr },
+    {
+      userId: userStr,
+      sourceType,
+      sourceId: idStr,
+      embeddedText,
+      title,
+      vector
+    },
+    { upsert: true, new: true, runValidators: true }
+  );
+
+  logger.info({ sourceType, sourceId: idStr, userId: userStr }, "embedding updated successfully");
+}
+
+/**
  * Job worker processor for `type: "embedding"`.
  */
 export async function processEmbeddingJob(job: Job<EmbeddingJobData>): Promise<void> {
@@ -92,39 +171,6 @@ export async function processEmbeddingJob(job: Job<EmbeddingJobData>): Promise<v
     return;
   }
 
-  const model = SOURCE_MODELS[sourceType];
-  if (!model) {
-    logger.warn({ sourceType }, "unknown sourceType in embedding job — skipping");
-    return;
-  }
-
-  const doc = await model.findOne({ _id: sourceId, userId });
-  if (!doc) {
-    // Source document was deleted before job executed — remove any stale embedding
-    await Embedding.deleteOne({ sourceType, sourceId });
-    logger.info(
-      { sourceType, sourceId },
-      "embedding job: source document missing — cleaned up embedding"
-    );
-    return;
-  }
-
-  const { title, embeddedText } = formatSourceRecordForEmbedding(sourceType, doc);
-  const vector = await generateEmbedding(embeddedText);
-
-  // Upsert embedding: replace existing embedding for edited content (no stale duplicates)
-  await Embedding.findOneAndUpdate(
-    { sourceType, sourceId },
-    {
-      userId,
-      sourceType,
-      sourceId,
-      embeddedText,
-      title,
-      vector
-    },
-    { upsert: true, new: true, runValidators: true }
-  );
-
-  logger.info({ sourceType, sourceId, userId }, "embedding updated successfully");
+  await generateAndSaveEmbedding(sourceType, sourceId, userId);
 }
+

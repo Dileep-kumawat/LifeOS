@@ -264,7 +264,15 @@ describe("RAG Pipeline Unit & Integration Tests", () => {
 
       vi.spyOn(Embedding, "aggregate").mockResolvedValue([]);
       vi.spyOn(Embedding, "find").mockImplementation(((filter: any) => {
-        const matches = store.filter((d) => d.userId === filter.userId);
+        const matches = store.filter((d) => {
+          if (filter.userId) return d.userId.toString() === filter.userId.toString();
+          if (filter.$or) {
+            return filter.$or.some(
+              (clause: any) => clause.userId && clause.userId.toString() === d.userId.toString()
+            );
+          }
+          return false;
+        });
         return {
           lean: async () => matches
         } as any;
