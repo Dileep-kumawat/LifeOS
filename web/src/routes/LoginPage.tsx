@@ -68,7 +68,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f6f5f4] p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-[#f6f5f4] p-4">
       <LoginForm
         onSubmit={handleLogin}
         onNavigateRegister={() => navigate("/register")}

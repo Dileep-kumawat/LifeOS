@@ -58,7 +58,7 @@ export function EventCard({
     >
       <span className="size-1.5 shrink-0 rounded-full bg-[#0075de] transition-transform duration-150 group-hover:scale-125" />
       {!occurrence.isAllDay && (
-        <span className="shrink-0 text-[10px] font-medium text-[#615d59]">{timeLabel}</span>
+        <span className="shrink-0 text-[10px] font-medium text-[#615d59] hidden sm:inline">{timeLabel}</span>
       )}
       <span className="truncate font-medium">{occurrence.title}</span>
     </button>

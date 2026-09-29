@@ -389,12 +389,12 @@ export function StudyPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 border-b border-[#e6e6e6]">
+      <div className="flex items-center gap-1 border-b border-[#e6e6e6] overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab("subjects")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all",
+            "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all shrink-0 whitespace-nowrap",
             activeTab === "subjects"
               ? "border-[#0075de] text-[#0075de]"
               : "border-transparent text-[#615d59] hover:text-[#000000]"
@@ -408,7 +408,7 @@ export function StudyPage() {
           type="button"
           onClick={() => setActiveTab("flashcards")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all",
+            "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all shrink-0 whitespace-nowrap",
             activeTab === "flashcards"
               ? "border-[#0075de] text-[#0075de]"
               : "border-transparent text-[#615d59] hover:text-[#000000]"
@@ -422,7 +422,7 @@ export function StudyPage() {
           type="button"
           onClick={() => setActiveTab("review")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all",
+            "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-semibold border-b-2 transition-all shrink-0 whitespace-nowrap",
             activeTab === "review"
               ? "border-[#0075de] text-[#0075de]"
               : "border-transparent text-[#615d59] hover:text-[#000000]"
@@ -525,17 +525,17 @@ export function StudyPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
                 {/* Status Filter Pill Dropdown */}
-                <div className="flex items-center gap-1 bg-[#f6f5f4] p-1 rounded-lg border border-[#e6e6e6] text-xs">
-                  <Filter className="size-3.5 text-[#a39e98] ml-1" />
+                <div className="flex items-center gap-1 bg-[#f6f5f4] p-1 rounded-lg border border-[#e6e6e6] text-xs overflow-x-auto max-w-full no-scrollbar">
+                  <Filter className="size-3.5 text-[#a39e98] ml-1 shrink-0" />
                   {["all", "not_started", "in_progress", "completed"].map((st) => (
                     <button
                       key={st}
                       type="button"
                       onClick={() => setTopicStatusFilter(st)}
                       className={cn(
-                        "px-2.5 py-1 rounded-md capitalize font-medium transition-all",
+                        "px-2.5 py-1 rounded-md capitalize font-medium transition-all shrink-0 whitespace-nowrap",
                         topicStatusFilter === st
                           ? "bg-white text-[#0075de] font-bold shadow-2xs"
                           : "text-[#615d59] hover:text-[#000000]"
@@ -554,7 +554,7 @@ export function StudyPage() {
                       setEditingTopic(null);
                       setIsTopicModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0075de] text-white text-xs font-semibold hover:bg-[#005bab] shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0075de] text-white text-xs font-semibold hover:bg-[#005bab] shadow-xs shrink-0"
                   >
                     <Plus className="size-3.5" />
                     <span>Add Topic</span>

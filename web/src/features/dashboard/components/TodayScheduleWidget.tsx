@@ -71,14 +71,14 @@ export function TodayScheduleWidget() {
                 <div
                   className={`absolute -left-[23px] top-1 size-3 rounded-full ${dotColor} border-2 border-white`}
                 />
-                <div className="flex justify-between items-start gap-3">
-                  <div>
+                <div className="flex justify-between items-start gap-2 sm:gap-3 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#1a1c1c] truncate">{evt.title}</p>
                     {evt.description && (
                       <p className="text-xs text-[#414753] mt-0.5 truncate">{evt.description}</p>
                     )}
                   </div>
-                  <span className="font-mono text-xs bg-[#efeeed] px-2 py-1 rounded text-[#414753] shrink-0 font-medium">
+                  <span className="font-mono text-[11px] sm:text-xs bg-[#efeeed] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[#414753] shrink-0 font-medium">
                     {evt.isAllDay ? "All Day" : `${startTimeStr} - ${endTimeStr}`}
                   </span>
                 </div>

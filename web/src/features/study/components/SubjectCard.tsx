@@ -98,8 +98,8 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     >
       {/* Top Accent Strip & Header */}
       <div>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-start justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <span
               className="size-3.5 shrink-0 rounded-full border border-black/10 shadow-2xs"
               style={{ backgroundColor: color }}
@@ -115,7 +115,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-1 text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4] rounded-lg transition-colors"
+              className="p-2 -m-1 text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4] rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
               aria-label="Subject options"
             >
               <MoreVertical className="size-4" />

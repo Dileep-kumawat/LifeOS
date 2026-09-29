@@ -81,8 +81,8 @@ export function GoalsOverviewWidget() {
                 to={`/goals/${goal._id}`}
                 className="group flex flex-col gap-2 rounded-xl border border-border/40 bg-accent/20 p-3.5 transition-all hover:bg-accent/40 hover:border-purple-200 dark:hover:border-purple-900/50"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-foreground truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-xs font-semibold text-foreground truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors flex-1 min-w-0">
                     {goal.title}
                   </span>
                   <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 shrink-0">

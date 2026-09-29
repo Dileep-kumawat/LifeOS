@@ -172,7 +172,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
   const details = renderDetails();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200 overflow-y-auto overscroll-contain">
       <div
         ref={modalRef}
         role="dialog"
@@ -182,7 +182,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
         className="bg-white rounded-xl shadow-xl border border-[#e6e6e6] max-w-lg w-full overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col"
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
+        <div className="flex shrink-0 items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#e6e6e6] bg-[#f6f5f4]">
           <div className="flex items-center gap-3">
             {details.icon}
             <div>
@@ -196,20 +196,20 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="Close dialog"
-            className="text-[#615d59] hover:text-[#000000] p-1 rounded-md transition-colors"
+            className="text-[#615d59] hover:text-[#000000] p-2 -m-1 rounded-md transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0">
           <p id="tool-confirm-modal-desc" className="text-sm font-medium text-[#31302e]">
             {details.description}
           </p>
 
           {/* Formatted Parameters List */}
-          <div className="bg-[#f6f5f4] border border-[#e6e6e6] rounded-lg p-4 flex flex-col gap-2.5">
+          <div className="bg-[#f6f5f4] border border-[#e6e6e6] rounded-lg p-3 sm:p-4 flex flex-col gap-2.5">
             {details.items.map((item, idx) => (
               <div key={idx} className="flex flex-col text-xs">
                 <span className="font-semibold text-[#615d59] uppercase tracking-wider">
@@ -222,12 +222,12 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t border-[#e6e6e6] bg-slate-50">
+        <div className="flex shrink-0 flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[#e6e6e6] bg-slate-50">
           <button
             type="button"
             onClick={onCancel}
             disabled={isExecuting}
-            className="px-4 py-2 text-sm font-medium text-[#31302e] bg-white border border-[#e6e6e6] rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-[#31302e] bg-white border border-[#e6e6e6] rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50 text-center"
           >
             Cancel Action
           </button>
@@ -236,7 +236,7 @@ export const ToolConfirmationModal: React.FC<ToolConfirmationModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isExecuting}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0075de] rounded-lg hover:bg-[#005bab] transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0075de] rounded-lg hover:bg-[#005bab] transition-colors disabled:opacity-50 text-center"
           >
             <CheckCircle2 className="w-4 h-4" />
             {isExecuting ? "Executing..." : "Confirm & Execute"}

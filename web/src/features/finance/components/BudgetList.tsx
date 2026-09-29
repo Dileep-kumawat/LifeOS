@@ -51,17 +51,17 @@ export const BudgetList: React.FC<BudgetListProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search budgets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#0075de]"
+            className="w-full sm:w-60 px-3 py-1.5 text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#0075de]"
           />
           <button
             onClick={onCreateBudget}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-full transition-colors shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+            className="justify-center px-4 py-2 text-sm font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-full transition-colors shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0"
           >
             <span>+</span> Set Budget
           </button>

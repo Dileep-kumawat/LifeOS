@@ -138,7 +138,7 @@ export function TodayHabitsWidget() {
                 }
                 className="flex items-center justify-between group cursor-pointer p-2 -mx-2 rounded-lg transition-all duration-150 hover:bg-[#f6f5f4] active:scale-[0.99]"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
                   <button
                     type="button"
                     className={`size-6 rounded flex items-center justify-center border-2 transition-all duration-150 active:scale-75 ${

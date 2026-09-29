@@ -49,20 +49,20 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
   return (
     <div className={`flex flex-col gap-2 w-full ${className}`}>
       {showLabels && (
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            {category && <span className="font-semibold text-neutral-900">{category}</span>}
-            <span className="text-xs text-neutral-500 capitalize">({period})</span>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {category && <span className="font-semibold text-neutral-900 truncate">{category}</span>}
+            <span className="text-xs text-neutral-500 capitalize shrink-0">({period})</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-sm">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <span className="font-mono text-xs sm:text-sm">
               <span className={isOver ? "font-bold text-red-600" : "text-neutral-900"}>
                 ₹{currentSpend.toFixed(2)}
               </span>{" "}
               <span className="text-neutral-400">/ ₹{limit.toFixed(2)}</span>
             </span>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border transition-transform duration-150 hover:scale-105 cursor-default shadow-2xs ${badgeStyle}`}
+              className={`text-[11px] sm:text-xs px-2 py-0.5 rounded-full border transition-transform duration-150 hover:scale-105 cursor-default shadow-2xs whitespace-nowrap ${badgeStyle}`}
             >
               {statusText}
             </span>

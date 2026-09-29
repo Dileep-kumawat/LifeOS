@@ -99,12 +99,12 @@ export function DownloadAppPage() {
   )}&bgcolor=ffffff&color=005db2&margin=8`;
 
   return (
-    <div className="flex-1 w-full bg-[#f6f5f4] text-[#1a1c1c] min-h-screen">
+    <div className="flex-1 w-full bg-[#f6f5f4] text-[#1a1c1c] min-h-dvh">
       {/* ─── Hero Section ──────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#faf9f8] to-[#f6f5f4] border-b border-[#c1c6d5]/70 pt-10 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Top Breadcrumb / Navigation */}
-          <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
             <div className="flex items-center gap-2 text-xs text-[#717784]">
               <Link
                 to={user ? "/" : "/login"}

@@ -152,9 +152,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           onSubmit={handleCustomApply}
           className="p-3 bg-white border border-[#e6e6e6] rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2.5 animate-in fade-in duration-150"
         >
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <CalendarIcon className="size-4 text-[#615d59] shrink-0" />
-            <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
+            <div className="flex flex-wrap items-center gap-1.5 flex-1 sm:flex-initial">
               <label htmlFor="start-date-input" className="sr-only">Start Date</label>
               <input
                 id="start-date-input"

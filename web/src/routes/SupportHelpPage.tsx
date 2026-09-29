@@ -98,7 +98,7 @@ export function SupportHelpPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f6f5f4] p-4 sm:p-6 lg:p-8 flex flex-col items-center w-full">
+    <div className="min-h-dvh bg-[#f6f5f4] p-4 sm:p-6 lg:p-8 flex flex-col items-center w-full">
       <div className="w-full max-w-5xl flex flex-col gap-8 pb-16">
         {/* ─── Hero Header ─────────────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-2xl border border-[#e6e6e6] shadow-sm relative overflow-hidden">
@@ -142,7 +142,7 @@ export function SupportHelpPage() {
 
         {/* ─── Navigation Tabs & Search ─────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
             {[
               { key: "all", label: "All Topics" },
               { key: "audience", label: "For Whom" },

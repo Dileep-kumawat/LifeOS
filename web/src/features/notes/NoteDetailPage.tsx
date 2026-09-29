@@ -158,7 +158,7 @@ export function NoteDetailPage() {
 
       {/* Title bar */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#e6e6e6] bg-white p-4 sm:p-5 shadow-sm">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-3 min-w-0">
           <input
             value={title}
             onChange={(e) => {
@@ -168,20 +168,22 @@ export function NoteDetailPage() {
             placeholder="Untitled"
             maxLength={300}
             aria-label="Note title"
-            className="min-w-0 flex-1 bg-transparent text-xl sm:text-2xl font-bold text-[#000000] placeholder:text-[#a39e98] focus:outline-none"
+            className="min-w-0 flex-1 w-full sm:w-auto bg-transparent text-xl sm:text-2xl font-bold text-[#000000] placeholder:text-[#a39e98] focus:outline-none"
           />
-          <span
-            className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-[#f6f5f4] border border-[#e6e6e6] ${saveMeta.className}`}
-          >
-            <SaveIcon
-              className={`size-3.5 ${saveState === "saving" ? "animate-spin" : ""}`}
-              aria-hidden="true"
-            />
-            {saveMeta.label}
-          </span>
-          <Button variant="destructive" size="icon" onClick={handleDelete} aria-label="Delete note">
-            <Trash2 className="size-4" />
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-[#f6f5f4] border border-[#e6e6e6] ${saveMeta.className}`}
+            >
+              <SaveIcon
+                className={`size-3.5 ${saveState === "saving" ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              {saveMeta.label}
+            </span>
+            <Button variant="destructive" size="icon" onClick={handleDelete} aria-label="Delete note">
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4 border-t border-[#e6e6e6] pt-3 sm:flex-row sm:items-start">

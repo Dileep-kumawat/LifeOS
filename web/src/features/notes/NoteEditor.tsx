@@ -154,7 +154,7 @@ export function NoteEditor({
   }
 
   const toolbarItem =
-    "inline-flex size-8 items-center justify-center rounded-md text-[#31302e] transition-colors hover:bg-[#f6f5f4]";
+    "inline-flex size-9 sm:size-8 shrink-0 items-center justify-center rounded-md text-[#31302e] transition-colors hover:bg-[#f6f5f4]";
 
   const toolbarActive = `bg-[#f6f5f4] text-[#0075de]`;
 
@@ -167,9 +167,9 @@ export function NoteEditor({
   }
 
   return (
-    <div className={cn("notes-editor flex-1 flex flex-col gap-3", className)}>
+    <div className={cn("notes-editor flex-1 flex flex-col gap-3 min-w-0", className)}>
       <div
-        className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#e6e6e6] bg-white p-1.5 shadow-2xs"
+        className="flex items-center gap-1 sm:gap-0.5 rounded-lg border border-[#e6e6e6] bg-white p-1.5 shadow-2xs overflow-x-auto no-scrollbar max-w-full"
         role="toolbar"
         aria-label="Formatting toolbar"
       >

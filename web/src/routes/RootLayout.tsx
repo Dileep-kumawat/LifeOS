@@ -80,12 +80,12 @@ export function RootLayout() {
     <div
       className={cn(
         "bg-[#f6f5f4] flex flex-col lg:flex-row w-full",
-        isChat ? "h-full overflow-hidden" : "min-h-screen"
+        isChat ? "h-full overflow-hidden" : "min-h-dvh"
       )}
     >
       {/* ─── Mobile / Tablet Top Header (<lg) ────────────────────────────── */}
       {!isChat && (
-        <header className="lg:hidden fixed top-0 left-0 right-0 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40 transition-all duration-200 box-border">
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c1c6d5] px-4 flex items-center justify-between z-40 transition-all duration-200 box-border">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
@@ -376,12 +376,12 @@ export function RootLayout() {
 
       {/* ─── BottomNavBar (Mobile 5-item Shared Nav) ────────────────────── */}
       {!isChat && (
-        <nav className="lg:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom,0px))] bg-[#faf9f8]/95 backdrop-blur-md border-t border-[#c1c6d5] shadow-lg box-border">
+        <nav className="lg:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-2 pt-1 pb-[calc(0.375rem+env(safe-area-inset-bottom,0px))] pl-[calc(0.5rem+env(safe-area-inset-left,0px))] pr-[calc(0.5rem+env(safe-area-inset-right,0px))] bg-[#faf9f8]/95 backdrop-blur-md border-t border-[#c1c6d5] shadow-lg box-border">
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] min-h-[44px] ${
                 isActive
                   ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
                   : "text-[#414753] hover:bg-[#e3e2e1]"
@@ -394,7 +394,7 @@ export function RootLayout() {
           <NavLink
             to="/calendar"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] min-h-[44px] ${
                 isActive
                   ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
                   : "text-[#414753] hover:bg-[#e3e2e1]"
@@ -407,7 +407,7 @@ export function RootLayout() {
           <NavLink
             to="/habits"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] min-h-[44px] ${
                 isActive
                   ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
                   : "text-[#414753] hover:bg-[#e3e2e1]"
@@ -420,7 +420,7 @@ export function RootLayout() {
           <NavLink
             to="/notes"
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] ${
+              `flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs transition-all duration-150 active:scale-90 min-w-[54px] min-h-[44px] ${
                 isActive
                   ? "bg-[#0075de] text-white font-bold shadow-xs scale-105"
                   : "text-[#414753] hover:bg-[#e3e2e1]"
@@ -433,7 +433,7 @@ export function RootLayout() {
           <button
             type="button"
             onClick={() => setIsMobileDrawerOpen(true)}
-            className="flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs text-[#414753] hover:bg-[#e3e2e1] active:scale-90 transition-all duration-150 min-w-[54px]"
+            className="flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-xs text-[#414753] hover:bg-[#e3e2e1] active:scale-90 transition-all duration-150 min-w-[54px] min-h-[44px]"
           >
             <Menu className="size-4" />
             <span className="text-[10px] mt-0.5">More</span>
@@ -447,7 +447,7 @@ export function RootLayout() {
           "flex-1 lg:ml-64 flex flex-col min-w-0",
           isChat
             ? "h-full p-0 overflow-hidden"
-            : "min-h-[calc(100vh-3.5rem)] lg:min-h-screen pt-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pb-12"
+            : "min-h-[calc(100dvh-3.5rem)] lg:min-h-screen pt-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:pb-12"
         )}
       >
         {/* Content Outlet */}

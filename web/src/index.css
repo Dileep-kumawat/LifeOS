@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body,
 #root {
@@ -10,6 +15,22 @@ body,
   margin: 0;
   padding: 0;
 }
+
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent auto-zoom on input focus in iOS and Android WebViews */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 
 /* ─── TipTap / ProseMirror note editor ───────────────────────────────────── */
 .notes-editor {

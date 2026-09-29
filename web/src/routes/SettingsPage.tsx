@@ -66,7 +66,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f4] p-4 sm:p-6 flex flex-col items-center w-full">
+    <div className="min-h-dvh bg-[#f6f5f4] p-4 sm:p-6 flex flex-col items-center w-full">
       <div className="w-full max-w-2xl flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-bold text-[#000000]">Account Settings</h1>
@@ -105,8 +105,8 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[#e3e2e0] bg-white">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-[#f6f5f4] border border-[#e3e2e0] flex items-center justify-center">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-md bg-[#f6f5f4] border border-[#e3e2e0] flex items-center justify-center shrink-0">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" width="20" height="20">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -126,8 +126,8 @@ export function SettingsPage() {
                     />
                   </svg>
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-[#000000]">Google</span>
                     {user?.googleId ? (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">

@@ -11,14 +11,14 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in-0"
         onClick={() => onOpenChange(false)}
       />
       {/* Content Container */}
-      <div className="relative z-50 w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl border border-[#e6e6e6] animate-in zoom-in-95 duration-200 ease-out my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-y-auto">
+      <div className="relative z-50 w-full max-w-lg rounded-xl bg-white p-4 sm:p-6 shadow-2xl border border-[#e6e6e6] animate-in zoom-in-95 duration-200 ease-out my-auto max-h-[calc(100dvh-2rem)] flex flex-col overflow-y-auto">
         {children}
       </div>
     </div>
@@ -26,11 +26,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-2", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-2 min-h-0 flex-1", className)} {...props} />;
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-1.5 text-left mb-4", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-1.5 text-left mb-4 shrink-0", className)} {...props} />;
 }
 
 export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
@@ -47,7 +47,7 @@ export function DialogDescription({
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6", className)}
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6 shrink-0", className)}
       {...props}
     />
   );

@@ -94,14 +94,14 @@ export const TopicDetailModal: React.FC<TopicDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto overscroll-contain"
       role="dialog"
       aria-modal="true"
       aria-labelledby="topic-detail-title"
     >
-      <div className="relative w-full max-w-3xl rounded-2xl bg-white border border-[#e6e6e6] shadow-xl my-8 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-white border border-[#e6e6e6] shadow-xl my-auto overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]">
         {/* Modal Header */}
-        <div className="flex items-start justify-between p-6 border-b border-[#e6e6e6] bg-[#f6f5f4]/50">
+        <div className="flex items-start justify-between p-4 sm:p-6 border-b border-[#e6e6e6] bg-[#f6f5f4]/50 shrink-0">
           <div className="min-w-0 pr-4">
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               {topic.subjectName && (
@@ -136,7 +136,7 @@ export const TopicDetailModal: React.FC<TopicDetailModalProps> = ({
               )}
             </div>
 
-            <h2 id="topic-detail-title" className="text-xl font-bold text-[#000000] tracking-tight leading-snug">
+            <h2 id="topic-detail-title" className="text-lg sm:text-xl font-bold text-[#000000] tracking-tight leading-snug">
               {topic.title}
             </h2>
 
@@ -159,7 +159,7 @@ export const TopicDetailModal: React.FC<TopicDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-[#615d59] hover:text-[#000000] hover:bg-[#e6e6e6]/60 rounded-xl transition-colors shrink-0"
+            className="p-2 -m-1 text-[#615d59] hover:text-[#000000] hover:bg-[#e6e6e6]/60 rounded-xl transition-colors shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Close dialog"
           >
             <X className="size-5" />
@@ -167,7 +167,7 @@ export const TopicDetailModal: React.FC<TopicDetailModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 min-h-0">
           {/* Section 1: Accumulated Focus Time Summary */}
           <div className="p-5 rounded-xl border border-[#e6e6e6] bg-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -338,11 +338,11 @@ export const TopicDetailModal: React.FC<TopicDetailModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-[#e6e6e6] bg-[#f6f5f4]/40 flex justify-end">
+        <div className="p-3 sm:p-4 border-t border-[#e6e6e6] bg-[#f6f5f4]/40 flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-white text-xs font-semibold text-[#615d59] hover:text-[#000000] rounded-xl border border-[#e6e6e6] shadow-2xs hover:bg-[#f6f5f4] transition-colors"
+            className="px-4 py-2 bg-white text-xs font-semibold text-[#615d59] hover:text-[#000000] rounded-xl border border-[#e6e6e6] shadow-2xs hover:bg-[#f6f5f4] transition-colors min-h-[38px]"
           >
             Close
           </button>

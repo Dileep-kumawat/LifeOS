@@ -331,7 +331,7 @@ export function PomodoroTimer({
       </div>
 
       {/* Controls Bar */}
-      <div className="w-full flex items-center justify-center gap-3 mt-6">
+      <div className="w-full flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mt-6">
         {isIdle ? (
           <>
             <button

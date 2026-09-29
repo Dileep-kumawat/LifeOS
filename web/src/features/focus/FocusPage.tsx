@@ -238,7 +238,7 @@ export function FocusPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f5f4] pb-16 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+    <div className="min-h-dvh bg-[#f6f5f4] pb-16 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -268,11 +268,11 @@ export function FocusPage() {
       </div>
 
       {/* Main Tab Navigation */}
-      <div className="inline-flex p-1 rounded-xl bg-white border border-[#e6e6e6] shadow-2xs mb-8">
+      <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1 rounded-xl bg-white border border-[#e6e6e6] shadow-2xs mb-6 sm:mb-8">
         <button
           type="button"
           onClick={() => setActiveTab("timer")}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 whitespace-nowrap ${
             activeTab === "timer"
               ? "bg-[#0075de] text-white shadow-xs"
               : "text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4]"
@@ -288,7 +288,7 @@ export function FocusPage() {
             setActiveTab("analytics");
             loadSummary(summaryRange);
           }}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 whitespace-nowrap ${
             activeTab === "analytics"
               ? "bg-[#0075de] text-white shadow-xs"
               : "text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4]"
@@ -304,7 +304,7 @@ export function FocusPage() {
             setActiveTab("history");
             loadHistory();
           }}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 whitespace-nowrap ${
             activeTab === "history"
               ? "bg-[#0075de] text-white shadow-xs"
               : "text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4]"

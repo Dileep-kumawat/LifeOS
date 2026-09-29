@@ -26,7 +26,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#faf9f8] p-4">
+      <div className="flex min-h-dvh items-center justify-center bg-[#faf9f8] p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Invalid Reset Link</CardTitle>
@@ -57,7 +57,7 @@ export function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#faf9f8] p-4">
+      <div className="flex min-h-dvh items-center justify-center bg-[#faf9f8] p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Password Reset</CardTitle>
@@ -82,7 +82,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#faf9f8] p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-[#faf9f8] p-4">
       <ResetPasswordForm token={token} onSubmit={handleResetPassword} />
     </div>
   );

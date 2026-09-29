@@ -281,7 +281,7 @@ export function EventForm({
         <DialogDescription>Times are shown in {BROWSER_TIMEZONE}.</DialogDescription>
       </DialogHeader>
 
-      <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
+      <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto pr-1">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="event-title">Title</Label>
           <Input
@@ -303,7 +303,7 @@ export function EventForm({
           All day
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="event-start">Start</Label>
             <Input
