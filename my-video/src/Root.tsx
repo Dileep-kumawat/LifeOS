@@ -7,12 +7,14 @@ import { MainVertical } from "./MainVertical";
 import {
   Scene1Hook,
   Scene2Problem,
-  Scene3Study,
-  Scene4Focus,
-  Scene5Habits,
-  Scene6AI,
+  Scene2Logo,
+  Scene3Brief,
+  Scene4AI,
+  Scene5Study,
+  Scene6Montage,
   Scene7Mobile,
   Scene8Privacy,
+  Scene8Trust,
   Scene9End,
   SCENE_1_DURATION,
   SCENE_2_DURATION,
@@ -66,32 +68,40 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
       />
       <Composition
-        id="Scene3Study"
-        component={Scene3Study}
+        id="Scene2Logo"
+        component={Scene2Problem}
+        durationInFrames={SCENE_2_DURATION}
+        fps={FPS}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="Scene3Brief"
+        component={Scene3Brief}
         durationInFrames={SCENE_3_DURATION}
         fps={FPS}
         width={1920}
         height={1080}
       />
       <Composition
-        id="Scene4Focus"
-        component={Scene4Focus}
+        id="Scene4AI"
+        component={Scene4AI}
         durationInFrames={SCENE_4_DURATION}
         fps={FPS}
         width={1920}
         height={1080}
       />
       <Composition
-        id="Scene5Habits"
-        component={Scene5Habits}
+        id="Scene5Study"
+        component={Scene5Study}
         durationInFrames={SCENE_5_DURATION}
         fps={FPS}
         width={1920}
         height={1080}
       />
       <Composition
-        id="Scene6AI"
-        component={Scene6AI}
+        id="Scene6Montage"
+        component={Scene6Montage}
         durationInFrames={SCENE_6_DURATION}
         fps={FPS}
         width={1920}
@@ -101,6 +111,14 @@ export const RemotionRoot: React.FC = () => {
         id="Scene7Mobile"
         component={Scene7Mobile}
         durationInFrames={SCENE_7_DURATION}
+        fps={FPS}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="Scene8Trust"
+        component={Scene8Trust}
+        durationInFrames={SCENE_8_DURATION}
         fps={FPS}
         width={1920}
         height={1080}
